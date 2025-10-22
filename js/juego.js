@@ -22,33 +22,125 @@ class SalaJuego {
         this.updateGameStatus();
         this.startStateMonitoring();
         this.setupAudio();
+        this.setupAudioActivation();
         this.floatingHistoryOpen = false;
+    }
+    
+    setupAudioActivation() {
+        // Crear botón para activar audio en móviles
+        const activateAudio = () => {
+            if (this.speechSynthesis) {
+                // Reproducir un sonido silencioso para activar el audio
+                const utterance = new SpeechSynthesisUtterance('');
+                utterance.volume = 0;
+                this.speechSynthesis.speak(utterance);
+                
+                // Remover listeners después de activar
+                document.removeEventListener('touchstart', activateAudio);
+                document.removeEventListener('click', activateAudio);
+                
+                console.log('Audio activado para dispositivo móvil');
+            }
+        };
+        
+        // Activar audio en el primer toque/click
+        document.addEventListener('touchstart', activateAudio, { once: true });
+        document.addEventListener('click', activateAudio, { once: true });
     }
 
     setupAudio() {
         // Verificar si el navegador soporta síntesis de voz
         if ('speechSynthesis' in window) {
             this.speechSynthesis = window.speechSynthesis;
+            
+            // Cargar voces disponibles
+            this.loadVoices();
+            
+            // Escuchar cambios en las voces (importante para móviles)
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = () => this.loadVoices();
+            }
+            
             console.log('Audio habilitado');
         } else {
             console.log('Audio no disponible en este navegador');
             this.audioEnabled = false;
         }
     }
+    
+    loadVoices() {
+        this.voices = this.speechSynthesis.getVoices();
+        
+        // Buscar la mejor voz en español disponible
+        this.spanishVoice = this.voices.find(voice => 
+            voice.lang === 'es-ES' || voice.lang === 'es-MX' || voice.lang === 'es-US'
+        ) || this.voices.find(voice => 
+            voice.lang.startsWith('es')
+        ) || this.voices.find(voice => 
+            voice.name.toLowerCase().includes('spanish') || voice.name.toLowerCase().includes('español')
+        ) || this.voices[0];
+        
+        if (this.spanishVoice) {
+            console.log('Voz seleccionada:', this.spanishVoice.name, this.spanishVoice.lang);
+        }
+    }
 
     speakNumber(number) {
         if (!this.audioEnabled || !this.speechSynthesis) return;
 
+        // Cancelar cualquier síntesis anterior
+        this.speechSynthesis.cancel();
+        
         const bingoLetter = this.getBingoLetter(number);
-        const text = `${bingoLetter} ${number}, repito, ${bingoLetter} ${number}`;
+        const text = `${bingoLetter} ${number}`;
         
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'es-ES';
-        utterance.rate = 0.8;
-        utterance.pitch = 1.1;
-        utterance.volume = 0.8;
         
-        this.speechSynthesis.speak(utterance);
+        // Configurar voz
+        if (this.spanishVoice) {
+            utterance.voice = this.spanishVoice;
+        }
+        
+        // Configuración optimizada para móviles
+        utterance.lang = this.spanishVoice?.lang || 'es-ES';
+        utterance.rate = 0.8;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        // Manejar eventos
+        utterance.onstart = () => {
+            console.log(`Reproduciendo: ${text}`);
+        };
+        
+        utterance.onerror = (event) => {
+            console.log('Error en síntesis de voz:', event.error);
+            // Reintentar una vez más
+            if (event.error !== 'interrupted') {
+                setTimeout(() => {
+                    this.speechSynthesis.speak(utterance);
+                }, 500);
+            }
+        };
+        
+        utterance.onend = () => {
+            console.log(`Finalizado: ${text}`);
+        };
+        
+        // Reproducir inmediatamente
+        try {
+            this.speechSynthesis.speak(utterance);
+            
+            // Backup para dispositivos problemáticos
+            setTimeout(() => {
+                if (this.speechSynthesis.speaking === false && this.speechSynthesis.pending === false) {
+                    console.log('Reintentando reproducción de audio...');
+                    this.speechSynthesis.speak(utterance);
+                }
+            }, 200);
+            
+        } catch (error) {
+            console.log('Error al reproducir audio:', error);
+        }
     }
 
     loadGameState() {
@@ -95,10 +187,42 @@ class SalaJuego {
     }
 
     startStateMonitoring() {
+        let previousGameActive = this.gameActive;
+        let lastAlertTimestamp = 0;
+        
         setInterval(() => {
             const newGameState = localStorage.getItem('bingoGameState');
+            const pendingVerification = localStorage.getItem('pendingBingoVerification');
+            const globalAlert = localStorage.getItem('globalBingoAlert');
+            
+            // Verificar alerta global de BINGO
+            if (globalAlert) {
+                const alertData = JSON.parse(globalAlert);
+                if (alertData.timestamp > lastAlertTimestamp) {
+                    lastAlertTimestamp = alertData.timestamp;
+                    this.showPersistentAlert('🎯 ¡BINGO CANTADO!', `El cartón ${alertData.cartonId} (${alertData.phone}) está siendo verificado...`);
+                }
+            }
+            
             if (newGameState) {
                 const parsed = JSON.parse(newGameState);
+                
+                // Verificar si el juego terminó (de activo a inactivo)
+                if (previousGameActive && !parsed.gameActive) {
+                    this.markCardsAsExpired();
+                    this.resetPrizesAfterGame();
+                    this.showMessage('🏆 Juego terminado. Tus cartones han expirado. ¡Compra nuevos cartones para la próxima partida!');
+                }
+                
+                previousGameActive = parsed.gameActive;
+                
+                // Verificar si el juego está pausado
+                if (parsed.isPaused && !pendingVerification && !globalAlert) {
+                    // El juego se reanudó después de verificación
+                    this.hidePersistentAlert();
+                    this.enableBingoButtons();
+                    this.showMessage('El juego continúa...');
+                }
                 
                 if (parsed.gameActive !== this.gameActive) {
                     this.gameActive = parsed.gameActive;
@@ -114,7 +238,8 @@ class SalaJuego {
                     this.updateGameStatus();
                 }
                 
-                if (parsed.calledNumbers) {
+                // Solo procesar nuevos números si el juego no está pausado
+                if (!parsed.isPaused && parsed.calledNumbers) {
                     const savedNumbers = parsed.calledNumbers.map(item => 
                         typeof item === 'object' ? item.number : item
                     );
@@ -165,7 +290,7 @@ class SalaJuego {
     loadPlayerCards() {
         const allCards = this.getSavedCards();
         this.playerCards = allCards.filter(card => 
-            card.status === 'vigente' || card.status === 'en_uso'
+            card.status === 'vigente'
         );
         
         if (this.playerCards.length === 0) {
@@ -245,9 +370,17 @@ class SalaJuego {
         if (card.autoMode === undefined) {
             card.autoMode = true;
         }
+        
+        const isPendingVerification = localStorage.getItem('pendingBingoVerification');
+        const bingoButtonDisabled = !(card.hasBingo || card.hasLine) || isPendingVerification;
+        const bingoButtonText = isPendingVerification ? 'VERIFICANDO...' : 'BINGO';
+        const bingoButtonStyle = isPendingVerification ? 'background: #ffc107;' : '';
+        
+        const cardCode = card.code || `C${card.id}`;
+        const cardId = card.id || Date.now();
 
         cardDiv.innerHTML = `
-            <div class="mini-header">${card.id} - ${card.code}</div>
+            <div class="mini-header">${cardCode}</div>
             <div class="bingo-header">
                 <div class="bingo-letter">B</div>
                 <div class="bingo-letter">I</div>
@@ -255,15 +388,15 @@ class SalaJuego {
                 <div class="bingo-letter">G</div>
                 <div class="bingo-letter">O</div>
             </div>
-            <div class="mini-grid" data-card-id="${card.id}">
+            <div class="mini-grid" data-card-id="${cardId}">
                 ${this.generateCardGrid(card)}
             </div>
             <div class="mini-controls">
-                <div class="mini-toggle ${card.autoMode ? 'active' : ''}" onclick="salaJuego.toggleAutoMode(${card.id})">
+                <div class="mini-toggle ${card.autoMode ? 'active' : ''}" onclick="salaJuego.toggleAutoMode(${cardId})">
                     ${card.autoMode ? 'A' : 'M'}
                 </div>
-                <button class="mini-bingo" onclick="salaJuego.claimCardBingo(${card.id})" ${!(card.hasBingo || card.hasLine) ? 'disabled' : ''}>
-                    BINGO
+                <button class="mini-bingo" onclick="salaJuego.claimCardBingo(${cardId})" ${bingoButtonDisabled ? 'disabled' : ''} style="${bingoButtonStyle}">
+                    ${bingoButtonText}
                 </button>
             </div>
         `;
@@ -336,17 +469,8 @@ class SalaJuego {
             this.autoMarkCard(card);
         }
         
-        const toggleButton = document.querySelector(`[onclick="salaJuego.toggleAutoMode(${cardId})"]`);
-        if (toggleButton) {
-            if (card.autoMode) {
-                toggleButton.classList.add('active');
-                toggleButton.textContent = 'A';
-            } else {
-                toggleButton.classList.remove('active');
-                toggleButton.textContent = 'M';
-            }
-        }
-        
+        this.checkCardStatus(card);
+        this.renderPlayerCards();
         this.saveCards();
     }
 
@@ -368,12 +492,68 @@ class SalaJuego {
 
     claimCardBingo(cardId) {
         const card = this.playerCards.find(c => c.id === cardId);
-        if (card && (card.hasBingo || card.hasLine)) {
-            const message = card.hasBingo ? 
-                `¡Felicidades! Has ganado BINGO con el cartón #${cardId}` :
-                `¡Felicidades! Has completado el patrón con el cartón #${cardId}`;
-            this.showMessage(message);
+        if (!card) return;
+        
+        // Verificar si realmente tiene BINGO o línea
+        if (!card.hasBingo && !card.hasLine) {
+            this.showMessage('Este cartón no tiene BINGO ni patrón completo');
+            return;
         }
+        
+        // Obtener teléfono del jugador
+        const playerPhone = localStorage.getItem('userPhone') || '04XX-XXXXXXX';
+        
+        // Pausar el juego
+        this.pauseGameForVerification();
+        
+        // Crear registro de BINGO pendiente
+        const bingoData = {
+            cartonId: card.code || card.id,
+            phone: playerPhone,
+            type: card.hasBingo ? 'BINGO Completo' : 'Patrón',
+            bingoTime: new Date().toISOString(),
+            calledNumbers: this.calledNumbers,
+            currentRound: this.currentRound,
+            cardNumbers: card.numbers,
+            markedCells: card.marked
+        };
+        
+        localStorage.setItem('pendingBingoVerification', JSON.stringify(bingoData));
+        
+        // Mostrar alerta persistente a TODOS los jugadores
+        this.broadcastBingoAlert(bingoData);
+        
+        // Deshabilitar todos los botones de BINGO
+        this.disableAllBingoButtons();
+    }
+    
+    pauseGameForVerification() {
+        const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+        gameState.isPaused = true;
+        gameState.pauseReason = 'bingo_verification';
+        localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+    }
+    
+    disableAllBingoButtons() {
+        const bingoButtons = document.querySelectorAll('.mini-bingo');
+        bingoButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.textContent = 'VERIFICANDO...';
+            btn.style.background = '#ffc107';
+        });
+    }
+    
+    enableBingoButtons() {
+        const bingoButtons = document.querySelectorAll('.mini-bingo');
+        bingoButtons.forEach(btn => {
+            const cardId = btn.getAttribute('onclick').match(/\d+/)[0];
+            const card = this.playerCards.find(c => c.id == cardId);
+            if (card && (card.hasBingo || card.hasLine)) {
+                btn.disabled = false;
+                btn.textContent = 'BINGO';
+                btn.style.background = '#28a745';
+            }
+        });
     }
 
     checkCardStatus(card) {
@@ -519,10 +699,12 @@ class SalaJuego {
         
         setTimeout(() => {
             ball.remove();
-        }, 3000);
+        }, 4000);
     }
 
     autoMarkCards(number) {
+        let hasChanges = false;
+        
         this.playerCards.forEach(card => {
             if (card.autoMode) {
                 for (let row = 0; row < 5; row++) {
@@ -531,6 +713,7 @@ class SalaJuego {
                             const cellKey = `${row}-${col}`;
                             if (!card.marked.includes(cellKey)) {
                                 card.marked.push(cellKey);
+                                hasChanges = true;
                             }
                         }
                     }
@@ -539,16 +722,40 @@ class SalaJuego {
             }
         });
         
-        this.renderPlayerCards();
+        if (hasChanges) {
+            this.renderPlayerCards();
+            this.saveCards();
+        }
     }
 
     markCardsAsInUse() {
         this.playerCards.forEach(card => {
             if (card.status === 'vigente') {
                 card.status = 'en_uso';
+                card.gameStartTime = new Date().toISOString();
             }
         });
         this.saveCards();
+    }
+    
+    markCardsAsExpired() {
+        // Marcar todos los cartones en uso como vencidos al finalizar las 2 rondas
+        const allCards = this.getSavedCards();
+        let hasChanges = false;
+        
+        allCards.forEach(card => {
+            if (card.status === 'en_uso') {
+                card.status = 'vencido';
+                card.expiredDate = new Date().toISOString();
+                hasChanges = true;
+            }
+        });
+        
+        if (hasChanges) {
+            localStorage.setItem('playerCards', JSON.stringify(allCards));
+            this.playerCards = []; // Limpiar cartones locales
+            this.loadPlayerCards(); // Recargar cartones
+        }
     }
 
     saveCards() {
@@ -563,11 +770,22 @@ class SalaJuego {
     }
 
     showWaitingState() {
+        const allCards = this.getSavedCards();
+        const expiredCards = allCards.filter(card => card.status === 'vencido').length;
+        
+        let message = 'No tienes cartones vigentes';
+        let description = 'Necesitas comprar cartones para participar en el bingo';
+        
+        if (expiredCards > 0) {
+            message = 'Tus cartones han expirado';
+            description = `Tienes ${expiredCards} cartones vencidos. Compra nuevos cartones para jugar.`;
+        }
+        
         const container = document.getElementById('bingo-cards');
         container.innerHTML = `
             <div class="waiting-state" style="grid-column: 1 / -1; text-align: center; padding: 2rem 1rem;">
-                <h3 style="color: #3498db; margin-bottom: 1rem; font-size: 1.1rem;">No tienes cartones vigentes</h3>
-                <p style="margin-bottom: 1.5rem; color: #666; font-size: 0.9rem;">Necesitas comprar cartones para participar en el bingo</p>
+                <h3 style="color: #3498db; margin-bottom: 1rem; font-size: 1.1rem;">${message}</h3>
+                <p style="margin-bottom: 1.5rem; color: #666; font-size: 0.9rem;">${description}</p>
                 <a href="comprar-cartones.html" style="display: inline-block; padding: 1rem 2rem; text-decoration: none; background: #3498db; color: white; border-radius: 8px; font-weight: 600; font-size: 0.9rem;">Comprar Cartones</a>
             </div>
         `;
@@ -581,16 +799,26 @@ class SalaJuego {
     }
 
     updateGameStatus() {
+        // Calcular premios por ronda
+        const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+        const ticketsSold = verifiedPurchases.reduce((sum, purchase) => sum + purchase.cartones, 0);
+        const totalSales = ticketsSold * 60;
+        
+        // Premio según la ronda
+        const roundPrize = this.currentRound === 1 ? 
+            totalSales * 0.25 : // Ronda 1: 25% (Línea)
+            totalSales * 0.50;  // Ronda 2: 50% (Cartón Lleno)
+        
         // Actualizar header principal
         document.getElementById('current-round').textContent = `${this.currentRound} de 2`;
-        document.getElementById('current-prize').textContent = `BsF ${this.currentPrize}`;
+        document.getElementById('current-prize').textContent = `BsF ${roundPrize.toFixed(2)}`;
         document.getElementById('current-pattern').textContent = this.currentPattern;
         
         // Actualizar header fijo
         const roundFixed = document.getElementById('round-fixed');
         const prizeFixed = document.getElementById('prize-fixed');
         if (roundFixed) roundFixed.textContent = this.currentRound;
-        if (prizeFixed) prizeFixed.textContent = this.currentPrize;
+        if (prizeFixed) prizeFixed.textContent = roundPrize.toFixed(2);
     }
 
     showMessage(message) {
@@ -602,6 +830,55 @@ class SalaJuego {
         setTimeout(() => {
             toast.remove();
         }, 3000);
+    }
+    
+    broadcastBingoAlert(bingoData) {
+        // Crear alerta global para todos los jugadores
+        const globalAlert = {
+            type: 'BINGO_ALERT',
+            cartonId: bingoData.cartonId,
+            phone: bingoData.phone,
+            timestamp: Date.now()
+        };
+        
+        localStorage.setItem('globalBingoAlert', JSON.stringify(globalAlert));
+        
+        // Mostrar alerta local inmediatamente
+        this.showPersistentAlert('🎯 ¡BINGO CANTADO!', `El cartón ${bingoData.cartonId} (${bingoData.phone}) está siendo verificado...`);
+    }
+    
+    showPersistentAlert(title, message) {
+        // Remover alerta anterior si existe
+        const existingAlert = document.getElementById('persistent-bingo-alert');
+        if (existingAlert) existingAlert.remove();
+        
+        const alert = document.createElement('div');
+        alert.id = 'persistent-bingo-alert';
+        alert.className = 'persistent-alert';
+        alert.innerHTML = `
+            <div class="alert-content">
+                <h3>${title}</h3>
+                <p>${message}</p>
+                <div class="alert-spinner"></div>
+            </div>
+        `;
+        
+        document.body.appendChild(alert);
+    }
+    
+    hidePersistentAlert() {
+        const alert = document.getElementById('persistent-bingo-alert');
+        if (alert) {
+            alert.remove();
+        }
+    }
+    
+    resetPrizesAfterGame() {
+        // Limpiar compras verificadas para resetear premios
+        localStorage.setItem('verifiedPurchases', JSON.stringify([]));
+        
+        // Actualizar display de premios
+        this.updateGameStatus();
     }
 
     toggleHistory() {

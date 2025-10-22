@@ -6,8 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURACIÓN ---
     const TICKET_PRICE = 60; // Costo de cada cartón
     
-    // Número de cartones vendidos para la simulación visual.
-    const numberOfTicketsSold = 20;
+    // Leer cartones vendidos reales del admin
+    const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+    const numberOfTicketsSold = verifiedPurchases.reduce((sum, purchase) => sum + purchase.cartones, 0);
 
     const totalSaleAmount = TICKET_PRICE * numberOfTicketsSold;
 
@@ -18,9 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ticketPriceInfoEl = document.getElementById('ticket-price-info');
 
     // --- CÁLCULOS DE PREMIOS ---
-    const prizeForPlayers = totalSaleAmount * 0.75;
-    const prizeFull = totalSaleAmount * 0.50;
-    const prizeLine = totalSaleAmount * 0.25;
+    const prizeForPlayers = totalSaleAmount * 0.75; // 75% total en premios (después de descontar 25% del dueño)
+    const prizeLine = prizeForPlayers * 0.25; // 25% del monto de premios para Ronda 1 (Patrón)
+    const prizeFull = prizeForPlayers * 0.75; // 75% del monto de premios para Ronda 2 (Cartón Lleno)
 
     // --- FORMATEADOR DE NÚMERO ---
     const numberFormatter = new Intl.NumberFormat('es-VE', {
@@ -40,4 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const today = new Date().toLocaleDateString('es-VE');
         ticketPriceInfoEl.textContent = `Precio por cartón: ${TICKET_PRICE} BsF (Válido por hoy: ${today})`;
     }
+    
+    // Actualizar cada 5 segundos
+    setTimeout(() => {
+        location.reload();
+    }, 5000);
 });

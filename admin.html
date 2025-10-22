@@ -41,7 +41,74 @@
                 <div class="admin-controls">
                     <button id="start-round" class="admin-btn primary" disabled>Iniciar Ronda</button>
                     <button id="end-round" class="admin-btn secondary">Finalizar Ronda</button>
-                    <button id="reset-prizes" class="admin-btn danger">Reset Premios</button>
+                    <button id="reset-prizes" class="admin-btn danger">🔄 RESET TOTAL</button>
+                </div>
+            </div>
+
+            <!-- VERIFICACIÓN DE CARTONES -->
+            <div class="admin-card">
+                <h2>🎯 Verificación de Cartones</h2>
+                <div id="bingo-verification" class="verification-section">
+                    <div id="no-bingo-pending" class="no-bingo-msg">
+                        <p>No hay BINGO pendiente de verificación</p>
+                    </div>
+                    <div id="bingo-pending" class="bingo-pending" style="display: none;">
+                        <div class="bingo-alert">
+                            <h3>🚨 ¡BINGO CANTADO!</h3>
+                            <p>Un jugador ha cantado BINGO</p>
+                            <div class="bingo-details">
+                                <span>Cartón: <strong id="winner-carton">-</strong></span>
+                                <span>Teléfono: <strong id="winner-phone">-</strong></span>
+                                <span>Tipo: <strong id="winner-type">-</strong></span>
+                            </div>
+                        </div>
+                        <div class="verification-actions">
+                            <button id="verify-winner" class="admin-btn primary">✓ Verificar Ganador</button>
+                            <button id="reject-winner" class="admin-btn danger">✗ Rechazar</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Historial de Ganadores -->
+                <div class="winners-history">
+                    <h4>📋 Últimos Ganadores</h4>
+                    <div class="search-winners">
+                        <input type="date" id="winner-date-filter" placeholder="Fecha">
+                        <input type="tel" id="winner-phone-filter" placeholder="Teléfono">
+                        <button onclick="filterWinners()" class="admin-btn small">Buscar</button>
+                    </div>
+                    <div id="winners-list" class="winners-list">
+                        <!-- Lista de ganadores -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- GESTIÓN DE PREMIOS -->
+            <div class="admin-card">
+                <h2>💰 Gestión de Premios</h2>
+                <div class="prize-stats">
+                    <div class="prize-stat">
+                        <span class="stat-number" id="pending-prizes">0</span>
+                        <span class="stat-label">Pendientes</span>
+                    </div>
+                    <div class="prize-stat">
+                        <span class="stat-number" id="paid-prizes">0</span>
+                        <span class="stat-label">Pagados</span>
+                    </div>
+                    <div class="prize-stat">
+                        <span class="stat-number" id="total-pending">BsF 0</span>
+                        <span class="stat-label">Total Pendiente</span>
+                    </div>
+                </div>
+                
+                <!-- Pestañas de Premios -->
+                <div class="prize-tabs">
+                    <button class="tab-btn active" onclick="showPrizeTab('pending')">Pendientes</button>
+                    <button class="tab-btn" onclick="showPrizeTab('paid')">Pagados</button>
+                </div>
+                
+                <div id="prizes-content" class="prizes-content">
+                    <!-- Contenido de premios -->
                 </div>
             </div>
 
@@ -536,6 +603,195 @@
             font-weight: bold;
             color: var(--accent-color);
         }
+
+        /* ESTILOS PARA VERIFICACIÓN DE CARTONES */
+        .verification-section {
+            margin-bottom: 1rem;
+        }
+
+        .no-bingo-msg {
+            text-align: center;
+            color: #666;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .bingo-pending {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .bingo-alert {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .bingo-alert h3 {
+            margin: 0 0 0.5rem 0;
+            color: #dc3545;
+            font-size: 1.2rem;
+        }
+
+        .bingo-details {
+            display: flex;
+            justify-content: space-around;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .verification-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .winners-history {
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+        .winners-history h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--accent-color);
+            font-size: 1rem;
+        }
+
+        .search-winners {
+            display: flex;
+            gap: 0.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .search-winners input {
+            flex: 1;
+            padding: 0.4rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .winners-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .winner-item {
+            background: #f8f9fa;
+            padding: 0.5rem;
+            margin-bottom: 0.3rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .winner-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .winner-details {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 0.2rem;
+        }
+
+        /* ESTILOS PARA GESTIÓN DE PREMIOS */
+        .prize-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .prize-stat {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .prize-tabs {
+            display: flex;
+            margin-bottom: 1rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            background: #f8f9fa;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            font-size: 0.9rem;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .prizes-content {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .prize-item {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+        }
+
+        .prize-item.paid {
+            border-left-color: #6c757d;
+            opacity: 0.8;
+        }
+
+        .prize-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.3rem;
+        }
+
+        .prize-info {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .prize-amount {
+            font-weight: bold;
+            color: #28a745;
+            font-size: 1rem;
+        }
+
+        .prize-actions {
+            margin-top: 0.5rem;
+        }
+
+        .pay-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .paid-badge {
+            background: #6c757d;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+        }
     </style>
 
     <script src="js/popup.js"></script>
@@ -545,6 +801,10 @@
         let selectedBingoIndex = -1;
         let currentRound = 1;
         let gameActive = false;
+        let currentPrizeTab = 'pending';
+        let bingoWinners = JSON.parse(localStorage.getItem('bingoWinners') || '[]');
+        let bingoPrizes = JSON.parse(localStorage.getItem('bingoPrizes') || '[]');
+        let filteredWinners = [];
         let dailySchedule = [
             { time: '13:00', label: '1:00 PM', completed: false },
             { time: '17:00', label: '5:00 PM', completed: false },
@@ -609,13 +869,274 @@
             updatePaymentStats();
             updateStats();
             renderSchedule();
+            initializeVerificationSystem();
             
             // Event listener para agregar horario
             document.getElementById('add-schedule').addEventListener('click', addNewSchedule);
             
             // Actualizar pagos cada 5 segundos
             setInterval(loadPendingPurchases, 5000);
+            
+            // Verificar BINGO pendiente cada segundo
+            setInterval(checkPendingBingo, 1000);
         });
+        
+        // SISTEMA DE VERIFICACIÓN DE CARTONES
+        function initializeVerificationSystem() {
+            // Event listeners para verificación
+            document.getElementById('verify-winner').addEventListener('click', verifyWinner);
+            document.getElementById('reject-winner').addEventListener('click', rejectWinner);
+            
+            // Cargar datos iniciales
+            loadWinners();
+            updatePrizeStats();
+            showPrizeTab('pending');
+        }
+        
+        function checkPendingBingo() {
+            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            const pendingBingo = localStorage.getItem('pendingBingoVerification');
+            
+            if (pendingBingo) {
+                const bingoData = JSON.parse(pendingBingo);
+                showBingoPending(bingoData);
+            } else {
+                showNoBingo();
+            }
+        }
+        
+        function showBingoPending(bingoData) {
+            document.getElementById('no-bingo-pending').style.display = 'none';
+            document.getElementById('bingo-pending').style.display = 'block';
+            
+            document.getElementById('winner-carton').textContent = bingoData.cartonId || 'C123';
+            document.getElementById('winner-phone').textContent = bingoData.phone || '0414-1234567';
+            document.getElementById('winner-type').textContent = bingoData.type || 'Patrón';
+            
+            console.log('Mostrando BINGO pendiente en panel admin:', bingoData);
+        }
+        
+        function showNoBingo() {
+            document.getElementById('no-bingo-pending').style.display = 'block';
+            document.getElementById('bingo-pending').style.display = 'none';
+        }
+        
+        function verifyWinner() {
+            const pendingBingo = localStorage.getItem('pendingBingoVerification');
+            if (!pendingBingo) {
+                console.log('No hay BINGO pendiente para verificar');
+                return;
+            }
+            
+            const bingoData = JSON.parse(pendingBingo);
+            console.log('Verificando ganador:', bingoData);
+            
+            // Crear registro del ganador
+            const winner = {
+                id: Date.now(),
+                cartonId: bingoData.cartonId || 'C123',
+                phone: bingoData.phone || '0414-1234567',
+                type: bingoData.type || 'Patrón',
+                amount: calculatePrizeAmount(),
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toLocaleTimeString('es-VE', { hour12: false }),
+                round: bingoData.currentRound || currentRound,
+                bingoTime: bingoData.bingoTime || new Date().toISOString()
+            };
+            
+            // Guardar ganador
+            bingoWinners.unshift(winner);
+            if (bingoWinners.length > 50) bingoWinners = bingoWinners.slice(0, 50); // Máximo 50 registros
+            localStorage.setItem('bingoWinners', JSON.stringify(bingoWinners));
+            
+            // Crear premio pendiente
+            const prize = {
+                id: Date.now(),
+                cartonId: winner.cartonId,
+                phone: winner.phone,
+                type: winner.type,
+                amount: winner.amount,
+                date: winner.date,
+                time: winner.time,
+                status: 'pending',
+                winnerId: winner.id
+            };
+            
+            bingoPrizes.unshift(prize);
+            localStorage.setItem('bingoPrizes', JSON.stringify(bingoPrizes));
+            
+            // Limpiar verificación pendiente y alerta global
+            localStorage.removeItem('pendingBingoVerification');
+            localStorage.removeItem('globalBingoAlert');
+            
+            // Continuar juego según ronda
+            if (currentRound === 1) {
+                // Pasar a ronda 2
+                currentRound = 2;
+                showPopup('Ganador Verificado', `¡Patrón verificado! Premio: BsF ${winner.amount}. Iniciando Ronda 2...`);
+            } else {
+                // Terminar juego
+                gameActive = false;
+                stopAutomaticCalling();
+                if (selectedBingoIndex !== -1) {
+                    dailySchedule[selectedBingoIndex].completed = true;
+                }
+                currentRound = 1;
+                selectedBingoIndex = -1;
+                
+                // Marcar todos los cartones como vencidos
+                expireAllActiveCards();
+                
+                // Resetear premios después de la partida completa
+                resetPrizesAfterCompleteGame();
+                
+                showPopup('BINGO Verificado', `¡BINGO COMPLETO verificado! Premio: BsF ${winner.amount}. Juego terminado.`);
+            }
+            
+            // Actualizar displays
+            loadWinners();
+            updatePrizeStats();
+            showPrizeTab(currentPrizeTab);
+            renderSchedule();
+            updateStats();
+            
+            // Reanudar juego si es ronda 1
+            if (currentRound === 2) {
+                setTimeout(() => {
+                    const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+                    gameState.gameActive = true;
+                    gameState.currentRound = 2;
+                    gameState.isPaused = false;
+                    localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+                }, 3000);
+            }
+        }
+        
+        function rejectWinner() {
+            console.log('Rechazando BINGO');
+            localStorage.removeItem('pendingBingoVerification');
+            localStorage.removeItem('globalBingoAlert');
+            
+            // Reanudar juego
+            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            gameState.isPaused = false;
+            delete gameState.pauseReason;
+            localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+            
+            showPopup('BINGO Rechazado', 'El BINGO fue rechazado. El juego continúa.');
+        }
+        
+        function calculatePrizeAmount() {
+            const totalRecaudado = ticketsSoldToday * 60;
+            const totalParaPremios = totalRecaudado * 0.75; // Descontar 25% del dueño
+            // Ronda 1 = 25% del monto de premios, Ronda 2 = 75% del monto de premios
+            const roundPrize = currentRound === 1 ? totalParaPremios * 0.25 : totalParaPremios * 0.75;
+            return Math.round(roundPrize * 100) / 100;
+        }
+        
+        // GESTIÓN DE PREMIOS
+        function updatePrizeStats() {
+            const pendingPrizes = bingoPrizes.filter(p => p.status === 'pending');
+            const paidPrizes = bingoPrizes.filter(p => p.status === 'paid');
+            const totalPending = pendingPrizes.reduce((sum, p) => sum + p.amount, 0);
+            
+            document.getElementById('pending-prizes').textContent = pendingPrizes.length;
+            document.getElementById('paid-prizes').textContent = paidPrizes.length;
+            document.getElementById('total-pending').textContent = `BsF ${totalPending.toFixed(2)}`;
+        }
+        
+        function showPrizeTab(tab) {
+            currentPrizeTab = tab;
+            
+            // Actualizar botones
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event?.target?.classList.add('active') || document.querySelector(`[onclick="showPrizeTab('${tab}')"]`).classList.add('active');
+            
+            // Mostrar contenido
+            const container = document.getElementById('prizes-content');
+            const prizes = bingoPrizes.filter(p => p.status === tab);
+            
+            if (prizes.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#666; padding:1rem;">No hay premios ${tab === 'pending' ? 'pendientes' : 'pagados'}</p>`;
+                return;
+            }
+            
+            container.innerHTML = prizes.map(prize => `
+                <div class="prize-item ${prize.status}">
+                    <div class="prize-header">
+                        <div>
+                            <strong>Cartón: ${prize.cartonId}</strong>
+                            <div class="prize-info">${prize.phone} • ${prize.type}</div>
+                        </div>
+                        <div class="prize-amount">BsF ${prize.amount}</div>
+                    </div>
+                    <div class="prize-info">
+                        ${prize.date} ${prize.time}
+                    </div>
+                    <div class="prize-actions">
+                        ${prize.status === 'pending' ? 
+                            `<button class="pay-btn" onclick="markAsPaid(${prize.id})">Marcar Pagado</button>` :
+                            `<span class="paid-badge">✓ Pagado</span>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function markAsPaid(prizeId) {
+            const prize = bingoPrizes.find(p => p.id === prizeId);
+            if (prize) {
+                prize.status = 'paid';
+                prize.paidDate = new Date().toISOString().split('T')[0];
+                prize.paidTime = new Date().toLocaleTimeString('es-VE', { hour12: false });
+                
+                localStorage.setItem('bingoPrizes', JSON.stringify(bingoPrizes));
+                
+                showPopup('Premio Pagado', `Premio de BsF ${prize.amount} marcado como pagado`);
+                updatePrizeStats();
+                showPrizeTab(currentPrizeTab);
+            }
+        }
+        
+        // HISTORIAL DE GANADORES
+        function loadWinners() {
+            filteredWinners = [...bingoWinners];
+            renderWinnersList();
+        }
+        
+        function filterWinners() {
+            const dateFilter = document.getElementById('winner-date-filter').value;
+            const phoneFilter = document.getElementById('winner-phone-filter').value;
+            
+            filteredWinners = bingoWinners.filter(winner => {
+                const matchDate = !dateFilter || winner.date === dateFilter;
+                const matchPhone = !phoneFilter || winner.phone.includes(phoneFilter);
+                return matchDate && matchPhone;
+            });
+            
+            renderWinnersList();
+        }
+        
+        function renderWinnersList() {
+            const container = document.getElementById('winners-list');
+            
+            if (filteredWinners.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666; padding:0.5rem;">No hay ganadores registrados</p>';
+                return;
+            }
+            
+            container.innerHTML = filteredWinners.slice(0, 10).map(winner => `
+                <div class="winner-item">
+                    <div class="winner-header">
+                        <span>Cartón: ${winner.cartonId}</span>
+                        <span>BsF ${winner.amount}</span>
+                    </div>
+                    <div class="winner-details">
+                        ${winner.phone} • ${winner.type} • ${winner.date} ${winner.time}
+                    </div>
+                </div>
+            `).join('');
+        }
         
         // Cargar compras pendientes
         function loadPendingPurchases() {
@@ -659,7 +1180,14 @@
                 }
                 currentRound = 1;
                 selectedBingoIndex = -1;
-                showPopup('Bingo Completado', 'Las 2 rondas han terminado. Selecciona el próximo horario.');
+                
+                // Marcar todos los cartones como vencidos al terminar las 2 rondas
+                expireAllActiveCards();
+                
+                // Resetear premios después de la partida completa
+                resetPrizesAfterCompleteGame();
+                
+                showPopup('Bingo Completado', 'Las 2 rondas han terminado. Todos los cartones han expirado.');
             } else {
                 currentRound = 2;
                 showPopup('Ronda Finalizada', 'Ronda 1 completada. Preparando ronda 2...');
@@ -673,23 +1201,53 @@
         });
 
         document.getElementById('reset-prizes').addEventListener('click', () => {
+            if (!confirm('⚠️ RESET TOTAL DEL SISTEMA\n\n¿Estás seguro? Esto eliminará:\n• Todos los premios y ganadores\n• Todos los pagos y compras\n• Todos los cartones\n• Estado del juego\n• Historial completo\n\nEsta acción NO se puede deshacer.')) {
+                return;
+            }
+            
+            // RESET TOTAL DEL SISTEMA
+            
+            // 1. Variables del juego
             dailyPrizeTotal = 0;
             ticketsSoldToday = 0;
             selectedBingoIndex = -1;
             currentRound = 1;
             gameActive = false;
             calledNumbers = [];
+            bingoWinners = [];
+            bingoPrizes = [];
+            allPayments = [];
+            filteredPayments = [];
+            filteredWinners = [];
+            
+            // 2. Horarios
             dailySchedule.forEach(bingo => bingo.completed = false);
             
-            // Detener cantado automático
+            // 3. Detener juego
             stopAutomaticCalling();
             
-            // Limpiar estado del juego completamente
+            // 4. LIMPIAR TODO EL LOCALSTORAGE
             localStorage.removeItem('bingoGameState');
+            localStorage.removeItem('pendingBingoVerification');
+            localStorage.removeItem('globalBingoAlert');
+            localStorage.removeItem('bingoWinners');
+            localStorage.removeItem('bingoPrizes');
+            localStorage.removeItem('playerCards');
+            localStorage.removeItem('pendingPurchases');
+            localStorage.removeItem('verifiedPurchases');
+            localStorage.removeItem('rejectedPurchases');
+            localStorage.removeItem('userPhone');
+            localStorage.removeItem('userProfile');
             
-            showPopup('Premios Reseteados', 'Todos los premios y estadísticas han sido reiniciados.');
+            // 5. Actualizar displays
+            loadPendingPurchases();
+            loadWinners();
+            updatePrizeStats();
+            showPrizeTab('pending');
             renderSchedule();
             updateStats();
+            
+            showPopup('🔄 RESET TOTAL COMPLETADO', 'Sistema completamente reiniciado. Todos los datos han sido eliminados.');
         });
 
         // Actualizar estadísticas de pagos
@@ -801,7 +1359,7 @@
                 localStorage.setItem('verifiedPurchases', JSON.stringify(verifiedPurchases));
                 
                 ticketsSoldToday += payment.cartones;
-                dailyPrizeTotal += payment.amount * 0.75; // 75% va a premios
+                dailyPrizeTotal += payment.amount * 0.75; // 75% va a premios (25% + 50%)
                 
                 showPopup('Pago Aprobado', `Se han asignado ${payment.cartones} cartones al teléfono ${payment.phone}`);
                 loadPendingPurchases();
@@ -840,7 +1398,7 @@
             if (payment) {
                 payment.status = 'rejected';
                 ticketsSoldToday -= payment.cartones;
-                dailyPrizeTotal -= payment.amount * 0.75;
+                dailyPrizeTotal -= payment.amount * 0.75; // Restar 75% de premios
                 
                 showPopup('Pago Corregido', `Pago verificado del teléfono ${payment.phone} ha sido rechazado. Cartones retirados.`);
                 updatePaymentStats();
@@ -854,7 +1412,9 @@
             document.getElementById('current-round').textContent = `${currentRound} de 2`;
             document.getElementById('tickets-sold').textContent = ticketsSoldToday;
             
-            const roundPrize = ticketsSoldToday * 60 * 0.375; // 37.5% por ronda
+            const totalRecaudado = ticketsSoldToday * 60;
+            const totalParaPremios = totalRecaudado * 0.75; // Descontar 25% del dueño
+            const roundPrize = currentRound === 1 ? totalParaPremios * 0.25 : totalParaPremios * 0.75;
             document.getElementById('round-prize').textContent = `BsF ${roundPrize.toFixed(2)}`;
             document.getElementById('daily-total').textContent = `BsF ${dailyPrizeTotal.toFixed(2)}`;
             
@@ -980,7 +1540,7 @@
                 gameActive: gameActive,
                 currentRound: currentRound,
                 selectedBingoIndex: selectedBingoIndex,
-                roundPrize: ticketsSoldToday * 60 * 0.375,
+                roundPrize: currentRound === 1 ? (ticketsSoldToday * 60 * 0.75) * 0.25 : (ticketsSoldToday * 60 * 0.75) * 0.75,
                 calledNumbers: calledNumbers,
                 gameStartTime: gameStartTime,
                 timestamp: Date.now()
@@ -1004,7 +1564,7 @@
                 gameActive: gameActive,
                 currentRound: currentRound,
                 selectedBingoIndex: selectedBingoIndex,
-                roundPrize: ticketsSoldToday * 60 * 0.375,
+                roundPrize: currentRound === 1 ? (ticketsSoldToday * 60 * 0.75) * 0.25 : (ticketsSoldToday * 60 * 0.75) * 0.75,
                 calledNumbers: calledNumbers,
                 gameStartTime: gameStartTime,
                 currentPattern: currentPattern,
@@ -1190,6 +1750,50 @@
                 searchUser();
             }
         });
+        
+        // Permitir filtrar ganadores con Enter
+        document.getElementById('winner-phone-filter').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterWinners();
+            }
+        });
+        
+        document.getElementById('winner-date-filter').addEventListener('change', filterWinners);
+        
+        // Función para expirar todos los cartones activos
+        function expireAllActiveCards() {
+            const allCards = JSON.parse(localStorage.getItem('playerCards') || '[]');
+            let hasChanges = false;
+            
+            allCards.forEach(card => {
+                if (card.status === 'en_uso' || card.status === 'vigente') {
+                    card.status = 'vencido';
+                    card.expiredDate = new Date().toISOString();
+                    card.expiredReason = 'Juego completado';
+                    hasChanges = true;
+                }
+            });
+            
+            if (hasChanges) {
+                localStorage.setItem('playerCards', JSON.stringify(allCards));
+                console.log('Todos los cartones activos han sido marcados como vencidos');
+            }
+        }
+        
+        // Función para resetear premios después de partida completa
+        function resetPrizesAfterCompleteGame() {
+            // Limpiar compras verificadas para resetear premios
+            localStorage.setItem('verifiedPurchases', JSON.stringify([]));
+            
+            // Resetear variables del admin
+            ticketsSoldToday = 0;
+            dailyPrizeTotal = 0;
+            
+            // Actualizar stats
+            updateStats();
+            
+            console.log('Premios reseteados después de partida completa');
+        }
     </script>
 </body>
 </html>

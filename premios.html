@@ -263,36 +263,54 @@
             loadWinners();
             
             // Actualizar cada 30 segundos
-            setInterval(loadCurrentPrizes, 30000);
+            setInterval(() => {
+                loadCurrentPrizes();
+                loadSchedule();
+            }, 30000);
         });
 
         function loadCurrentPrizes() {
-            // Obtener datos del admin (simulado)
+            // Obtener cartones vendidos verificados
             const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
-            const totalSold = verifiedPurchases.reduce((sum, p) => sum + p.amount, 0);
-            const totalPrize = totalSold * 0.75; // 75% va a premios
+            const totalCartones = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0);
+            const totalRecaudado = totalCartones * 60;
             
-            const round1Prize = totalPrize * 0.5; // 50% para ronda 1
-            const round2Prize = totalPrize * 0.5; // 50% para ronda 2
+            // Descontar 25% del dueño, el restante (75%) se reparte en premios
+            const totalParaPremios = totalRecaudado * 0.75;
+            const round1Prize = totalParaPremios * 0.25; // 25% del monto de premios
+            const round2Prize = totalParaPremios * 0.75; // 75% del monto de premios
             
-            document.getElementById('total-daily-prize').textContent = `BsF ${totalPrize.toFixed(0)}`;
-            document.getElementById('round1-prize').textContent = `BsF ${round1Prize.toFixed(0)}`;
-            document.getElementById('round2-prize').textContent = `BsF ${round2Prize.toFixed(0)}`;
+            document.getElementById('total-daily-prize').textContent = `BsF ${totalParaPremios.toFixed(2)}`;
+            document.getElementById('round1-prize').textContent = `BsF ${round1Prize.toFixed(2)}`;
+            document.getElementById('round2-prize').textContent = `BsF ${round2Prize.toFixed(2)}`;
         }
 
         function loadSchedule() {
-            const schedules = [
-                { time: '1:00 PM', status: 'completed' },
-                { time: '5:00 PM', status: 'completed' },
-                { time: '9:00 PM', status: 'pending' }
+            // Obtener estado real del juego desde localStorage
+            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            const currentSelectedIndex = gameState.selectedBingoIndex || -1;
+            const isGameActive = gameState.gameActive || false;
+            
+            // Horarios predeterminados que coinciden con admin
+            const defaultSchedules = [
+                { time: '1:00 PM', completed: false },
+                { time: '5:00 PM', completed: false },
+                { time: '9:00 PM', completed: false }
             ];
 
             const container = document.getElementById('schedule-list');
             container.innerHTML = '';
 
-            schedules.forEach(schedule => {
+            defaultSchedules.forEach((schedule, index) => {
                 const item = document.createElement('div');
                 item.className = 'schedule-item';
+                
+                let status = 'pending';
+                if (index === currentSelectedIndex && isGameActive) {
+                    status = 'active';
+                } else if (schedule.completed) {
+                    status = 'completed';
+                }
                 
                 const statusText = {
                     'pending': 'Pendiente',
@@ -302,7 +320,7 @@
 
                 item.innerHTML = `
                     <span class="schedule-time">${schedule.time}</span>
-                    <span class="schedule-status ${schedule.status}">${statusText[schedule.status]}</span>
+                    <span class="schedule-status ${status}">${statusText[status]}</span>
                 `;
                 
                 container.appendChild(item);

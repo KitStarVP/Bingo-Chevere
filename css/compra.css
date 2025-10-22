@@ -6,27 +6,29 @@
     gap: 0.5rem;
     width: 100%;
     max-width: 450px;
-    padding: 1rem;
+    padding: 0;
+    flex-grow: 1;
+    justify-content: space-around;
 }
 
 .purchase-step.card {
     background: var(--card-bg, #ffffff);
     border-radius: 8px;
-    padding: 1rem;
+    padding: 0.8rem;
     box-shadow: 0 3px 15px var(--shadow-color, rgba(44, 62, 80, 0.15));
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
 }
 
 .purchase-step h2 {
     margin: 0 0 clamp(0.2rem, 1vh, 0.5rem) 0;
     color: var(--accent-color, #3498db);
-    font-size: clamp(0.8rem, 2.5vw, 1.2rem);
+    font-size: clamp(0.7rem, 2.2vw, 1rem);
     line-height: 1.2;
 }
 
 .purchase-step p {
-    font-size: clamp(0.6rem, 2vw, 0.9rem);
+    font-size: clamp(0.5rem, 1.8vw, 0.8rem);
     margin: 0 0 clamp(0.2rem, 1vh, 0.4rem) 0;
     line-height: 1.3;
 }
@@ -46,8 +48,8 @@
 }
 
 .quantity-btn {
-    width: clamp(25px, 5vw, 35px);
-    height: clamp(25px, 5vw, 35px);
+    width: clamp(22px, 4.5vw, 32px);
+    height: clamp(22px, 4.5vw, 32px);
     border-radius: 50%;
     border: 2px solid var(--accent-color, #3498db);
     font-size: clamp(0.9rem, 3vw, 1.3rem);
@@ -56,8 +58,8 @@
 }
 
 #quantity-input {
-    width: clamp(40px, 8vw, 60px);
-    height: clamp(30px, 5vh, 40px);
+    width: clamp(35px, 7vw, 55px);
+    height: clamp(28px, 4.5vh, 38px);
     text-align: center;
     font-size: clamp(1rem, 3vw, 1.4rem);
     border-radius: 6px;
@@ -90,7 +92,7 @@
 }
 
 .phone-input-wrapper input {
-    width: clamp(120px, 25vw, 180px);
+    width: clamp(110px, 22vw, 160px);
     height: clamp(30px, 4vh, 40px);
     font-size: clamp(0.8rem, 2.5vw, 1.1rem);
     font-weight: bold;
@@ -107,7 +109,7 @@
 }
 
 .reference-input-wrapper input {
-    width: clamp(70px, 15vw, 100px);
+    width: clamp(60px, 13vw, 90px);
     height: clamp(30px, 4vh, 40px);
     font-size: clamp(1rem, 3vw, 1.3rem);
     font-weight: bold;
@@ -151,11 +153,11 @@
 /* Media Queries */
 @media (max-height: 600px) {
     .purchase-flow {
-        gap: 0.2rem;
+        gap: 0.1rem;
     }
     
     .purchase-step.card {
-        padding: 0.3rem;
+        padding: 0.2rem;
     }
 }
 
