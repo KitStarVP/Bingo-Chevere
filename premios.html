@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premios - Bingo Chévere</title>
+    <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="css/new-nav.css">
+    <link rel="stylesheet" href="css/popup.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container">
+        <header class="landing-header">
+            <div class="logo">
+                <span class="logo-main">PREMIOS</span>
+                <span class="logo-tagline">Hoy</span>
+            </div>
+        </header>
+
+        <main class="prizes-section">
+            <!-- Premios Actuales -->
+            <div class="prize-card">
+                <h2>🏆 Premios de Hoy</h2>
+                <div class="current-prize">
+                    <div class="total-prize">
+                        <span class="prize-label">Premio Total</span>
+                        <span id="total-daily-prize" class="prize-amount">BsF 0</span>
+                    </div>
+                </div>
+                
+                <div class="rounds-prizes">
+                    <div class="round-prize">
+                        <span class="round-label">Ronda 1 - Patrón</span>
+                        <span id="round1-prize" class="round-amount">BsF 0</span>
+                    </div>
+                    <div class="round-prize">
+                        <span class="round-label">Ronda 2 - Cartón Lleno</span>
+                        <span id="round2-prize" class="round-amount">BsF 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horarios de Bingo -->
+            <div class="prize-card">
+                <h2>⏰ Horarios de Hoy</h2>
+                <div id="schedule-list" class="schedule-list">
+                    <!-- Horarios se cargarán dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Historial de Ganadores -->
+            <div class="prize-card">
+                <h2>🎉 Ganadores Recientes</h2>
+                <div id="winners-list" class="winners-list">
+                    <!-- Ganadores se cargarán dinámicamente -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <nav class="new-bottom-nav">
+        <a href="index.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span class="new-nav-label">Inicio</span>
+        </a>
+        <a href="comprar-cartones.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
+            <span class="new-nav-label">Cartones</span>
+        </a>
+        <a href="juego.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span class="new-nav-label">Jugar</span>
+        </a>
+        <a href="premios.html" class="new-nav-item active">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C17.15 18.75 18 20.24 18 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+            <span class="new-nav-label">Premios</span>
+        </a>
+        <a href="perfil.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="new-nav-label">Perfil</span>
+        </a>
+    </nav>
+
+    <style>
+        .prizes-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .prize-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .prize-card h2 {
+            margin: 0 0 1rem 0;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .current-prize {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .total-prize {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .prize-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .prize-amount {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-color);
+        }
+
+        .rounds-prizes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .round-prize {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .round-label {
+            display: block;
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 0.3rem;
+        }
+
+        .round-amount {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .schedule-time {
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .schedule-status {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .schedule-status.pending {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .schedule-status.completed {
+            background: #28a745;
+            color: white;
+        }
+
+        .schedule-status.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .winners-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .winner-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .winner-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .winner-phone {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .winner-date {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .winner-prize {
+            font-weight: 700;
+            color: #28a745;
+        }
+
+        .winner-type {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .no-winners {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+    </style>
+
+    <script src="js/popup.js"></script>
+    <script>
+        // Cargar ganadores desde localStorage
+        function getWinners() {
+            return JSON.parse(localStorage.getItem('bingoWinners') || '[]');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCurrentPrizes();
+            loadSchedule();
+            loadWinners();
+            
+            // Actualizar cada 30 segundos
+            setInterval(() => {
+                loadCurrentPrizes();
+                loadSchedule();
+            }, 30000);
+        });
+
+        function loadCurrentPrizes() {
+            // Obtener cartones vendidos verificados
+            const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+            const totalCartones = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0);
+            const totalRecaudado = totalCartones * 60;
+            
+            // Descontar 25% del dueño, el restante (75%) se reparte en premios
+            const totalParaPremios = totalRecaudado * 0.75;
+            const round1Prize = totalParaPremios * 0.25; // 25% del monto de premios
+            const round2Prize = totalParaPremios * 0.75; // 75% del monto de premios
+            
+            document.getElementById('total-daily-prize').textContent = `BsF ${totalParaPremios.toFixed(2)}`;
+            document.getElementById('round1-prize').textContent = `BsF ${round1Prize.toFixed(2)}`;
+            document.getElementById('round2-prize').textContent = `BsF ${round2Prize.toFixed(2)}`;
+        }
+
+        function loadSchedule() {
+            // Obtener estado real del juego desde localStorage
+            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            const currentSelectedIndex = gameState.selectedBingoIndex || -1;
+            const isGameActive = gameState.gameActive || false;
+            
+            // Horarios predeterminados que coinciden con admin
+            const defaultSchedules = [
+                { time: '1:00 PM', completed: false },
+                { time: '5:00 PM', completed: false },
+                { time: '9:00 PM', completed: false }
+            ];
+
+            const container = document.getElementById('schedule-list');
+            container.innerHTML = '';
+
+            defaultSchedules.forEach((schedule, index) => {
+                const item = document.createElement('div');
+                item.className = 'schedule-item';
+                
+                let status = 'pending';
+                if (index === currentSelectedIndex && isGameActive) {
+                    status = 'active';
+                } else if (schedule.completed) {
+                    status = 'completed';
+                }
+                
+                const statusText = {
+                    'pending': 'Pendiente',
+                    'completed': 'Completado',
+                    'active': 'En Curso'
+                };
+
+                item.innerHTML = `
+                    <span class="schedule-time">${schedule.time}</span>
+                    <span class="schedule-status ${status}">${statusText[status]}</span>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        function loadWinners() {
+            const winners = getWinners();
+            const container = document.getElementById('winners-list');
+            
+            if (winners.length === 0) {
+                container.innerHTML = '<div class="no-winners">Aún no hay ganadores hoy</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            winners.forEach(winner => {
+                const item = document.createElement('div');
+                item.className = 'winner-item';
+                
+                // Ocultar parte del teléfono
+                const hiddenPhone = winner.phone.replace(/(\d{4})(\d{3})(\d{4})/, '$1-***-$3');
+                
+                item.innerHTML = `
+                    <div class="winner-info">
+                        <span class="winner-phone">${hiddenPhone}</span>
+                        <span class="winner-date">${winner.date}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="winner-prize">BsF ${winner.prize}</div>
+                        <div class="winner-type">${winner.type}</div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>
