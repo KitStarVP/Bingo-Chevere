@@ -1,4 +1,4 @@
-// Sistema de Compra de Cartones - Optimizado
+// Sistema de Compra de Cartones - Arreglado
 class PurchaseSystem {
     constructor() {
         this.TICKET_PRICE = 60;
@@ -17,8 +17,6 @@ class PurchaseSystem {
     }
 
     bindElements() {
-        console.log('🔍 Buscando elementos...');
-        
         this.elements = {
             quantity: document.getElementById('quantity-input'),
             btnMinus: document.getElementById('btn-minus'),
@@ -30,33 +28,18 @@ class PurchaseSystem {
             reference: document.getElementById('reference-input'),
             submit: document.getElementById('submit-purchase')
         };
-        
-        console.log('📋 Elementos encontrados:', {
-            submit: !!this.elements.submit,
-            phone: !!this.elements.phone,
-            reference: !!this.elements.reference
-        });
     }
 
     setupEventListeners() {
-        console.log('🔗 Configurando event listeners...');
-        
         this.elements.btnMinus?.addEventListener('click', () => this.changeQuantity(-1));
         this.elements.btnPlus?.addEventListener('click', () => this.changeQuantity(1));
         this.elements.quantity?.addEventListener('input', () => this.updateTotals());
         this.elements.phone?.addEventListener('input', (e) => this.formatPhone(e));
         this.elements.reference?.addEventListener('input', (e) => this.formatReference(e));
         
-        // Verificar que el botón existe
+        // Usar onclick directo para evitar conflictos
         if (this.elements.submit) {
-            console.log('✅ Botón de compra encontrado, agregando listener');
-            this.elements.submit.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('🖱️ Botón de compra clickeado');
-                this.submitPurchase();
-            });
-        } else {
-            console.error('❌ Botón de compra NO encontrado');
+            this.elements.submit.onclick = () => this.submitPurchase();
         }
     }
 
@@ -92,12 +75,12 @@ class PurchaseSystem {
 
     validateInputs(phone, reference) {
         if (phone.length !== 11 || !phone.startsWith('04')) {
-            showPopup('Teléfono Inválido', 'Ingresa un número válido (04241234567)');
+            alert('Ingresa un número válido (04241234567)');
             return false;
         }
         
         if (reference.length !== 4) {
-            showPopup('Referencia Incompleta', 'Por favor ingresa los 4 dígitos de la referencia');
+            alert('Por favor ingresa los 4 dígitos de la referencia');
             return false;
         }
         
@@ -105,13 +88,9 @@ class PurchaseSystem {
     }
 
     submitPurchase() {
-        console.log('🔄 Iniciando proceso de compra...');
-        
         const phone = this.elements.phone.value;
         const reference = this.elements.reference.value;
         const quantity = parseInt(this.elements.quantity.value);
-        
-        console.log('📝 Datos de compra:', { phone, reference, quantity });
         
         if (!this.validateInputs(phone, reference)) return;
         
@@ -126,39 +105,28 @@ class PurchaseSystem {
             timestamp: Date.now()
         };
         
-        console.log('💾 Objeto de compra creado:', purchase);
-        
-        // Guardar en Firebase si está disponible
+        // Guardar en Firebase
         if (window.firebase) {
-            console.log('🔥 Firebase disponible, guardando...');
             const { database, ref, set } = window.firebase;
             set(ref(database, `purchases/${purchase.id}`), purchase)
                 .then(() => {
-                    console.log('✅ Compra guardada en Firebase exitosamente');
-                    console.log('🔗 URL Firebase:', `purchases/${purchase.id}`);
+                    // Mantener localStorage como backup
+                    const pendingPurchases = JSON.parse(localStorage.getItem('pendingPurchases') || '[]');
+                    pendingPurchases.push(purchase);
+                    localStorage.setItem('pendingPurchases', JSON.stringify(pendingPurchases));
+                    
+                    window.location.href = `espera-confirmacion.html?ref=${reference}&cartones=${quantity}&purchaseId=${purchase.id}`;
                 })
                 .catch(error => {
-                    console.error('❌ Error guardando en Firebase:', error);
-                    console.error('📋 Detalles del error:', error.message);
+                    alert('Error al procesar la compra: ' + error.message);
                 });
         } else {
-            console.log('❌ Firebase NO disponible');
+            alert('Error: Sistema no disponible');
         }
-        
-        // Mantener localStorage como backup
-        const pendingPurchases = JSON.parse(localStorage.getItem('pendingPurchases') || '[]');
-        pendingPurchases.push(purchase);
-        localStorage.setItem('pendingPurchases', JSON.stringify(pendingPurchases));
-        console.log('💾 Compra guardada en localStorage también');
-        
-        console.log('🚀 Redirigiendo a confirmación...');
-        window.location.href = `espera-confirmacion.html?ref=${reference}&cartones=${quantity}&purchaseId=${purchase.id}`;
     }
 }
 
-// Inicializar automáticamente
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new PurchaseSystem());
-} else {
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
     new PurchaseSystem();
-}
+});
