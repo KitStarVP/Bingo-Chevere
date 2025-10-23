@@ -1,0 +1,2292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Bingo Chévere</title>
+    <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="css/new-nav.css">
+    <link rel="stylesheet" href="css/popup.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container">
+        <header class="landing-header">
+            <div class="logo">
+                <span class="logo-main">ADMIN</span>
+                <span class="logo-tagline">Panel</span>
+            </div>
+        </header>
+
+        <main class="admin-section">
+            <div class="admin-card">
+                <h2>Programación de Bingos</h2>
+                <div class="schedule-info">
+                    <div class="current-bingo">
+                        <span>Bingo Actual: <strong id="current-bingo">Seleccionar horario</strong></span>
+                    </div>
+                    <div id="schedule-times" class="schedule-times">
+                        <!-- Horarios se cargarán dinámicamente -->
+                    </div>
+                </div>
+                <div class="schedule-management">
+                    <div class="add-schedule">
+                        <input type="time" id="new-time" placeholder="HH:MM">
+                        <button id="add-schedule" class="admin-btn small">+ Agregar</button>
+                    </div>
+                </div>
+                <div class="admin-controls">
+                    <button id="start-round" class="admin-btn primary" disabled>Iniciar Ronda</button>
+                    <button id="pause-round" class="admin-btn warning" style="display: none;">Pausar Ronda</button>
+                    <button id="end-round" class="admin-btn secondary">Finalizar Ronda</button>
+                    <button id="reset-prizes" class="admin-btn danger">🔄 RESET TOTAL</button>
+                </div>
+            </div>
+
+            <!-- VERIFICACIÓN DE CARTONES -->
+            <div class="admin-card">
+                <h2>🎯 Verificación de Cartones</h2>
+                <div id="bingo-verification" class="verification-section">
+                    <div id="no-bingo-pending" class="no-bingo-msg">
+                        <p>No hay BINGO pendiente de verificación</p>
+                    </div>
+                    <div id="bingo-pending" class="bingo-pending" style="display: none;">
+                        <div class="bingo-alert">
+                            <h3>🚨 ¡BINGO CANTADO!</h3>
+                            <p>Un jugador ha cantado BINGO</p>
+                            <div class="bingo-details">
+                                <span>Cartón: <strong id="winner-carton">-</strong></span>
+                                <span>Teléfono: <strong id="winner-phone">-</strong></span>
+                                <span>Tipo: <strong id="winner-type">-</strong></span>
+                            </div>
+                        </div>
+                        <div class="verification-actions">
+                            <button id="verify-winner" class="admin-btn primary">✓ Verificar Ganador</button>
+                            <button id="reject-winner" class="admin-btn danger">✗ Rechazar</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Historial de Ganadores -->
+                <div class="winners-history">
+                    <h4>📋 Últimos Ganadores</h4>
+                    <div class="search-winners">
+                        <input type="date" id="winner-date-filter" placeholder="Fecha">
+                        <input type="tel" id="winner-phone-filter" placeholder="Teléfono">
+                        <button onclick="filterWinners()" class="admin-btn small">Buscar</button>
+                    </div>
+                    <div id="winners-list" class="winners-list">
+                        <!-- Lista de ganadores -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h2>Gestión de Pagos</h2>
+                <div class="payment-stats">
+                    <div class="payment-stat" onclick="showPayments('pending')">
+                        <span class="stat-number" id="pending-count">0</span>
+                        <span class="stat-label">Pendientes</span>
+                    </div>
+                    <div class="payment-stat" onclick="showPayments('verified')">
+                        <span class="stat-number" id="verified-count">0</span>
+                        <span class="stat-label">Verificados</span>
+                    </div>
+                    <div class="payment-stat" onclick="showPayments('rejected')">
+                        <span class="stat-number" id="rejected-count">0</span>
+                        <span class="stat-label">Rechazados</span>
+                    </div>
+                </div>
+                
+                <div id="payment-modal" class="payment-modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="modal-title">Pagos</h3>
+                            <button class="close-modal" onclick="closePaymentModal()">×</button>
+                        </div>
+                        <div class="search-filters">
+                            <input type="date" id="date-filter" placeholder="Fecha">
+                            <input type="tel" id="phone-filter" placeholder="Teléfono">
+                            <button onclick="filterPayments()">Buscar</button>
+                        </div>
+                        <div id="payments-list" class="payments-list">
+                            <!-- Pagos se cargarán aquí -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GESTIÓN DE PREMIOS -->
+            <div class="admin-card">
+                <h2>💰 Gestión de Premios</h2>
+                <div class="prize-stats">
+                    <div class="prize-stat">
+                        <span class="stat-number" id="pending-prizes">0</span>
+                        <span class="stat-label">Pendientes</span>
+                    </div>
+                    <div class="prize-stat">
+                        <span class="stat-number" id="paid-prizes">0</span>
+                        <span class="stat-label">Pagados</span>
+                    </div>
+                    <div class="prize-stat">
+                        <span class="stat-number" id="total-pending">BsF 0</span>
+                        <span class="stat-label">Total Pendiente</span>
+                    </div>
+                </div>
+                
+                <!-- Pestañas de Premios -->
+                <div class="prize-tabs">
+                    <button class="tab-btn active" onclick="showPrizeTab('pending')">Pendientes</button>
+                    <button class="tab-btn" onclick="showPrizeTab('paid')">Pagados</button>
+                </div>
+                
+                <div id="prizes-content" class="prizes-content">
+                    <!-- Contenido de premios -->
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h2>Gestión de Usuarios</h2>
+                <div class="user-search">
+                    <select id="user-dropdown" onchange="selectUserFromDropdown()">
+                        <option value="">Seleccionar jugador...</option>
+                    </select>
+                    <span style="margin: 0 0.5rem; color: #666;">o</span>
+                    <input type="tel" id="user-phone-search" placeholder="Buscar por teléfono">
+                    <button onclick="searchUser()" class="admin-btn small">Buscar</button>
+                </div>
+                <div id="user-profile" class="user-profile" style="display: none;">
+                    <!-- Perfil del usuario se cargará aquí -->
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h2>Estadísticas</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Ronda Actual</span>
+                        <span id="current-round" class="stat-value">1 de 2</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Cartones Vendidos</span>
+                        <span id="tickets-sold" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Premio Ronda</span>
+                        <span id="round-prize" class="stat-value">BsF 0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Premio Total Hoy</span>
+                        <span id="daily-total" class="stat-value">BsF 0</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <nav class="new-bottom-nav">
+        <a href="index.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span class="new-nav-label">Inicio</span>
+        </a>
+        <a href="comprar-cartones.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
+            <span class="new-nav-label">Cartones</span>
+        </a>
+        <a href="sala-de-juego.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span class="new-nav-label">Jugar</span>
+        </a>
+        <a href="premios.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C17.15 18.75 18 20.24 18 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+            <span class="new-nav-label">Premios</span>
+        </a>
+        <a href="perfil.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="new-nav-label">Perfil</span>
+        </a>
+    </nav>
+
+    <style>
+        .admin-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 500px;
+            padding-bottom: 2rem;
+        }
+
+        .admin-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        .admin-card h2 {
+            margin: 0 0 1rem 0;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .admin-btn {
+            padding: 0.7rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .admin-btn.primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .admin-btn.secondary {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .admin-btn.danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .admin-btn.warning {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .admin-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .payments-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .payment-actions {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .payment-btn {
+            padding: 0.3rem 0.6rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        .approve-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .reject-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+
+
+        
+        .schedule-info {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .current-bingo {
+            background: #e8f0fe;
+            padding: 0.5rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .schedule-times {
+            display: flex;
+            justify-content: space-around;
+            gap: 0.5rem;
+        }
+
+        .time-slot {
+            background: #f8f9fa;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .time-slot.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .time-slot.selected {
+            background: #28a745;
+            color: white;
+        }
+
+        .delete-time {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .schedule-management {
+            margin: 0.5rem 0;
+        }
+
+        .add-schedule {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #new-time {
+            padding: 0.4rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .admin-btn.small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        .payment-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .payment-stat {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .payment-stat:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .payment-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--accent-color);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .search-filters {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-filters input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .search-filters button {
+            padding: 0.5rem 1rem;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .payments-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .user-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .user-search {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .user-search select {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        .user-search input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .user-profile {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .user-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .user-stat {
+            background: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .user-stat-number {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .user-stat-label {
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .user-history {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: white;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .history-date {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        /* ESTILOS PARA VERIFICACIÓN DE CARTONES */
+        .verification-section {
+            margin-bottom: 1rem;
+        }
+
+        .no-bingo-msg {
+            text-align: center;
+            color: #666;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .bingo-pending {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .bingo-alert {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .bingo-alert h3 {
+            margin: 0 0 0.5rem 0;
+            color: #dc3545;
+            font-size: 1.2rem;
+        }
+
+        .bingo-details {
+            display: flex;
+            justify-content: space-around;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .verification-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .winners-history {
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+
+        .winners-history h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--accent-color);
+            font-size: 1rem;
+        }
+
+        .search-winners {
+            display: flex;
+            gap: 0.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .search-winners input {
+            flex: 1;
+            padding: 0.4rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .winners-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .winner-item {
+            background: #f8f9fa;
+            padding: 0.5rem;
+            margin-bottom: 0.3rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .winner-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .winner-details {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 0.2rem;
+        }
+
+        /* ESTILOS PARA GESTIÓN DE PREMIOS */
+        .prize-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .prize-stat {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .prize-tabs {
+            display: flex;
+            margin-bottom: 1rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            background: #f8f9fa;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            font-size: 0.9rem;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .prizes-content {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .prize-item {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+        }
+
+        .prize-item.paid {
+            border-left-color: #6c757d;
+            opacity: 0.8;
+        }
+
+        .prize-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.3rem;
+        }
+
+        .prize-info {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .prize-amount {
+            font-weight: bold;
+            color: #28a745;
+            font-size: 1rem;
+        }
+
+        .prize-actions {
+            margin-top: 0.5rem;
+        }
+
+        .pay-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .paid-badge {
+            background: #6c757d;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+        }
+    </style>
+
+    <!-- Firebase Configuration -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+      import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: "bingo-chevere.firebaseapp.com",
+        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: "bingo-chevere",
+        storageBucket: "bingo-chevere.firebasestorage.app",
+        messagingSenderId: "1057150163831",
+        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebase = { database, ref, set, get, onValue };
+      console.log('Firebase inicializado en admin.html');
+    </script>
+
+    <script src="js/popup.js"></script>
+    <script src="js/loader.js"></script>
+    <script>
+        // Sistema de bingos diarios
+        let selectedBingoIndex = -1;
+        let currentRound = 1;
+        let gameActive = false;
+        let currentPrizeTab = 'pending';
+        let bingoWinners = JSON.parse(localStorage.getItem('bingoWinners') || '[]');
+        let bingoPrizes = JSON.parse(localStorage.getItem('bingoPrizes') || '[]');
+        let filteredWinners = [];
+        let dailySchedule = [
+            { time: '13:00', label: '1:00 PM', completed: false },
+            { time: '17:00', label: '5:00 PM', completed: false },
+            { time: '21:00', label: '9:00 PM', completed: false }
+        ];
+        let ticketsSoldToday = 0;
+        let dailyPrizeTotal = 0;
+        let allPayments = [];
+        let currentFilter = 'pending';
+        let filteredPayments = [];
+        let calledNumbers = [];
+        let callingInterval = null;
+        let currentPattern = null;
+        
+        // Patrones únicos y complicados
+        const bingoPatterns = [
+            {
+                name: "Cruz Diagonal",
+                description: "Ambas diagonales completas",
+                positions: [[0,0],[1,1],[2,2],[3,3],[4,4],[0,4],[1,3],[2,2],[3,1],[4,0]]
+            },
+            {
+                name: "Marcos Dobles",
+                description: "Bordes exteriores e interiores",
+                positions: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[1,4],[2,0],[2,4],[3,0],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4],[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3]]
+            },
+            {
+                name: "Estrella de 8 Puntas",
+                description: "Patrón de estrella compleja",
+                positions: [[0,2],[1,1],[1,3],[2,0],[2,2],[2,4],[3,1],[3,3],[4,2],[1,0],[1,4],[0,1],[0,3],[3,0],[3,4],[4,1],[4,3]]
+            },
+            {
+                name: "Espiral Completa",
+                description: "Espiral desde esquina",
+                positions: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,3],[4,2],[4,1],[4,0],[3,0],[2,0],[1,0],[1,1],[1,2],[1,3],[2,3],[3,3],[3,2],[3,1],[2,1],[2,2]]
+            },
+            {
+                name: "Diamante Expandido",
+                description: "Diamante con extensiones",
+                positions: [[0,2],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[2,4],[3,1],[3,2],[3,3],[4,2],[0,1],[0,3],[1,0],[1,4],[3,0],[3,4],[4,1],[4,3]]
+            },
+            {
+                name: "Zigzag Completo",
+                description: "Patrón zigzag por todo el cartón",
+                positions: [[0,0],[0,2],[0,4],[1,1],[1,3],[2,0],[2,2],[2,4],[3,1],[3,3],[4,0],[4,2],[4,4]]
+            },
+            {
+                name: "Cuadrados Anidados",
+                description: "Tres cuadrados concéntricos",
+                positions: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[1,4],[2,0],[2,4],[3,0],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4],[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3]]
+            },
+            {
+                name: "Flecha Doble",
+                description: "Dos flechas apuntando al centro",
+                positions: [[0,0],[0,4],[1,1],[1,3],[2,2],[3,1],[3,3],[4,0],[4,4],[1,0],[1,4],[2,1],[2,3],[3,0],[3,4]]
+            }
+        ];
+
+        // Inicializar panel
+        document.addEventListener('DOMContentLoaded', () => {
+            // Esperar a que Firebase esté disponible
+            setTimeout(() => {
+                if (window.firebase) {
+                    loadPurchasesFromFirebase();
+                    loadWinnersFromFirebase();
+                } else {
+                    loadPendingPurchases();
+                }
+                
+                updatePaymentStats();
+                updateStats();
+                renderSchedule();
+                initializeVerificationSystem();
+                restoreGameState();
+                
+                // Event listener para agregar horario
+                document.getElementById('add-schedule').addEventListener('click', addNewSchedule);
+                
+                // Actualizar pagos cada 2 segundos
+                setInterval(() => {
+                    if (!window.firebase) {
+                        loadPendingPurchases();
+                        updatePaymentStats();
+                    }
+                }, 2000);
+                
+                // Verificar BINGO pendiente cada segundo
+                setInterval(checkPendingBingo, 1000);
+            }, 1000);
+        });
+        
+        // Restaurar estado del juego al recargar
+        function restoreGameState() {
+            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            
+            console.log('Restaurando estado del juego:', gameState);
+            
+            if (gameState.gameActive || gameState.isPaused) {
+                gameActive = gameState.gameActive && !gameState.isPaused;
+                currentRound = gameState.currentRound || 1;
+                selectedBingoIndex = gameState.selectedBingoIndex || -1;
+                calledNumbers = gameState.calledNumbers || [];
+                currentPattern = gameState.currentPattern || null;
+                
+                // Mostrar botones correctos
+                document.getElementById('start-round').style.display = 'none';
+                document.getElementById('pause-round').style.display = 'inline-block';
+                
+                if (gameState.isPaused) {
+                    document.getElementById('pause-round').textContent = 'Reanudar Ronda';
+                    console.log('Juego pausado, no iniciando cantado');
+                } else {
+                    document.getElementById('pause-round').textContent = 'Pausar Ronda';
+                    console.log('Juego activo, iniciando cantado automático');
+                    // Esperar un poco antes de iniciar
+                    setTimeout(() => {
+                        startAutomaticCalling();
+                    }, 2000);
+                }
+                
+                updateStats();
+                renderSchedule();
+            }
+        }
+        
+        // SISTEMA DE VERIFICACIÓN DE CARTONES
+        function initializeVerificationSystem() {
+            // Event listeners para verificación
+            document.getElementById('verify-winner').addEventListener('click', verifyWinner);
+            document.getElementById('reject-winner').addEventListener('click', rejectWinner);
+            
+            // Cargar datos iniciales
+            loadWinners();
+            updatePrizeStats();
+            showPrizeTab('pending');
+        }
+        
+        function checkPendingBingo() {
+            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            const pendingBingo = localStorage.getItem('pendingBingoVerification');
+            
+            if (pendingBingo) {
+                const bingoData = JSON.parse(pendingBingo);
+                showBingoPending(bingoData);
+            } else {
+                showNoBingo();
+            }
+        }
+        
+        function showBingoPending(bingoData) {
+            document.getElementById('no-bingo-pending').style.display = 'none';
+            document.getElementById('bingo-pending').style.display = 'block';
+            
+            document.getElementById('winner-carton').textContent = bingoData.cartonId || 'C123';
+            document.getElementById('winner-phone').textContent = bingoData.phone || '0414-1234567';
+            document.getElementById('winner-type').textContent = bingoData.type || 'Patrón';
+            
+            console.log('Mostrando BINGO pendiente en panel admin:', bingoData);
+        }
+        
+        function showNoBingo() {
+            document.getElementById('no-bingo-pending').style.display = 'block';
+            document.getElementById('bingo-pending').style.display = 'none';
+        }
+        
+        function verifyWinner() {
+            const pendingBingo = localStorage.getItem('pendingBingoVerification');
+            if (!pendingBingo) {
+                console.log('No hay BINGO pendiente para verificar');
+                return;
+            }
+            
+            const bingoData = JSON.parse(pendingBingo);
+            console.log('Verificando ganador:', bingoData);
+            
+            // Determinar si es línea o cartón lleno
+            const isLine = bingoData.type === 'LINEA';
+            const isBingo = bingoData.type === 'CARTON_LLENO';
+            
+            // Crear registro del ganador
+            const winner = {
+                id: Date.now(),
+                cartonId: bingoData.cartonId || 'C123',
+                phone: bingoData.phone || '0414-1234567',
+                type: bingoData.typeText || (isLine ? 'Línea' : 'Cartón Lleno'),
+                amount: calculatePrizeAmount(),
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toLocaleTimeString('es-VE', { hour12: false }),
+                round: bingoData.round || currentRound,
+                bingoTime: bingoData.timestamp || new Date().toISOString()
+            };
+            
+            // Guardar ganador
+            if (window.firebase) {
+                saveWinnerToFirebase(winner);
+            }
+            
+            bingoWinners.unshift(winner);
+            if (bingoWinners.length > 50) bingoWinners = bingoWinners.slice(0, 50);
+            localStorage.setItem('bingoWinners', JSON.stringify(bingoWinners));
+            
+            // Crear premio pendiente
+            const prize = {
+                id: Date.now() + 1,
+                cartonId: winner.cartonId,
+                phone: winner.phone,
+                type: winner.type,
+                amount: winner.amount,
+                date: winner.date,
+                time: winner.time,
+                status: 'pending',
+                winnerId: winner.id
+            };
+            
+            if (window.firebase) {
+                savePrizeToFirebase(prize);
+            }
+            
+            bingoPrizes.unshift(prize);
+            localStorage.setItem('bingoPrizes', JSON.stringify(bingoPrizes));
+            
+            // Crear resultado de verificación para el jugador
+            const verificationResult = {
+                isCorrect: true,
+                isWinner: bingoData.phone === localStorage.getItem('userPhone'),
+                winnerCard: winner.cartonId,
+                type: winner.type,
+                typeText: winner.type,
+                prize: winner.amount,
+                gameEnded: isBingo || currentRound === 2
+            };
+            
+            localStorage.setItem('bingoVerificationResult', JSON.stringify(verificationResult));
+            
+            // Limpiar verificación pendiente y alerta global
+            localStorage.removeItem('pendingBingoVerification');
+            localStorage.removeItem('globalBingoAlert');
+            
+            // Actualizar estado del juego
+            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            
+            if (isLine && currentRound === 1) {
+                // Línea en ronda 1 - continuar a ronda 2
+                currentRound = 2;
+                gameState.currentRound = 2;
+                gameState.gameActive = true;
+                gameState.isPaused = false;
+                showPopup('Línea Verificada', `¡Línea verificada! Premio: BsF ${winner.amount}. Iniciando Ronda 2...`);
+            } else {
+                // Cartón lleno o línea en ronda 2 - terminar juego
+                gameActive = false;
+                currentRound = 1;
+                gameState.gameActive = false;
+                gameState.currentRound = 1;
+                gameState.isPaused = false;
+                
+                stopAutomaticCalling();
+                if (selectedBingoIndex !== -1) {
+                    dailySchedule[selectedBingoIndex].completed = true;
+                }
+                selectedBingoIndex = -1;
+                
+                expireAllActiveCards();
+                resetPrizesAfterCompleteGame();
+                
+                showPopup('BINGO Verificado', `¡${winner.type} verificado! Premio: BsF ${winner.amount}. Juego terminado.`);
+            }
+            
+            localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+            
+            // Actualizar displays
+            loadWinners();
+            updatePrizeStats();
+            showPrizeTab(currentPrizeTab);
+            renderSchedule();
+            updateStats();
+        }
+        
+        function rejectWinner() {
+            console.log('Rechazando BINGO');
+            
+            // Crear resultado de verificación negativo
+            const verificationResult = {
+                isCorrect: false,
+                isWinner: false,
+                message: 'BINGO incorrecto'
+            };
+            
+            localStorage.setItem('bingoVerificationResult', JSON.stringify(verificationResult));
+            
+            // Limpiar verificación pendiente y alerta global
+            localStorage.removeItem('pendingBingoVerification');
+            localStorage.removeItem('globalBingoAlert');
+            
+            // Reanudar juego
+            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            gameState.isPaused = false;
+            delete gameState.pauseReason;
+            delete gameState.pauseTimestamp;
+            localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+            
+            showPopup('BINGO Rechazado', 'El BINGO fue rechazado. El juego continúa.');
+        }
+        
+        function calculatePrizeAmount() {
+            const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+            const totalRecaudado = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0) * 60;
+            const totalParaPremios = totalRecaudado * 0.75;
+            const roundPrize = currentRound === 1 ? totalParaPremios * 0.25 : totalParaPremios * 0.75;
+            return Math.round(roundPrize * 100) / 100;
+        }
+        
+        // GESTIÓN DE PREMIOS
+        function updatePrizeStats() {
+            const pendingPrizes = bingoPrizes.filter(p => p.status === 'pending');
+            const paidPrizes = bingoPrizes.filter(p => p.status === 'paid');
+            const totalPending = pendingPrizes.reduce((sum, p) => sum + p.amount, 0);
+            
+            document.getElementById('pending-prizes').textContent = pendingPrizes.length;
+            document.getElementById('paid-prizes').textContent = paidPrizes.length;
+            document.getElementById('total-pending').textContent = `BsF ${totalPending.toFixed(2)}`;
+        }
+        
+        function showPrizeTab(tab) {
+            currentPrizeTab = tab;
+            
+            // Actualizar botones
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event?.target?.classList.add('active') || document.querySelector(`[onclick="showPrizeTab('${tab}')"]`).classList.add('active');
+            
+            // Mostrar contenido
+            const container = document.getElementById('prizes-content');
+            const prizes = bingoPrizes.filter(p => p.status === tab);
+            
+            if (prizes.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#666; padding:1rem;">No hay premios ${tab === 'pending' ? 'pendientes' : 'pagados'}</p>`;
+                return;
+            }
+            
+            container.innerHTML = prizes.map(prize => `
+                <div class="prize-item ${prize.status}">
+                    <div class="prize-header">
+                        <div>
+                            <strong>Cartón: ${prize.cartonId}</strong>
+                            <div class="prize-info">${prize.phone} • ${prize.type}</div>
+                        </div>
+                        <div class="prize-amount">BsF ${prize.amount}</div>
+                    </div>
+                    <div class="prize-info">
+                        ${prize.date} ${prize.time}
+                    </div>
+                    <div class="prize-actions">
+                        ${prize.status === 'pending' ? 
+                            `<button class="pay-btn" onclick="markAsPaid(${prize.id})">Marcar Pagado</button>` :
+                            `<span class="paid-badge">✓ Pagado</span>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function markAsPaid(prizeId) {
+            const prize = bingoPrizes.find(p => p.id === prizeId);
+            if (prize) {
+                prize.status = 'paid';
+                prize.paidDate = new Date().toISOString().split('T')[0];
+                prize.paidTime = new Date().toLocaleTimeString('es-VE', { hour12: false });
+                
+                if (window.firebase) {
+                    savePrizeToFirebase(prize);
+                }
+                
+                localStorage.setItem('bingoPrizes', JSON.stringify(bingoPrizes));
+                
+                showPopup('Premio Pagado', `Premio de BsF ${prize.amount} marcado como pagado`);
+                updatePrizeStats();
+                showPrizeTab(currentPrizeTab);
+            }
+        }
+        
+        // HISTORIAL DE GANADORES
+        function loadWinners() {
+            filteredWinners = [...bingoWinners];
+            renderWinnersList();
+        }
+        
+        function filterWinners() {
+            const dateFilter = document.getElementById('winner-date-filter').value;
+            const phoneFilter = document.getElementById('winner-phone-filter').value;
+            
+            filteredWinners = bingoWinners.filter(winner => {
+                const matchDate = !dateFilter || winner.date === dateFilter;
+                const matchPhone = !phoneFilter || winner.phone.includes(phoneFilter);
+                return matchDate && matchPhone;
+            });
+            
+            renderWinnersList();
+        }
+        
+        function renderWinnersList() {
+            const container = document.getElementById('winners-list');
+            
+            if (filteredWinners.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666; padding:0.5rem;">No hay ganadores registrados</p>';
+                return;
+            }
+            
+            container.innerHTML = filteredWinners.slice(0, 10).map(winner => `
+                <div class="winner-item">
+                    <div class="winner-header">
+                        <span>Cartón: ${winner.cartonId}</span>
+                        <span>BsF ${winner.amount}</span>
+                    </div>
+                    <div class="winner-details">
+                        ${winner.phone} • ${winner.type} • ${winner.date} ${winner.time}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Cargar compras pendientes
+        function loadPendingPurchases() {
+            if (window.firebase) {
+                loadPurchasesFromFirebase();
+                return;
+            }
+            
+            const pendingPurchases = JSON.parse(localStorage.getItem('pendingPurchases') || '[]');
+            const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+            const rejectedPurchases = JSON.parse(localStorage.getItem('rejectedPurchases') || '[]');
+            
+            allPayments = [...pendingPurchases, ...verifiedPurchases, ...rejectedPurchases];
+            updatePaymentStats();
+        }
+
+        // Controles de rondas
+        document.getElementById('start-round').addEventListener('click', () => {
+            if (selectedBingoIndex === -1) {
+                showPopup('Error', 'Selecciona un horario de bingo primero');
+                return;
+            }
+            gameActive = true;
+            const selectedBingo = dailySchedule[selectedBingoIndex];
+            
+            // Mostrar botón pausar y ocultar iniciar
+            document.getElementById('start-round').style.display = 'none';
+            document.getElementById('pause-round').style.display = 'inline-block';
+            
+            // Guardar estado antes de iniciar
+            saveGameState();
+            
+            // Iniciar cantado automático
+            startAutomaticCalling();
+            
+            showPopup('Ronda Iniciada', `Iniciando ronda ${currentRound} del bingo de las ${selectedBingo.label}`);
+            updateStats();
+        });
+
+        document.getElementById('pause-round').addEventListener('click', () => {
+            if (gameActive) {
+                // Pausar juego
+                gameActive = false;
+                stopAutomaticCalling();
+                
+                // Actualizar estado del juego
+                const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+                gameState.isPaused = true;
+                gameState.pauseReason = 'admin_pause';
+                gameState.pauseTimestamp = Date.now();
+                localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+                
+                // Pausar también en Firebase
+                pauseGameInFirebase('admin_pause');
+                
+                // Cambiar botones
+                document.getElementById('pause-round').textContent = 'Reanudar Ronda';
+                
+                showPopup('Ronda Pausada', 'La ronda ha sido pausada por el administrador');
+            } else {
+                // Reanudar juego
+                gameActive = true;
+                
+                // Actualizar estado del juego
+                const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+                gameState.gameActive = true;
+                gameState.isPaused = false;
+                delete gameState.pauseReason;
+                delete gameState.pauseTimestamp;
+                localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+                
+                // Reanudar también en Firebase
+                saveGameStateToFirebase();
+                
+                // Reiniciar cantado automático
+                startAutomaticCalling();
+                
+                // Cambiar botones
+                document.getElementById('pause-round').textContent = 'Pausar Ronda';
+                
+                showPopup('Ronda Reanudada', 'La ronda ha sido reanudada');
+            }
+        });
+
+        document.getElementById('end-round').addEventListener('click', () => {
+            gameActive = false;
+            
+            // Detener cantado automático
+            stopAutomaticCalling();
+            
+            // Restaurar botones
+            document.getElementById('start-round').style.display = 'inline-block';
+            document.getElementById('pause-round').style.display = 'none';
+            document.getElementById('pause-round').textContent = 'Pausar Ronda';
+            
+            // Limpiar números cantados
+            calledNumbers = [];
+            
+            if (currentRound === 2) {
+                // Completar bingo actual
+                if (selectedBingoIndex !== -1) {
+                    dailySchedule[selectedBingoIndex].completed = true;
+                }
+                currentRound = 1;
+                selectedBingoIndex = -1;
+                
+                // Marcar todos los cartones como vencidos al terminar las 2 rondas
+                expireAllActiveCards();
+                
+                // Resetear premios después de la partida completa
+                resetPrizesAfterCompleteGame();
+                
+                showPopup('Bingo Completado', 'Las 2 rondas han terminado. Todos los cartones han expirado.');
+            } else {
+                currentRound = 2;
+                showPopup('Ronda Finalizada', 'Ronda 1 completada. Preparando ronda 2...');
+            }
+            
+            // Limpiar estado del juego completamente
+            localStorage.removeItem('bingoGameState');
+            
+            renderSchedule();
+            updateStats();
+        });
+
+        document.getElementById('reset-prizes').addEventListener('click', () => {
+            if (!confirm('⚠️ RESET TOTAL DEL SISTEMA\n\n¿Estás seguro? Esto eliminará:\n• Todos los premios y ganadores\n• Todos los pagos y compras\n• Todos los cartones\n• Estado del juego\n• Historial completo\n\nEsta acción NO se puede deshacer.')) {
+                return;
+            }
+            
+            // RESET TOTAL DEL SISTEMA
+            
+            // 1. Variables del juego
+            dailyPrizeTotal = 0;
+            ticketsSoldToday = 0;
+            selectedBingoIndex = -1;
+            currentRound = 1;
+            gameActive = false;
+            calledNumbers = [];
+            bingoWinners = [];
+            bingoPrizes = [];
+            allPayments = [];
+            filteredPayments = [];
+            filteredWinners = [];
+            
+            // 2. Horarios
+            dailySchedule.forEach(bingo => bingo.completed = false);
+            
+            // 3. Detener juego
+            stopAutomaticCalling();
+            
+            // 4. LIMPIAR TODO EL LOCALSTORAGE
+            localStorage.removeItem('bingoGameState');
+            localStorage.removeItem('pendingBingoVerification');
+            localStorage.removeItem('globalBingoAlert');
+            localStorage.removeItem('bingoWinners');
+            localStorage.removeItem('bingoPrizes');
+            localStorage.removeItem('playerCards');
+            localStorage.removeItem('pendingPurchases');
+            localStorage.removeItem('verifiedPurchases');
+            localStorage.removeItem('rejectedPurchases');
+            localStorage.removeItem('userPhone');
+            localStorage.removeItem('userProfile');
+            
+            // 5. Actualizar displays
+            loadPendingPurchases();
+            loadWinners();
+            updatePrizeStats();
+            showPrizeTab('pending');
+            renderSchedule();
+            updateStats();
+            
+            showPopup('🔄 RESET TOTAL COMPLETADO', 'Sistema completamente reiniciado. Todos los datos han sido eliminados.');
+        });
+
+        // Actualizar estadísticas de pagos
+        function updatePaymentStats() {
+            const pending = allPayments.filter(p => p.status === 'pending').length;
+            const verified = allPayments.filter(p => p.status === 'verified').length;
+            const rejected = allPayments.filter(p => p.status === 'rejected').length;
+            
+            document.getElementById('pending-count').textContent = pending;
+            document.getElementById('verified-count').textContent = verified;
+            document.getElementById('rejected-count').textContent = rejected;
+        }
+
+        // Mostrar pagos por categoría
+        function showPayments(status) {
+            currentFilter = status;
+            const titles = {
+                'pending': 'Pagos Pendientes',
+                'verified': 'Pagos Verificados', 
+                'rejected': 'Pagos Rechazados'
+            };
+            
+            document.getElementById('modal-title').textContent = titles[status];
+            document.getElementById('payment-modal').style.display = 'flex';
+            
+            filterPayments();
+            
+            // Actualizar lista cada 2 segundos mientras el modal esté abierto
+            if (window.paymentModalInterval) {
+                clearInterval(window.paymentModalInterval);
+            }
+            window.paymentModalInterval = setInterval(() => {
+                if (document.getElementById('payment-modal').style.display === 'flex') {
+                    loadPendingPurchases();
+                    filterPayments();
+                } else {
+                    clearInterval(window.paymentModalInterval);
+                }
+            }, 2000);
+        }
+
+        // Cerrar modal
+        function closePaymentModal() {
+            document.getElementById('payment-modal').style.display = 'none';
+            document.getElementById('date-filter').value = '';
+            document.getElementById('phone-filter').value = '';
+            
+            // Limpiar intervalo de actualización del modal
+            if (window.paymentModalInterval) {
+                clearInterval(window.paymentModalInterval);
+                window.paymentModalInterval = null;
+            }
+        }
+
+        // Filtrar pagos
+        function filterPayments() {
+            const dateFilter = document.getElementById('date-filter').value;
+            const phoneFilter = document.getElementById('phone-filter').value;
+            
+            filteredPayments = allPayments.filter(payment => {
+                const matchStatus = payment.status === currentFilter;
+                const matchDate = !dateFilter || payment.date === dateFilter;
+                const matchPhone = !phoneFilter || payment.phone.includes(phoneFilter);
+                
+                return matchStatus && matchDate && matchPhone;
+            });
+            
+            renderPaymentsList();
+        }
+
+        // Renderizar lista de pagos
+        function renderPaymentsList() {
+            const container = document.getElementById('payments-list');
+            container.innerHTML = '';
+            
+            if (filteredPayments.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666;">No se encontraron pagos</p>';
+                return;
+            }
+            
+            filteredPayments.forEach(payment => {
+                const item = document.createElement('div');
+                item.className = 'payment-item';
+                
+                let actions = '';
+                if (payment.status === 'pending') {
+                    actions = `
+                        <div class="payment-actions">
+                            <button class="payment-btn approve-btn" onclick="approvePayment(${payment.id})">✓</button>
+                            <button class="payment-btn reject-btn" onclick="rejectPayment(${payment.id})">✗</button>
+                        </div>
+                    `;
+                } else if (payment.status === 'verified') {
+                    actions = `
+                        <div class="payment-actions">
+                            <button class="payment-btn reject-btn" onclick="rejectVerifiedPayment(${payment.id})">✗ Rechazar</button>
+                        </div>
+                    `;
+                }
+                
+                item.innerHTML = `
+                    <div>
+                        <strong>Ref: ${payment.ref}</strong> - <strong>${payment.phone}</strong><br>
+                        <small>${payment.cartones} cartones - BsF ${payment.amount} - ${payment.date}</small>
+                    </div>
+                    ${actions}
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Aprobar pago
+        function approvePayment(paymentId) {
+            const payment = allPayments.find(p => p.id === paymentId);
+            if (!payment) return;
+            
+            payment.status = 'verified';
+            payment.verifiedDate = new Date().toISOString();
+            
+            if (window.firebase) {
+                updatePurchaseInFirebase(payment);
+            } else {
+                // Fallback localStorage
+                let pendingPurchases = JSON.parse(localStorage.getItem('pendingPurchases') || '[]');
+                let verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+                
+                const paymentIndex = pendingPurchases.findIndex(p => p.id === paymentId);
+                if (paymentIndex !== -1) {
+                    pendingPurchases.splice(paymentIndex, 1);
+                    verifiedPurchases.push(payment);
+                    
+                    localStorage.setItem('pendingPurchases', JSON.stringify(pendingPurchases));
+                    localStorage.setItem('verifiedPurchases', JSON.stringify(verifiedPurchases));
+                }
+            }
+            
+            ticketsSoldToday += payment.cartones;
+            dailyPrizeTotal += payment.amount * 0.75;
+            
+            // Generar cartones para el jugador
+            generateCardsForPlayer(payment.phone, payment.cartones);
+            
+            showPopup('Pago Aprobado', `Se han asignado ${payment.cartones} cartones al teléfono ${payment.phone}`);
+            loadPendingPurchases();
+            filterPayments();
+            updateStats();
+        }
+
+        // Rechazar pago
+        function rejectPayment(paymentId) {
+            const payment = allPayments.find(p => p.id === paymentId);
+            if (!payment) return;
+            
+            payment.status = 'rejected';
+            payment.rejectedDate = new Date().toISOString();
+            
+            if (window.firebase) {
+                updatePurchaseInFirebase(payment);
+            } else {
+                // Fallback localStorage
+                let pendingPurchases = JSON.parse(localStorage.getItem('pendingPurchases') || '[]');
+                let rejectedPurchases = JSON.parse(localStorage.getItem('rejectedPurchases') || '[]');
+                
+                const paymentIndex = pendingPurchases.findIndex(p => p.id === paymentId);
+                if (paymentIndex !== -1) {
+                    pendingPurchases.splice(paymentIndex, 1);
+                    rejectedPurchases.push(payment);
+                    
+                    localStorage.setItem('pendingPurchases', JSON.stringify(pendingPurchases));
+                    localStorage.setItem('rejectedPurchases', JSON.stringify(rejectedPurchases));
+                }
+            }
+            
+            showPopup('Pago Rechazado', `Pago del teléfono ${payment.phone} ha sido rechazado.`);
+            loadPendingPurchases();
+            filterPayments();
+        }
+
+        // Rechazar pago verificado
+        function rejectVerifiedPayment(paymentId) {
+            const payment = allPayments.find(p => p.id === paymentId);
+            if (payment) {
+                payment.status = 'rejected';
+                ticketsSoldToday -= payment.cartones;
+                dailyPrizeTotal -= payment.amount * 0.75; // Restar 75% de premios
+                
+                showPopup('Pago Corregido', `Pago verificado del teléfono ${payment.phone} ha sido rechazado. Cartones retirados.`);
+                updatePaymentStats();
+                filterPayments();
+                updateStats();
+            }
+        }
+
+        // Actualizar estadísticas
+        function updateStats() {
+            document.getElementById('current-round').textContent = `${currentRound} de 2`;
+            document.getElementById('tickets-sold').textContent = ticketsSoldToday;
+            
+            const totalRecaudado = ticketsSoldToday * 60;
+            const totalParaPremios = totalRecaudado * 0.75; // Descontar 25% del dueño
+            const roundPrize = currentRound === 1 ? totalParaPremios * 0.25 : totalParaPremios * 0.75;
+            document.getElementById('round-prize').textContent = `BsF ${roundPrize.toFixed(2)}`;
+            document.getElementById('daily-total').textContent = `BsF ${dailyPrizeTotal.toFixed(2)}`;
+            
+            // Actualizar estado del juego si está activo
+            if (gameActive) {
+                saveGameState();
+            }
+        }
+
+        // Renderizar horarios dinámicamente
+        function renderSchedule() {
+            const container = document.getElementById('schedule-times');
+            container.innerHTML = '';
+            
+            dailySchedule.forEach((bingo, index) => {
+                const slot = document.createElement('div');
+                slot.className = 'time-slot';
+                if (index === selectedBingoIndex) slot.classList.add('selected');
+                if (bingo.completed) slot.classList.add('active');
+                
+                slot.innerHTML = `
+                    <span>${bingo.label}</span>
+                    <button class="delete-time" onclick="deleteSchedule(${index})">×</button>
+                `;
+                
+                slot.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-time')) return;
+                    selectBingo(index);
+                });
+                
+                container.appendChild(slot);
+            });
+            
+            updateScheduleDisplay();
+        }
+
+        // Seleccionar bingo
+        function selectBingo(index) {
+            if (dailySchedule[index].completed) {
+                showPopup('Bingo Completado', 'Este horario ya fue completado.');
+                return;
+            }
+            selectedBingoIndex = index;
+            document.getElementById('start-round').disabled = false;
+            renderSchedule();
+        }
+
+        // Actualizar display de horarios
+        function updateScheduleDisplay() {
+            const display = document.getElementById('current-bingo');
+            if (selectedBingoIndex === -1) {
+                display.textContent = 'Seleccionar horario';
+            } else {
+                const selectedBingo = dailySchedule[selectedBingoIndex];
+                display.textContent = `${selectedBingo.label} - Ronda ${currentRound}`;
+            }
+        }
+
+        // Agregar nuevo horario
+        function addNewSchedule() {
+            const timeInput = document.getElementById('new-time');
+            const time = timeInput.value;
+            
+            if (!time) {
+                showPopup('Error', 'Selecciona una hora válida');
+                return;
+            }
+            
+            const [hours, minutes] = time.split(':');
+            const label = formatTime(hours, minutes);
+            
+            dailySchedule.push({
+                time: time,
+                label: label,
+                completed: false
+            });
+            
+            timeInput.value = '';
+            renderSchedule();
+            showPopup('Horario Agregado', `Nuevo bingo programado para las ${label}`);
+        }
+
+        // Eliminar horario
+        function deleteSchedule(index) {
+            if (dailySchedule.length <= 1) {
+                showPopup('Error', 'Debe haber al menos un horario');
+                return;
+            }
+            
+            const bingo = dailySchedule[index];
+            dailySchedule.splice(index, 1);
+            
+            if (selectedBingoIndex === index) {
+                selectedBingoIndex = -1;
+                document.getElementById('start-round').disabled = true;
+            } else if (selectedBingoIndex > index) {
+                selectedBingoIndex--;
+            }
+            
+            renderSchedule();
+            showPopup('Horario Eliminado', `Bingo de las ${bingo.label} eliminado`);
+        }
+
+        // Formatear hora
+        function formatTime(hours, minutes) {
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            return `${displayHour}:${minutes} ${ampm}`;
+        }
+
+        // Funciones para controlar el juego
+        function saveGameState() {
+            const currentGameState = localStorage.getItem('bingoGameState');
+            let gameStartTime = Date.now();
+            
+            if (currentGameState) {
+                const parsed = JSON.parse(currentGameState);
+                gameStartTime = parsed.gameStartTime || Date.now();
+            }
+            
+            const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+            const totalRecaudado = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0) * 60;
+            const totalParaPremios = totalRecaudado * 0.75;
+            
+            const gameState = {
+                gameActive: gameActive,
+                currentRound: currentRound,
+                selectedBingoIndex: selectedBingoIndex,
+                roundPrize: currentRound === 1 ? totalParaPremios * 0.25 : totalParaPremios * 0.75,
+                calledNumbers: calledNumbers,
+                gameStartTime: gameStartTime,
+                currentPattern: currentPattern,
+                timestamp: Date.now(),
+                isPaused: false
+            };
+            localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+            
+            // Guardar también en Firebase
+            saveGameStateToFirebase();
+        }
+
+        function startAutomaticCalling() {
+            // NO limpiar números si ya existen (para mantener continuidad)
+            if (!calledNumbers) calledNumbers = [];
+            
+            const gameStartTime = Date.now();
+            
+            // Seleccionar patrón aleatorio para ronda 1 solo si no existe
+            if (currentRound === 1 && !currentPattern) {
+                currentPattern = {
+                    name: "Patrón Aleatorio",
+                    positions: generateRandomPatternPositions()
+                };
+            } else if (currentRound === 2) {
+                currentPattern = null; // Ronda 2 es bingo completo
+            }
+            
+            console.log('Iniciando cantado automático. Números ya cantados:', calledNumbers.length);
+            
+            // Detener intervalo anterior si existe
+            if (callingInterval) {
+                clearInterval(callingInterval);
+            }
+            
+            // Cantar números cada 5 segundos
+            callingInterval = setInterval(() => {
+                console.log('Tick del intervalo. GameActive:', gameActive);
+                
+                // Verificar estado actual del juego
+                const currentGameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+                if (!currentGameState.gameActive || currentGameState.isPaused) {
+                    console.log('Juego no activo o pausado, deteniendo cantado');
+                    return;
+                }
+                
+                if (!gameActive) {
+                    console.log('Variable gameActive es false, deteniendo');
+                    stopAutomaticCalling();
+                    return;
+                }
+                
+                const availableNumbers = [];
+                for (let i = 1; i <= 75; i++) {
+                    const alreadyCalled = calledNumbers.find(item => 
+                        (typeof item === 'object' ? item.number : item) === i
+                    );
+                    if (!alreadyCalled) {
+                        availableNumbers.push(i);
+                    }
+                }
+                
+                console.log('Números disponibles:', availableNumbers.length);
+                
+                if (availableNumbers.length === 0) {
+                    console.log('No hay más números disponibles');
+                    showPopup('Juego Terminado', 'Todos los números han sido cantados');
+                    stopAutomaticCalling();
+                    return;
+                }
+                
+                const randomNumber = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+                console.log('Cantando número:', randomNumber);
+                
+                // Guardar número con timestamp
+                const numberData = {
+                    number: randomNumber,
+                    timestamp: Date.now(),
+                    timeFromStart: Date.now() - gameStartTime
+                };
+                
+                calledNumbers.push(numberData);
+                
+                // Guardar número en Firebase
+                saveCalledNumberToFirebase(numberData);
+                
+                // Actualizar estado inmediatamente
+                const gameState = {
+                    gameActive: gameActive,
+                    currentRound: currentRound,
+                    selectedBingoIndex: selectedBingoIndex,
+                    calledNumbers: calledNumbers,
+                    gameStartTime: gameStartTime,
+                    currentPattern: currentPattern,
+                    timestamp: Date.now(),
+                    isPaused: false
+                };
+                localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+                
+                // Actualizar estado completo en Firebase
+                saveGameStateToFirebase();
+                
+            }, 5000); // Cada 5 segundos
+        }
+        
+        function generateRandomPatternPositions() {
+            const positions = [];
+            const patternSize = Math.floor(Math.random() * 7) + 12; // 12-18 casillas
+            const maxCells = 20;
+            const usedPositions = new Set();
+            
+            while (positions.length < Math.min(patternSize, maxCells)) {
+                const row = Math.floor(Math.random() * 5);
+                const col = Math.floor(Math.random() * 5);
+                const key = `${row}-${col}`;
+                
+                if (!usedPositions.has(key)) {
+                    positions.push([row, col]);
+                    usedPositions.add(key);
+                }
+            }
+            
+            return positions;
+        }
+
+        function stopAutomaticCalling() {
+            console.log('Deteniendo cantado automático');
+            if (callingInterval) {
+                clearInterval(callingInterval);
+                callingInterval = null;
+            }
+        }
+
+        function getBingoLetter(number) {
+            if (number >= 1 && number <= 15) return 'B';
+            if (number >= 16 && number <= 30) return 'I';
+            if (number >= 31 && number <= 45) return 'N';
+            if (number >= 46 && number <= 60) return 'G';
+            if (number >= 61 && number <= 75) return 'O';
+            return '';
+        }
+
+        // Actualizar stats cada 10 segundos
+        setInterval(updateStats, 10000);
+        
+        // Buscar usuario
+        function searchUser() {
+            const phone = document.getElementById('user-phone-search').value.trim();
+            if (!phone) {
+                showPopup('Error', 'Ingresa un número de teléfono');
+                return;
+            }
+            
+            const userProfile = getUserProfile(phone);
+            if (userProfile) {
+                displayUserProfile(userProfile);
+            } else {
+                showPopup('Usuario no encontrado', 'No se encontraron registros para este teléfono');
+                document.getElementById('user-profile').style.display = 'none';
+            }
+        }
+        
+        // Obtener perfil del usuario
+        function getUserProfile(phone) {
+            const allPurchases = [...allPayments];
+            const userPurchases = allPurchases.filter(p => p.phone === phone);
+            
+            if (userPurchases.length === 0) return null;
+            
+            // Obtener cartones del usuario (simulado por teléfono)
+            const userCards = getUserCards(phone);
+            
+            const totalSpent = userPurchases.reduce((sum, p) => p.status === 'verified' ? sum + p.amount : sum, 0);
+            const totalCards = userPurchases.reduce((sum, p) => p.status === 'verified' ? sum + p.cartones : sum, 0);
+            const vigentCards = userCards.filter(c => c.status === 'vigente').length;
+            const enUsoCards = userCards.filter(c => c.status === 'en_uso').length;
+            const vencidoCards = userCards.filter(c => c.status === 'vencido').length;
+            
+            return {
+                phone: phone,
+                firstPurchase: userPurchases[0].date,
+                totalPurchases: userPurchases.length,
+                totalSpent: totalSpent,
+                totalCards: totalCards,
+                vigentCards: vigentCards,
+                enUsoCards: enUsoCards,
+                vencidoCards: vencidoCards,
+                purchases: userPurchases.sort((a, b) => new Date(b.date) - new Date(a.date)),
+                lastActivity: userPurchases[userPurchases.length - 1].date
+            };
+        }
+        
+        // Simular cartones del usuario
+        function getUserCards(phone) {
+            // En producción esto vendría de una base de datos
+            // Por ahora simulamos algunos cartones
+            return [
+                { id: 'A1B2C', status: 'vigente', purchaseDate: '2024-01-15' },
+                { id: 'D3E4F', status: 'vigente', purchaseDate: '2024-01-15' },
+                { id: 'G5H6I', status: 'vencido', purchaseDate: '2024-01-14' },
+                { id: 'J7K8L', status: 'vencido', purchaseDate: '2024-01-14' }
+            ];
+        }
+        
+        // Mostrar perfil del usuario
+        function displayUserProfile(profile) {
+            const container = document.getElementById('user-profile');
+            container.style.display = 'block';
+            
+            container.innerHTML = `
+                <h4 style="margin: 0 0 1rem 0; color: var(--accent-color);">Usuario: ${profile.phone}</h4>
+                
+                <div class="user-info">
+                    <div><strong>Registro:</strong> ${profile.firstPurchase}</div>
+                    <div><strong>Última actividad:</strong> ${profile.lastActivity}</div>
+                </div>
+                
+                <div class="user-cards-grid">
+                    <div class="user-stat">
+                        <span class="user-stat-number">${profile.totalCards}</span>
+                        <span class="user-stat-label">Total Comprados</span>
+                    </div>
+                    <div class="user-stat">
+                        <span class="user-stat-number">${profile.vigentCards}</span>
+                        <span class="user-stat-label">Vigentes</span>
+                    </div>
+                    <div class="user-stat">
+                        <span class="user-stat-number">${profile.enUsoCards}</span>
+                        <span class="user-stat-label">En Uso</span>
+                    </div>
+                    <div class="user-stat">
+                        <span class="user-stat-number">${profile.vencidoCards}</span>
+                        <span class="user-stat-label">Vencidos</span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+                    <div class="user-stat">
+                        <span class="user-stat-number">${profile.totalPurchases}</span>
+                        <span class="user-stat-label">Compras Realizadas</span>
+                    </div>
+                    <div class="user-stat">
+                        <span class="user-stat-number">BsF ${profile.totalSpent}</span>
+                        <span class="user-stat-label">Total Gastado</span>
+                    </div>
+                </div>
+                
+                <h5 style="margin: 1rem 0 0.5rem 0;">Historial de Compras:</h5>
+                <div class="user-history">
+                    ${profile.purchases.map(purchase => `
+                        <div class="history-item">
+                            <div class="history-date">${purchase.date} - Ref: ${purchase.ref}</div>
+                            <div>${purchase.cartones} cartones - BsF ${purchase.amount} - 
+                                <span style="color: ${purchase.status === 'verified' ? '#28a745' : purchase.status === 'rejected' ? '#dc3545' : '#ffc107'}">
+                                    ${purchase.status.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Permitir buscar con Enter
+        document.getElementById('user-phone-search').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchUser();
+            }
+        });
+        
+        // Permitir filtrar ganadores con Enter
+        document.getElementById('winner-phone-filter').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterWinners();
+            }
+        });
+        
+        document.getElementById('winner-date-filter').addEventListener('change', filterWinners);
+        
+        // Función para expirar todos los cartones activos
+        function expireAllActiveCards() {
+            const allCards = JSON.parse(localStorage.getItem('playerCards') || '[]');
+            let hasChanges = false;
+            
+            allCards.forEach(card => {
+                if (card.status === 'en_uso' || card.status === 'vigente') {
+                    card.status = 'vencido';
+                    card.expiredDate = new Date().toISOString();
+                    card.expiredReason = 'Juego completado';
+                    hasChanges = true;
+                }
+            });
+            
+            if (hasChanges) {
+                localStorage.setItem('playerCards', JSON.stringify(allCards));
+                console.log('Todos los cartones activos han sido marcados como vencidos');
+            }
+        }
+        
+        // Función para resetear premios después de partida completa
+        function resetPrizesAfterCompleteGame() {
+            // Limpiar compras verificadas para resetear premios
+            localStorage.setItem('verifiedPurchases', JSON.stringify([]));
+            
+            // Resetear variables del admin
+            ticketsSoldToday = 0;
+            dailyPrizeTotal = 0;
+            
+            // Actualizar stats
+            updateStats();
+            
+            console.log('Premios reseteados después de partida completa');
+        }
+        
+        // Generar cartones para jugador
+        function generateCardsForPlayer(phone, quantity) {
+            const cards = [];
+            
+            for (let i = 0; i < quantity; i++) {
+                const card = {
+                    id: Date.now() + i,
+                    code: generateCardCode(),
+                    numbers: generateBingoCard(),
+                    marked: [],
+                    status: 'vigente',
+                    autoMode: true,
+                    purchaseDate: new Date().toISOString(),
+                    phone: phone
+                };
+                cards.push(card);
+            }
+            
+            if (window.firebase) {
+                saveCardsToFirebase(phone, cards);
+            }
+            
+            // Mantener localStorage como backup
+            const allCards = JSON.parse(localStorage.getItem('playerCards') || '[]');
+            allCards.push(...cards);
+            localStorage.setItem('playerCards', JSON.stringify(allCards));
+            
+            console.log(`Generados ${quantity} cartones para ${phone}`);
+        }
+        
+        function generateCardCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 5; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+        
+        function generateBingoCard() {
+            const card = [];
+            const ranges = [[1,15], [16,30], [31,45], [46,60], [61,75]];
+            
+            for (let col = 0; col < 5; col++) {
+                const column = [];
+                const [min, max] = ranges[col];
+                const numbers = [];
+                
+                while (numbers.length < 5) {
+                    const num = Math.floor(Math.random() * (max - min + 1)) + min;
+                    if (!numbers.includes(num)) {
+                        numbers.push(num);
+                    }
+                }
+                
+                numbers.sort((a, b) => a - b);
+                
+                for (let row = 0; row < 5; row++) {
+                    if (!card[row]) card[row] = [];
+                    card[row][col] = row === 2 && col === 2 ? 0 : numbers[row]; // Centro FREE
+                }
+            }
+            
+            return card;
+        }
+        
+        // FUNCIONES FIREBASE PARA GANADORES Y PREMIOS
+        function saveWinnerToFirebase(winner) {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            set(ref(database, `winners/${winner.id}`), winner)
+                .then(() => console.log('✅ Ganador guardado en Firebase'))
+                .catch(error => console.error('❌ Error guardando ganador:', error));
+        }
+        
+        function savePrizeToFirebase(prize) {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            set(ref(database, `prizes/${prize.id}`), prize)
+                .then(() => console.log('✅ Premio guardado en Firebase'))
+                .catch(error => console.error('❌ Error guardando premio:', error));
+        }
+        
+        function loadWinnersFromFirebase() {
+            if (!window.firebase) return;
+            
+            const { database, ref, onValue } = window.firebase;
+            onValue(ref(database, 'winners'), (snapshot) => {
+                const firebaseWinners = snapshot.val();
+                if (firebaseWinners) {
+                    bingoWinners = Object.values(firebaseWinners).sort((a, b) => b.id - a.id);
+                    loadWinners();
+                }
+            });
+            
+            onValue(ref(database, 'prizes'), (snapshot) => {
+                const firebasePrizes = snapshot.val();
+                if (firebasePrizes) {
+                    bingoPrizes = Object.values(firebasePrizes).sort((a, b) => b.id - a.id);
+                    updatePrizeStats();
+                    showPrizeTab(currentPrizeTab);
+                }
+            });
+        }
+        
+        // FUNCIONES FIREBASE PARA CARTONES
+        function saveCardsToFirebase(phone, cards) {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            set(ref(database, `playerCards/${phone.replace(/[^0-9]/g, '')}`), cards)
+                .then(() => console.log('✅ Cartones guardados en Firebase'))
+                .catch(error => console.error('❌ Error guardando cartones:', error));
+        }
+        
+        function loadCardsFromFirebase(phone) {
+            if (!window.firebase) return Promise.resolve(null);
+            
+            const { database, ref, get } = window.firebase;
+            return get(ref(database, `playerCards/${phone.replace(/[^0-9]/g, '')}`));
+        }
+        
+        // FUNCIONES FIREBASE PARA COMPRAS Y PAGOS
+        function savePurchaseToFirebase(purchase) {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            set(ref(database, `purchases/${purchase.id}`), purchase)
+                .then(() => console.log('✅ Compra guardada en Firebase'))
+                .catch(error => console.error('❌ Error guardando compra:', error));
+        }
+        
+        function loadPurchasesFromFirebase() {
+            if (!window.firebase) {
+                loadPendingPurchases(); // Fallback a localStorage
+                return;
+            }
+            
+            const { database, ref, onValue } = window.firebase;
+            onValue(ref(database, 'purchases'), (snapshot) => {
+                const firebasePurchases = snapshot.val();
+                if (firebasePurchases) {
+                    allPayments = Object.values(firebasePurchases);
+                    updatePaymentStats();
+                    if (document.getElementById('payment-modal').style.display === 'flex') {
+                        filterPayments();
+                    }
+                    console.log('✅ Compras cargadas desde Firebase:', allPayments.length);
+                }
+            });
+        }
+        
+        function updatePurchaseInFirebase(purchase) {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            set(ref(database, `purchases/${purchase.id}`), purchase)
+                .then(() => console.log('✅ Compra actualizada en Firebase'))
+                .catch(error => console.error('❌ Error actualizando compra:', error));
+        }
+        
+        // FUNCIONES FIREBASE PARA ESTADO DEL JUEGO
+        function saveGameStateToFirebase() {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+            const totalRecaudado = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0) * 60;
+            const totalParaPremios = totalRecaudado * 0.75;
+            
+            const gameState = {
+                gameActive: gameActive,
+                currentRound: currentRound,
+                selectedBingoIndex: selectedBingoIndex,
+                roundPrize: currentRound === 1 ? totalParaPremios * 0.25 : totalParaPremios * 0.75,
+                calledNumbers: calledNumbers,
+                currentPattern: currentPattern,
+                timestamp: Date.now(),
+                isPaused: false
+            };
+            
+            set(ref(database, 'gameState'), gameState)
+                .then(() => console.log('✅ Estado guardado en Firebase'))
+                .catch(error => console.error('❌ Error guardando estado:', error));
+        }
+        
+        function pauseGameInFirebase(reason = 'admin_pause') {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            const gameState = {
+                gameActive: false,
+                currentRound: currentRound,
+                selectedBingoIndex: selectedBingoIndex,
+                calledNumbers: calledNumbers,
+                currentPattern: currentPattern,
+                isPaused: true,
+                pauseReason: reason,
+                pauseTimestamp: Date.now(),
+                timestamp: Date.now()
+            };
+            
+            set(ref(database, 'gameState'), gameState)
+                .then(() => console.log('✅ Juego pausado en Firebase'))
+                .catch(error => console.error('❌ Error pausando:', error));
+        }
+        
+        function saveCalledNumberToFirebase(numberData) {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            set(ref(database, 'calledNumbers'), calledNumbers)
+                .then(() => console.log('✅ Número guardado:', numberData.number))
+                .catch(error => console.error('❌ Error guardando número:', error));
+        }
+    </script>
+</body>
+</html>
