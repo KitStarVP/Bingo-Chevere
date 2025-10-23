@@ -22,25 +22,43 @@
         </header>
 
         <main class="profile-section">
-            <!-- Información Personal -->
-            <div class="profile-card">
-                <h2>👤 Información Personal</h2>
-                <div class="profile-info">
-                    <div class="info-item">
-                        <span class="label">Teléfono:</span>
-                        <span id="user-phone" class="value">0424-1234567</span>
+            <!-- Login Section -->
+            <div id="login-section" class="profile-card" style="display: none;">
+                <h2>🔑 Iniciar Sesión</h2>
+                <div class="login-form">
+                    <input type="tel" id="login-phone" placeholder="Número de teléfono" maxlength="11">
+                    <input type="password" id="login-pin" placeholder="PIN de 4 dígitos" maxlength="4">
+                    <button onclick="loginUser()" class="profile-btn">Iniciar Sesión</button>
+                    <p style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: #666;">
+                        ¿No tienes cuenta? <a href="comprar-cartones.html" style="color: var(--accent-color);">Compra cartones</a> para registrarte
+                    </p>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div id="profile-content" style="display: none;">
+                <!-- Información Personal -->
+                <div class="profile-card">
+                    <h2>👤 Información Personal</h2>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <span class="label">Teléfono:</span>
+                            <span id="user-phone" class="value">0424-1234567</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Nombre:</span>
+                            <input type="text" id="user-name" class="editable-input" value="Jugador Pro">
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Registro:</span>
+                            <span id="register-date" class="value">15/01/2024</span>
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <span class="label">Nombre:</span>
-                        <input type="text" id="user-name" class="editable-input" value="Jugador Pro">
-                    </div>
-                    <div class="info-item">
-                        <span class="label">Registro:</span>
-                        <span id="register-date" class="value">15/01/2024</span>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick="saveProfile()" class="profile-btn">Guardar Cambios</button>
+                        <button onclick="logoutUser()" class="profile-btn" style="background: #dc3545;">Cerrar Sesión</button>
                     </div>
                 </div>
-                <button onclick="saveProfile()" class="profile-btn">Guardar Cambios</button>
-            </div>
 
             <!-- Estadísticas de Juego -->
             <div class="profile-card">
@@ -137,6 +155,7 @@
                     <button onclick="reportProblem()" class="support-btn">Reportar Problema</button>
                     <button onclick="showFAQ()" class="support-btn">Ayuda/FAQ</button>
                 </div>
+            </div>
             </div>
         </main>
     </div>
@@ -387,12 +406,36 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .login-form input {
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .login-form input:focus {
+            border-color: var(--accent-color);
+            outline: none;
+        }
+        
+        .login-form input[type="password"] {
+            text-align: center;
+            letter-spacing: 0.5rem;
+            font-size: 1.2rem;
+        }
     </style>
 
     <!-- Firebase Configuration -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-      import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+      import { getDatabase, ref, onValue, get, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
@@ -407,7 +450,7 @@
       const app = initializeApp(firebaseConfig);
       const database = getDatabase(app);
       
-      window.firebase = { database, ref, onValue };
+      window.firebase = { database, ref, onValue, get, set };
       console.log('Firebase inicializado en perfil.html');
     </script>
 
@@ -437,93 +480,160 @@
 
         // Inicializar perfil
         document.addEventListener('DOMContentLoaded', () => {
-            // Esperar a que Firebase esté disponible
             setTimeout(() => {
-                checkUserRegistration();
+                checkUserSession();
             }, 1000);
         });
         
-        // Verificar si el usuario se ha registrado
-        function checkUserRegistration() {
-            if (!window.firebase) {
-                showNoProfileMessage();
+        // Verificar sesión del usuario
+        function checkUserSession() {
+            const isLoggedIn = localStorage.getItem('userLoggedIn');
+            const userPhone = localStorage.getItem('userPhone');
+            
+            if (isLoggedIn && userPhone) {
+                loadUserProfile(userPhone);
+            } else {
+                showLoginSection();
+            }
+        }
+        
+        function showLoginSection() {
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('profile-content').style.display = 'none';
+        }
+        
+        function showProfileContent() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('profile-content').style.display = 'block';
+        }
+        
+        async function loginUser() {
+            const phone = document.getElementById('login-phone').value;
+            const pin = document.getElementById('login-pin').value;
+            
+            if (phone.length !== 11 || !phone.startsWith('04')) {
+                showPopup('Error', 'Ingresa un número válido (04241234567)');
                 return;
             }
             
-            const { database, ref, onValue } = window.firebase;
-            onValue(ref(database, 'purchases'), (snapshot) => {
-                const firebasePurchases = snapshot.val();
-                const allPurchases = firebasePurchases ? Object.values(firebasePurchases) : [];
+            if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+                showPopup('Error', 'Ingresa un PIN de 4 dígitos');
+                return;
+            }
             
-                if (allPurchases.length === 0) {
-                    showNoProfileMessage();
+            const { database, ref, get } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            try {
+                const snapshot = await get(ref(database, `users/${cleanPhone}`));
+                const userData = snapshot.val();
+                
+                if (userData && userData.pin === hashPIN(pin)) {
+                    localStorage.setItem('userPhone', phone);
+                    localStorage.setItem('userLoggedIn', 'true');
+                    loadUserProfile(phone);
                 } else {
-                    loadUserDataFromPurchases(allPurchases);
-                    showHistory('purchases');
+                    showPopup('Error de Acceso', 'Teléfono o PIN incorrecto');
                 }
+            } catch (error) {
+                showPopup('Error', 'Error al iniciar sesión: ' + error.message);
+            }
+        }
+        
+        function logoutUser() {
+            localStorage.removeItem('userPhone');
+            localStorage.removeItem('userLoggedIn');
+            showLoginSection();
+        }
+        
+        async function loadUserProfile(phone) {
+            showProfileContent();
+            
+            const { database, ref, onValue, get } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            // Cargar datos del usuario
+            const userSnapshot = await get(ref(database, `users/${cleanPhone}`));
+            const userData = userSnapshot.val();
+            
+            if (userData) {
+                document.getElementById('user-phone').textContent = phone;
+                document.getElementById('user-name').value = userData.name || `Usuario ${phone.slice(-4)}`;
+                document.getElementById('register-date').textContent = new Date(userData.createdDate).toLocaleDateString('es-ES');
+            }
+            
+            // Cargar compras del usuario
+            onValue(ref(database, 'purchases'), (snapshot) => {
+                const allPurchases = snapshot.val() ? Object.values(snapshot.val()) : [];
+                const userPurchases = allPurchases.filter(p => p.phone === phone);
+                const verifiedPurchases = userPurchases.filter(p => p.status === 'verified');
+                
+                const totalTickets = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0);
+                const totalSpent = verifiedPurchases.reduce((sum, p) => sum + p.amount, 0);
+                
+                document.getElementById('total-tickets').textContent = totalTickets;
+                document.getElementById('money-spent').textContent = `BsF ${totalSpent.toLocaleString()}`;
+                
+                // Actualizar historial
+                userData.purchases = userPurchases.map(p => ({
+                    date: p.date,
+                    tickets: p.cartones,
+                    amount: p.amount
+                }));
+                
+                userData.payments = userPurchases.map(p => ({
+                    date: p.date,
+                    ref: p.ref,
+                    status: p.status === 'verified' ? 'Verificado' : p.status === 'pending' ? 'Pendiente' : 'Rechazado'
+                }));
+            });
+            
+            // Cargar premios ganados
+            onValue(ref(database, 'winners'), (snapshot) => {
+                const allWinners = snapshot.val() ? Object.values(snapshot.val()) : [];
+                const userWinners = allWinners.filter(w => w.phone === phone);
+                const totalPrizes = userWinners.reduce((sum, w) => sum + (w.amount || 0), 0);
+                
+                document.getElementById('bingos-won').textContent = userWinners.length;
+                document.getElementById('prizes-won').textContent = `BsF ${totalPrizes.toLocaleString()}`;
             });
         }
         
-        // Procesar datos de compras
-        function loadUserDataFromPurchases(allPurchases) {
-        
-        // Mostrar mensaje de no perfil
-        function showNoProfileMessage() {
-            const profileSection = document.querySelector('.profile-section');
-            profileSection.innerHTML = `
-                <div class="profile-card" style="text-align: center; padding: 2rem;">
-                    <h2>👤 Sin Perfil</h2>
-                    <p style="color: #666; margin-bottom: 1.5rem;">Necesitas registrarte comprando cartones para ver tu perfil.</p>
-                    <a href="comprar-cartones.html" class="cta-button" style="display: inline-block; padding: 0.8rem 2rem; text-decoration: none;">Comprar Cartones</a>
-                </div>
-            `;
-        }
-
-        // Cargar datos del usuario desde Firebase
-        function loadUserData() {
-            if (!window.firebase) {
-                console.error('❌ Firebase no disponible en perfil.html');
-                return;
+        function hashPIN(pin) {
+            let hash = 0;
+            for (let i = 0; i < pin.length; i++) {
+                const char = pin.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
             }
-            
-            const { database, ref, onValue } = window.firebase;
-            onValue(ref(database, 'purchases'), (snapshot) => {
-                const firebasePurchases = snapshot.val();
-                const allPurchases = firebasePurchases ? Object.values(firebasePurchases) : [];
-            const userPhone = allPurchases[0].phone;
-            const userPurchases = allPurchases.filter(p => p.phone === userPhone);
-            const verifiedUserPurchases = userPurchases.filter(p => p.status === 'verified');
-            
-            const totalTickets = verifiedUserPurchases.reduce((sum, p) => sum + p.cartones, 0);
-            const totalSpent = verifiedUserPurchases.reduce((sum, p) => sum + p.amount, 0);
-            const firstPurchase = userPurchases.sort((a, b) => new Date(a.date) - new Date(b.date))[0];
-            
-            document.getElementById('user-phone').textContent = userPhone;
-            document.getElementById('user-name').value = `Usuario ${userPhone.slice(-4)}`;
-            document.getElementById('register-date').textContent = firstPurchase.date;
-            document.getElementById('total-tickets').textContent = totalTickets;
-            document.getElementById('bingos-won').textContent = '0';
-            document.getElementById('money-spent').textContent = `BsF ${totalSpent.toLocaleString()}`;
-            document.getElementById('prizes-won').textContent = 'BsF 0';
-            
-            // Actualizar historial con datos reales
-            userData.purchases = userPurchases.map(p => ({
-                date: p.date,
-                tickets: p.cartones,
-                amount: p.amount
-            }));
-            
-            userData.payments = userPurchases.map(p => ({
-                date: p.date,
-                ref: p.ref,
-                status: p.status === 'verified' ? 'Verificado' : p.status === 'pending' ? 'Pendiente' : 'Rechazado'
-            }));
+            return hash.toString();
         }
 
         // Guardar perfil
-        function saveProfile() {
-            userData.name = document.getElementById('user-name').value;
-            showPopup('Perfil Actualizado', 'Los cambios han sido guardados correctamente.');
+        async function saveProfile() {
+            const phone = localStorage.getItem('userPhone');
+            const name = document.getElementById('user-name').value;
+            
+            if (!phone || !window.firebase) {
+                showPopup('Error', 'Error al guardar perfil');
+                return;
+            }
+            
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            try {
+                const snapshot = await get(ref(database, `users/${cleanPhone}`));
+                const userData = snapshot.val();
+                
+                if (userData) {
+                    userData.name = name;
+                    await set(ref(database, `users/${cleanPhone}`), userData);
+                    showPopup('Perfil Actualizado', 'Los cambios han sido guardados correctamente.');
+                }
+            } catch (error) {
+                showPopup('Error', 'Error al guardar: ' + error.message);
+            }
         }
 
         // Mostrar historial

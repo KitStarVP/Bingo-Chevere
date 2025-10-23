@@ -243,7 +243,7 @@
             </div>
 
             <div class="admin-card">
-                <h2>Gestión de Usuarios</h2>
+                <h2>👥 Gestión de Usuarios</h2>
                 <div class="user-search">
                     <select id="user-dropdown" onchange="selectUserFromDropdown()">
                         <option value="">Seleccionar jugador...</option>
@@ -251,7 +251,25 @@
                     <span style="margin: 0 0.5rem; color: #666;">o</span>
                     <input type="tel" id="user-phone-search" placeholder="Buscar por teléfono">
                     <button onclick="searchUser()" class="admin-btn small">Buscar</button>
+                    <button onclick="loadAllUsers()" class="admin-btn small">Actualizar Lista</button>
                 </div>
+                
+                <!-- Estadísticas de Usuarios -->
+                <div class="users-stats">
+                    <div class="user-stat-box">
+                        <span class="stat-number" id="total-users">0</span>
+                        <span class="stat-label">Usuarios Registrados</span>
+                    </div>
+                    <div class="user-stat-box">
+                        <span class="stat-number" id="active-users">0</span>
+                        <span class="stat-label">Usuarios Activos</span>
+                    </div>
+                    <div class="user-stat-box">
+                        <span class="stat-number" id="vip-users">0</span>
+                        <span class="stat-label">Usuarios VIP</span>
+                    </div>
+                </div>
+                
                 <div id="user-profile" class="user-profile" style="display: none;">
                     <!-- Perfil del usuario se cargará aquí -->
                 </div>
@@ -705,6 +723,131 @@
             gap: 0.5rem;
             margin-bottom: 1rem;
             align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .users-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .user-stat-box {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .user-stat-box .stat-number {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        
+        .user-stat-box .stat-label {
+            font-size: 0.7rem;
+            color: #666;
+        }
+        
+        .user-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        
+        .user-action-btn {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .user-action-btn.edit {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .user-action-btn.reset-pin {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .user-action-btn.block {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .user-action-btn.unblock {
+            background: #28a745;
+            color: white;
+        }
+        
+        .user-action-btn.delete {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .user-action-btn.gift {
+            background: #fd7e14;
+            color: white;
+        }
+        
+        .user-level {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        .user-level.normal {
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .user-level.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .user-level.vip {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .user-level.premium {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .user-activity {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .activity-item {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 0.3rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .activity-date {
+            font-weight: bold;
+            color: var(--accent-color);
         }
 
         .user-search select {
@@ -1628,8 +1771,10 @@
             setTimeout(() => {
                 try {
                     if (window.firebase) {
+                        loadInitialAdminState();
                         loadPurchasesFromFirebase();
                         loadWinnersFromFirebase();
+                        loadAllUsers();
                     }
                     
                     updatePaymentStats();
@@ -1653,40 +1798,52 @@
             }, 1000);
         });
         
-        // Restaurar estado del juego desde Firebase
-        function restoreGameState() {
+        // Cargar estado inicial del admin desde Firebase
+        function loadInitialAdminState() {
             if (!window.firebase) {
-                console.error('❌ Firebase no disponible - no se puede restaurar estado');
+                console.log('Firebase no disponible para cargar estado inicial del admin');
                 return;
             }
             
-            const { database, ref, onValue } = window.firebase;
-            onValue(ref(database, 'gameState'), (snapshot) => {
-                const gameState = snapshot.val() || {};
-                console.log('Restaurando estado del juego desde Firebase:', gameState);
+            const { database, ref, get } = window.firebase;
             
-                if (gameState.gameActive || gameState.isPaused) {
-                gameActive = gameState.gameActive && !gameState.isPaused;
-                currentRound = gameState.currentRound || 1;
-                selectedBingoIndex = gameState.selectedBingoIndex || -1;
-                calledNumbers = gameState.calledNumbers || [];
-                currentPattern = gameState.currentPattern || null;
-                
-                // Mostrar botones correctos
-                document.getElementById('start-round').style.display = 'none';
-                document.getElementById('pause-round').style.display = 'inline-block';
-                
-                if (gameState.isPaused) {
-                    document.getElementById('pause-round').textContent = 'Reanudar Ronda';
-                    console.log('Juego pausado');
-                } else {
-                    document.getElementById('pause-round').textContent = 'Pausar Ronda';
-                    console.log('Juego activo - esperando comando manual');
-                    // NO iniciar automáticamente - solo el admin puede iniciar
+            // Cargar estado del juego
+            get(ref(database, 'gameState')).then((snapshot) => {
+                const gameState = snapshot.val();
+                if (gameState) {
+                    gameActive = gameState.gameActive || false;
+                    currentRound = gameState.currentRound || 1;
+                    selectedBingoIndex = gameState.selectedBingoIndex || -1;
+                    currentPattern = gameState.currentPattern;
+                    
+                    console.log('✅ Estado inicial del admin cargado:', gameState);
+                    
+                    // Actualizar botones según el estado
+                    if (gameActive || gameState.isPaused) {
+                        document.getElementById('start-round').style.display = 'none';
+                        document.getElementById('pause-round').style.display = 'inline-block';
+                        
+                        if (gameState.isPaused) {
+                            document.getElementById('pause-round').textContent = '▶️ Reanudar';
+                        } else {
+                            document.getElementById('pause-round').textContent = '⏸️ Pausar';
+                        }
+                    } else {
+                        document.getElementById('start-round').style.display = 'inline-block';
+                        document.getElementById('pause-round').style.display = 'none';
+                    }
+                    
+                    updateStats();
+                    renderSchedule();
                 }
-                
-                updateStats();
-                renderSchedule();
+            });
+            
+            // Cargar números cantados
+            get(ref(database, 'calledNumbers')).then((snapshot) => {
+                const numbers = snapshot.val();
+                if (numbers && Array.isArray(numbers)) {
+                    calledNumbers = [...numbers];
+                    console.log('✅ Números cantados cargados en admin:', numbers.length);
                 }
             });
         }
@@ -3028,51 +3185,138 @@
         // Actualizar stats cada 10 segundos
         setInterval(updateStats, 10000);
         
+        // Cargar todos los usuarios
+        function loadAllUsers() {
+            if (!window.firebase) {
+                console.error('❌ Firebase no disponible');
+                showPopup('Error', 'Firebase no disponible');
+                return;
+            }
+            
+            const { database, ref, onValue } = window.firebase;
+            onValue(ref(database, 'users'), (snapshot) => {
+                const users = snapshot.val();
+                if (users) {
+                    updateUserDropdown(users);
+                    updateUserStats(users);
+                    showPopup('Lista Actualizada', `${Object.keys(users).length} usuarios cargados`);
+                } else {
+                    // Limpiar dropdown si no hay usuarios
+                    const dropdown = document.getElementById('user-dropdown');
+                    dropdown.innerHTML = '<option value="">No hay usuarios registrados</option>';
+                    showPopup('Sin Usuarios', 'No se encontraron usuarios registrados');
+                }
+            });
+        }
+        
+        function updateUserDropdown(users) {
+            const dropdown = document.getElementById('user-dropdown');
+            dropdown.innerHTML = '<option value="">Seleccionar jugador...</option>';
+            
+            Object.entries(users).forEach(([phone, userData]) => {
+                const option = document.createElement('option');
+                option.value = userData.phone;
+                option.textContent = `${userData.phone} - ${userData.name || 'Sin nombre'}`;
+                dropdown.appendChild(option);
+            });
+        }
+        
+        function updateUserStats(users) {
+            const userArray = Object.values(users);
+            const totalUsers = userArray.length;
+            const activeUsers = userArray.filter(u => !u.blocked && u.lastActivity).length;
+            const vipUsers = userArray.filter(u => getUserLevel(u) === 'VIP' || getUserLevel(u) === 'PREMIUM').length;
+            
+            document.getElementById('total-users').textContent = totalUsers;
+            document.getElementById('active-users').textContent = activeUsers;
+            document.getElementById('vip-users').textContent = vipUsers;
+        }
+        
         // Buscar usuario
-        function searchUser() {
+        async function searchUser() {
             const phone = document.getElementById('user-phone-search').value.trim();
             if (!phone) {
                 showPopup('Error', 'Ingresa un número de teléfono');
                 return;
             }
             
-            const userProfile = getUserProfile(phone);
-            if (userProfile) {
-                displayUserProfile(userProfile);
-            } else {
-                showPopup('Usuario no encontrado', 'No se encontraron registros para este teléfono');
-                document.getElementById('user-profile').style.display = 'none';
+            if (!window.firebase) {
+                showPopup('Error', 'Firebase no disponible');
+                return;
+            }
+            
+            const { database, ref, get } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            try {
+                const snapshot = await get(ref(database, `users/${cleanPhone}`));
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    await displayUserProfile(userData);
+                } else {
+                    showPopup('Usuario no encontrado', 'No se encontraron registros para este teléfono');
+                    document.getElementById('user-profile').style.display = 'none';
+                }
+            } catch (error) {
+                showPopup('Error', 'Error buscando usuario: ' + error.message);
             }
         }
         
-        // Obtener perfil del usuario
-        function getUserProfile(phone) {
-            const allPurchases = [...allPayments];
-            const userPurchases = allPurchases.filter(p => p.phone === phone);
+        // Obtener perfil completo del usuario
+        async function getUserProfile(phone) {
+            if (!window.firebase) return null;
             
-            if (userPurchases.length === 0) return null;
+            const { database, ref, get } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
             
-            // Obtener cartones del usuario (simulado por teléfono)
-            const userCards = getUserCards(phone);
-            
-            const totalSpent = userPurchases.reduce((sum, p) => p.status === 'verified' ? sum + p.amount : sum, 0);
-            const totalCards = userPurchases.reduce((sum, p) => p.status === 'verified' ? sum + p.cartones : sum, 0);
-            const vigentCards = userCards.filter(c => c.status === 'vigente').length;
-            const enUsoCards = userCards.filter(c => c.status === 'en_uso').length;
-            const vencidoCards = userCards.filter(c => c.status === 'vencido').length;
-            
-            return {
-                phone: phone,
-                firstPurchase: userPurchases[0].date,
-                totalPurchases: userPurchases.length,
-                totalSpent: totalSpent,
-                totalCards: totalCards,
-                vigentCards: vigentCards,
-                enUsoCards: enUsoCards,
-                vencidoCards: vencidoCards,
-                purchases: userPurchases.sort((a, b) => new Date(b.date) - new Date(a.date)),
-                lastActivity: userPurchases[userPurchases.length - 1].date
-            };
+            try {
+                // Datos del usuario
+                const userSnapshot = await get(ref(database, `users/${cleanPhone}`));
+                if (!userSnapshot.exists()) return null;
+                
+                const userData = userSnapshot.val();
+                
+                // Compras del usuario
+                const purchasesSnapshot = await get(ref(database, 'purchases'));
+                const allPurchases = purchasesSnapshot.val() ? Object.values(purchasesSnapshot.val()) : [];
+                const userPurchases = allPurchases.filter(p => p.phone === phone);
+                
+                // Cartones del usuario
+                const cardsSnapshot = await get(ref(database, `playerCards/${cleanPhone}`));
+                const userCards = cardsSnapshot.val() || [];
+                
+                // Premios del usuario
+                const winnersSnapshot = await get(ref(database, 'winners'));
+                const allWinners = winnersSnapshot.val() ? Object.values(winnersSnapshot.val()) : [];
+                const userWinners = allWinners.filter(w => w.phone === phone);
+                
+                const verifiedPurchases = userPurchases.filter(p => p.status === 'verified');
+                const totalSpent = verifiedPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+                const totalCards = verifiedPurchases.reduce((sum, p) => sum + (p.cartones || 0), 0);
+                const totalPrizes = userWinners.reduce((sum, w) => sum + (w.amount || 0), 0);
+                
+                const vigentCards = Array.isArray(userCards) ? userCards.filter(c => c.status === 'vigente').length : 0;
+                const enUsoCards = Array.isArray(userCards) ? userCards.filter(c => c.status === 'en_uso').length : 0;
+                const vencidoCards = Array.isArray(userCards) ? userCards.filter(c => c.status === 'vencido').length : 0;
+                
+                return {
+                    ...userData,
+                    totalPurchases: userPurchases.length || 0,
+                    totalSpent: totalSpent || 0,
+                    totalCards: totalCards || 0,
+                    totalPrizes: totalPrizes || 0,
+                    vigentCards: vigentCards || 0,
+                    enUsoCards: enUsoCards || 0,
+                    vencidoCards: vencidoCards || 0,
+                    bingosWon: userWinners.length || 0,
+                    purchases: userPurchases.sort((a, b) => new Date(b.date) - new Date(a.date)) || [],
+                    winners: userWinners.sort((a, b) => (b.id || 0) - (a.id || 0)) || [],
+                    lastActivity: userPurchases.length > 0 ? userPurchases[userPurchases.length - 1].date : (userData.createdDate || 'N/A')
+                };
+            } catch (error) {
+                console.error('Error obteniendo perfil:', error);
+                return null;
+            }
         }
         
         // Simular cartones del usuario
@@ -3087,63 +3331,152 @@
             ];
         }
         
-        // Mostrar perfil del usuario
-        function displayUserProfile(profile) {
+        // Mostrar perfil completo del usuario
+        async function displayUserProfile(profile) {
             const container = document.getElementById('user-profile');
             container.style.display = 'block';
             
+            const userLevel = getUserLevel(profile);
+            const levelClass = userLevel.toLowerCase().replace(' ', '-');
+            
             container.innerHTML = `
-                <h4 style="margin: 0 0 1rem 0; color: var(--accent-color);">Usuario: ${profile.phone}</h4>
+                <div class="user-header">
+                    <h4 style="margin: 0; color: var(--accent-color); display: inline-block;">
+                        👤 ${profile.name || 'Usuario'}
+                        <span class="user-level ${levelClass}">${userLevel}</span>
+                    </h4>
+                    <p style="margin: 0.2rem 0; color: #666; font-size: 0.9rem;">
+                        📞 ${profile.phone} | 📅 Registro: ${new Date(profile.createdDate).toLocaleDateString('es-ES')}
+                        ${profile.blocked ? ' | 🚫 BLOQUEADO' : ''}
+                    </p>
+                </div>
                 
-                <div class="user-info">
-                    <div><strong>Registro:</strong> ${profile.firstPurchase}</div>
-                    <div><strong>Última actividad:</strong> ${profile.lastActivity}</div>
+                <div class="user-actions">
+                    <button class="user-action-btn edit" onclick="editUser('${profile.phone}')">✏️ Editar</button>
+                    <button class="user-action-btn reset-pin" onclick="resetUserPIN('${profile.phone}')">🔐 Reset PIN</button>
+                    <button class="user-action-btn ${profile.blocked ? 'unblock' : 'block'}" onclick="${profile.blocked ? 'unblockUser' : 'blockUser'}('${profile.phone}')">
+                        ${profile.blocked ? '✅ Desbloquear' : '🚫 Bloquear'}
+                    </button>
+                    <button class="user-action-btn gift" onclick="giftCards('${profile.phone}')">🎁 Regalar</button>
+                    <button class="user-action-btn delete" onclick="deleteUser('${profile.phone}')">🗑️ Eliminar</button>
+                    <button class="user-action-btn edit" onclick="exportUserData('${profile.phone}')">📤 Exportar</button>
                 </div>
                 
                 <div class="user-cards-grid">
                     <div class="user-stat">
-                        <span class="user-stat-number">${profile.totalCards}</span>
-                        <span class="user-stat-label">Total Comprados</span>
+                        <span class="user-stat-number">${profile.totalCards || 0}</span>
+                        <span class="user-stat-label">Cartones Comprados</span>
                     </div>
                     <div class="user-stat">
-                        <span class="user-stat-number">${profile.vigentCards}</span>
+                        <span class="user-stat-number">${profile.vigentCards || 0}</span>
                         <span class="user-stat-label">Vigentes</span>
                     </div>
                     <div class="user-stat">
-                        <span class="user-stat-number">${profile.enUsoCards}</span>
+                        <span class="user-stat-number">${profile.enUsoCards || 0}</span>
                         <span class="user-stat-label">En Uso</span>
                     </div>
                     <div class="user-stat">
-                        <span class="user-stat-number">${profile.vencidoCards}</span>
+                        <span class="user-stat-number">${profile.vencidoCards || 0}</span>
                         <span class="user-stat-label">Vencidos</span>
                     </div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 1rem 0;">
                     <div class="user-stat">
-                        <span class="user-stat-number">${profile.totalPurchases}</span>
-                        <span class="user-stat-label">Compras Realizadas</span>
+                        <span class="user-stat-number">BsF ${(profile.totalSpent || 0).toLocaleString()}</span>
+                        <span class="user-stat-label">Total Gastado</span>
                     </div>
                     <div class="user-stat">
-                        <span class="user-stat-number">BsF ${profile.totalSpent}</span>
-                        <span class="user-stat-label">Total Gastado</span>
+                        <span class="user-stat-number">${profile.bingosWon || 0}</span>
+                        <span class="user-stat-label">Bingos Ganados</span>
+                    </div>
+                    <div class="user-stat">
+                        <span class="user-stat-number">BsF ${(profile.totalPrizes || 0).toLocaleString()}</span>
+                        <span class="user-stat-label">Premios Ganados</span>
                     </div>
                 </div>
                 
-                <h5 style="margin: 1rem 0 0.5rem 0;">Historial de Compras:</h5>
-                <div class="user-history">
-                    ${profile.purchases.map(purchase => `
-                        <div class="history-item">
-                            <div class="history-date">${purchase.date} - Ref: ${purchase.ref}</div>
-                            <div>${purchase.cartones} cartones - BsF ${purchase.amount} - 
-                                <span style="color: ${purchase.status === 'verified' ? '#28a745' : purchase.status === 'rejected' ? '#dc3545' : '#ffc107'}">
-                                    ${purchase.status.toUpperCase()}
-                                </span>
-                            </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <h5 style="margin: 0 0 0.5rem 0; color: var(--accent-color);">💰 Últimas Compras:</h5>
+                        <div class="user-history">
+                            ${(profile.purchases || []).slice(0, 5).map(purchase => `
+                                <div class="history-item">
+                                    <div class="history-date">${purchase.date}</div>
+                                    <div>${purchase.cartones} cartones - BsF ${purchase.amount}</div>
+                                    <div style="color: ${getStatusColor(purchase.status)}">${purchase.status.toUpperCase()}</div>
+                                </div>
+                            `).join('') || '<p style="color: #666; font-size: 0.8rem;">Sin compras</p>'}
                         </div>
-                    `).join('')}
+                    </div>
+                    <div>
+                        <h5 style="margin: 0 0 0.5rem 0; color: var(--accent-color);">🏆 Últimos Premios:</h5>
+                        <div class="user-history">
+                            ${(profile.winners || []).slice(0, 5).map(winner => `
+                                <div class="history-item">
+                                    <div class="history-date">${winner.date}</div>
+                                    <div>${winner.type} - BsF ${winner.amount}</div>
+                                </div>
+                            `).join('') || '<p style="color: #666; font-size: 0.8rem;">Sin premios</p>'}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="user-activity">
+                    <h5 style="margin: 0 0 0.5rem 0; color: var(--accent-color);">📊 Actividad Reciente:</h5>
+                    ${generateUserActivity(profile)}
                 </div>
             `;
+        }
+        
+        function getUserLevel(profile) {
+            const totalSpent = profile.totalSpent || 0;
+            const totalPurchases = profile.totalPurchases || 0;
+            
+            if (totalSpent >= 5000) return 'PREMIUM';
+            if (totalSpent >= 2000) return 'VIP';
+            if (totalPurchases >= 5) return 'ACTIVO';
+            return 'NORMAL';
+        }
+        
+        function getStatusColor(status) {
+            switch(status) {
+                case 'verified': return '#28a745';
+                case 'rejected': return '#dc3545';
+                case 'pending': return '#ffc107';
+                default: return '#666';
+            }
+        }
+        
+        function generateUserActivity(profile) {
+            const activities = [];
+            
+            // Agregar compras recientes
+            (profile.purchases || []).slice(0, 3).forEach(purchase => {
+                activities.push({
+                    date: purchase.date || 'N/A',
+                    action: `Compró ${purchase.cartones || 0} cartones por BsF ${purchase.amount || 0}`,
+                    type: 'purchase'
+                });
+            });
+            
+            // Agregar premios recientes
+            (profile.winners || []).slice(0, 2).forEach(winner => {
+                activities.push({
+                    date: winner.date || 'N/A',
+                    action: `Ganó ${winner.type || 'Premio'} - BsF ${winner.amount || 0}`,
+                    type: 'win'
+                });
+            });
+            
+            // Ordenar por fecha
+            activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            return activities.slice(0, 5).map(activity => `
+                <div class="activity-item">
+                    <span class="activity-date">${activity.date}</span> - ${activity.action}
+                </div>
+            `).join('') || '<p style="color: #666; font-size: 0.8rem;">Sin actividad reciente</p>';
         }
         
         // Permitir buscar con Enter
@@ -3162,7 +3495,7 @@
         
         document.getElementById('winner-date-filter').addEventListener('change', filterWinners);
         
-        // Función faltante para dropdown de usuarios
+        // Función para dropdown de usuarios
         function selectUserFromDropdown() {
             const dropdown = document.getElementById('user-dropdown');
             const selectedPhone = dropdown.value;
@@ -3170,6 +3503,144 @@
                 document.getElementById('user-phone-search').value = selectedPhone;
                 searchUser();
             }
+        }
+        
+        // Funciones de gestión de usuarios
+        async function editUser(phone) {
+            const newName = prompt('Nuevo nombre para el usuario:', 'Usuario ' + phone.slice(-4));
+            if (!newName) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            try {
+                const snapshot = await get(ref(database, `users/${cleanPhone}`));
+                const userData = snapshot.val();
+                userData.name = newName;
+                await set(ref(database, `users/${cleanPhone}`), userData);
+                showPopup('Usuario Actualizado', `Nombre cambiado a: ${newName}`);
+                searchUser();
+            } catch (error) {
+                showPopup('Error', 'Error actualizando usuario: ' + error.message);
+            }
+        }
+        
+        async function resetUserPIN(phone) {
+            if (!confirm('¿Resetear PIN del usuario? Se generará un PIN temporal: 0000')) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            try {
+                const snapshot = await get(ref(database, `users/${cleanPhone}`));
+                const userData = snapshot.val();
+                userData.pin = hashPIN('0000');
+                userData.pinReset = true;
+                userData.resetDate = new Date().toISOString();
+                await set(ref(database, `users/${cleanPhone}`), userData);
+                showPopup('PIN Reseteado', 'PIN temporal: 0000\nEl usuario debe cambiarlo en su próximo acceso');
+            } catch (error) {
+                showPopup('Error', 'Error reseteando PIN: ' + error.message);
+            }
+        }
+        
+        async function blockUser(phone) {
+            if (!confirm('¿Bloquear usuario? No podrá realizar compras')) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            try {
+                const snapshot = await get(ref(database, `users/${cleanPhone}`));
+                const userData = snapshot.val();
+                userData.blocked = true;
+                userData.blockDate = new Date().toISOString();
+                await set(ref(database, `users/${cleanPhone}`), userData);
+                showPopup('Usuario Bloqueado', 'El usuario no podrá realizar compras');
+                searchUser();
+            } catch (error) {
+                showPopup('Error', 'Error bloqueando usuario: ' + error.message);
+            }
+        }
+        
+        async function unblockUser(phone) {
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            try {
+                const snapshot = await get(ref(database, `users/${cleanPhone}`));
+                const userData = snapshot.val();
+                userData.blocked = false;
+                delete userData.blockDate;
+                await set(ref(database, `users/${cleanPhone}`), userData);
+                showPopup('Usuario Desbloqueado', 'El usuario puede realizar compras nuevamente');
+                searchUser();
+            } catch (error) {
+                showPopup('Error', 'Error desbloqueando usuario: ' + error.message);
+            }
+        }
+        
+        async function giftCards(phone) {
+            const quantity = prompt('¿Cuántos cartones regalar?', '1');
+            if (!quantity || isNaN(quantity) || quantity < 1) return;
+            
+            try {
+                generateCardsForPlayer(phone, parseInt(quantity));
+                showPopup('Cartones Regalados', `Se regalaron ${quantity} cartones a ${phone}`);
+            } catch (error) {
+                showPopup('Error', 'Error regalando cartones: ' + error.message);
+            }
+        }
+        
+        async function deleteUser(phone) {
+            if (!confirm('⚠️ ELIMINAR USUARIO\n\n¿Estás seguro? Esta acción eliminará:\n• Cuenta del usuario\n• Todos sus cartones\n• Historial de compras\n\nEsta acción NO se puede deshacer.')) return;
+            
+            const { database, ref, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            try {
+                // Eliminar usuario
+                await set(ref(database, `users/${cleanPhone}`), null);
+                // Eliminar cartones
+                await set(ref(database, `playerCards/${cleanPhone}`), null);
+                showPopup('Usuario Eliminado', 'Usuario y todos sus datos han sido eliminados');
+                document.getElementById('user-profile').style.display = 'none';
+                loadAllUsers();
+            } catch (error) {
+                showPopup('Error', 'Error eliminando usuario: ' + error.message);
+            }
+        }
+        
+        function exportUserData(phone) {
+            getUserProfile(phone).then(profile => {
+                if (!profile) return;
+                
+                const data = {
+                    usuario: profile,
+                    exportDate: new Date().toISOString(),
+                    exportedBy: 'Admin Panel'
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `usuario_${phone}_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showPopup('Datos Exportados', 'Archivo descargado exitosamente');
+            });
+        }
+        
+        function hashPIN(pin) {
+            let hash = 0;
+            for (let i = 0; i < pin.length; i++) {
+                const char = pin.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return hash.toString();
         }
         
         // Función para expirar todos los cartones activos en Firebase

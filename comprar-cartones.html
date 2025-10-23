@@ -86,10 +86,36 @@
         </a>
     </nav>
 
+    <!-- Modal PIN -->
+    <div id="pin-modal" class="pin-modal" style="display: none;">
+        <div class="pin-modal-content">
+            <div class="pin-header">
+                <h3 id="pin-title">📱 CREAR CUENTA DE USUARIO</h3>
+            </div>
+            <div class="pin-body">
+                <p>Teléfono: <strong id="pin-phone">0414-1234567</strong></p>
+                <div id="create-pin-section">
+                    <p>Para proteger tu cuenta, crea un PIN de 4 dígitos:</p>
+                    <input type="password" id="new-pin" placeholder="PIN" maxlength="4" pattern="[0-9]{4}" inputmode="numeric">
+                    <input type="password" id="confirm-pin" placeholder="Confirmar PIN" maxlength="4" pattern="[0-9]{4}" inputmode="numeric">
+                    <p class="pin-info">✅ Este PIN te permitirá:<br>• Ver tu perfil y premios<br>• Evitar que otros usen tu teléfono</p>
+                </div>
+                <div id="verify-pin-section" style="display: none;">
+                    <p>Teléfono ya registrado. Ingresa tu PIN de 4 dígitos:</p>
+                    <input type="password" id="verify-pin" placeholder="PIN" maxlength="4" pattern="[0-9]{4}" inputmode="numeric">
+                </div>
+            </div>
+            <div class="pin-actions">
+                <button id="pin-cancel" class="pin-btn secondary">Cancelar</button>
+                <button id="pin-confirm" class="pin-btn primary">Crear Cuenta y Continuar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase Configuration -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-      import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+      import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
@@ -104,9 +130,109 @@
       const app = initializeApp(firebaseConfig);
       const database = getDatabase(app);
       
-      window.firebase = { database, ref, set };
+      window.firebase = { database, ref, set, get };
       console.log('Firebase inicializado en comprar-cartones.html');
     </script>
+
+    <style>
+        .pin-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .pin-modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            animation: modalSlide 0.3s ease-out;
+        }
+        
+        .pin-header {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+        
+        .pin-header h3 {
+            margin: 0;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+        }
+        
+        .pin-body {
+            padding: 1rem;
+        }
+        
+        .pin-body p {
+            margin: 0 0 1rem 0;
+            text-align: center;
+        }
+        
+        .pin-body input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5rem;
+        }
+        
+        .pin-body input:focus {
+            border-color: var(--accent-color);
+            outline: none;
+        }
+        
+        .pin-info {
+            background: #e8f5e8;
+            padding: 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #2d5a2d;
+        }
+        
+        .pin-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .pin-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .pin-btn.primary {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .pin-btn.secondary {
+            background: #f8f9fa;
+            color: #666;
+        }
+        
+        @keyframes modalSlide {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
 
     <script src="js/popup.js"></script>
     <script src="js/compra.js"></script>

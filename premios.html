@@ -198,6 +198,11 @@
             background: var(--accent-color);
             color: white;
         }
+        
+        .schedule-status.paused {
+            background: #fd7e14;
+            color: white;
+        }
 
         .winners-list {
             display: flex;
@@ -304,15 +309,29 @@
         });
 
         function loadCurrentPrizes() {
-            // Obtener cartones vendidos verificados
-            const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
-            const totalCartones = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0);
-            const totalRecaudado = totalCartones * 60;
+            if (!window.firebase) {
+                // Fallback a localStorage
+                const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+                const totalCartones = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0);
+                calculatePrizes(totalCartones);
+                return;
+            }
             
-            // Descontar 25% del dueño, el restante (75%) se reparte en premios
+            const { database, ref, onValue } = window.firebase;
+            onValue(ref(database, 'purchases'), (snapshot) => {
+                const allPurchases = snapshot.val() ? Object.values(snapshot.val()) : [];
+                const verifiedPurchases = allPurchases.filter(p => p.status === 'verified');
+                const totalCartones = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0);
+                
+                calculatePrizes(totalCartones);
+            });
+        }
+        
+        function calculatePrizes(totalCartones) {
+            const totalRecaudado = totalCartones * 60;
             const totalParaPremios = totalRecaudado * 0.75;
-            const round1Prize = totalParaPremios * 0.25; // 25% del monto de premios
-            const round2Prize = totalParaPremios * 0.75; // 75% del monto de premios
+            const round1Prize = totalParaPremios * 0.25;
+            const round2Prize = totalParaPremios * 0.75;
             
             document.getElementById('total-daily-prize').textContent = `BsF ${totalParaPremios.toFixed(2)}`;
             document.getElementById('round1-prize').textContent = `BsF ${round1Prize.toFixed(2)}`;
@@ -320,12 +339,28 @@
         }
 
         function loadSchedule() {
-            // Obtener estado real del juego desde localStorage
+            if (!window.firebase) {
+                loadScheduleFromLocalStorage();
+                return;
+            }
+            
+            const { database, ref, onValue } = window.firebase;
+            onValue(ref(database, 'gameState'), (snapshot) => {
+                const gameState = snapshot.val() || {};
+                renderSchedule(gameState);
+            });
+        }
+        
+        function loadScheduleFromLocalStorage() {
             const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            renderSchedule(gameState);
+        }
+        
+        function renderSchedule(gameState) {
             const currentSelectedIndex = gameState.selectedBingoIndex || -1;
             const isGameActive = gameState.gameActive || false;
+            const isPaused = gameState.isPaused || false;
             
-            // Horarios predeterminados que coinciden con admin
             const defaultSchedules = [
                 { time: '1:00 PM', completed: false },
                 { time: '5:00 PM', completed: false },
@@ -340,8 +375,14 @@
                 item.className = 'schedule-item';
                 
                 let status = 'pending';
-                if (index === currentSelectedIndex && isGameActive) {
-                    status = 'active';
+                if (index === currentSelectedIndex) {
+                    if (isPaused) {
+                        status = 'paused';
+                    } else if (isGameActive) {
+                        status = 'active';
+                    } else {
+                        status = 'completed';
+                    }
                 } else if (schedule.completed) {
                     status = 'completed';
                 }
@@ -349,7 +390,8 @@
                 const statusText = {
                     'pending': 'Pendiente',
                     'completed': 'Completado',
-                    'active': 'En Curso'
+                    'active': 'En Curso',
+                    'paused': 'Pausado'
                 };
 
                 item.innerHTML = `
