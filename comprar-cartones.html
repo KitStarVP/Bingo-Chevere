@@ -110,5 +110,51 @@
 
     <script src="js/popup.js"></script>
     <script src="js/compra.js"></script>
+    
+    <!-- SCRIPT FUNCIONAL -->
+    <script>
+    setTimeout(() => {
+        const btn = document.getElementById('submit-purchase');
+        if (btn) {
+            btn.onclick = function() {
+                const phone = document.getElementById('phone-input').value;
+                const ref = document.getElementById('reference-input').value;
+                const qty = document.getElementById('quantity-input').value;
+                
+                if (phone.length !== 11 || !phone.startsWith('04')) {
+                    alert('Ingresa un teléfono válido (04241234567)');
+                    return;
+                }
+                
+                if (ref.length !== 4) {
+                    alert('Ingresa los 4 dígitos de la referencia');
+                    return;
+                }
+                
+                const purchase = {
+                    id: Date.now(),
+                    ref: ref,
+                    amount: qty * 60,
+                    cartones: parseInt(qty),
+                    phone: phone,
+                    date: new Date().toISOString().split('T')[0],
+                    status: 'pending',
+                    timestamp: Date.now()
+                };
+                
+                if (window.firebase) {
+                    const { database, ref: dbRef, set } = window.firebase;
+                    set(dbRef(database, `purchases/${purchase.id}`), purchase)
+                        .then(() => {
+                            window.location.href = `espera-confirmacion.html?ref=${ref}&cartones=${qty}&purchaseId=${purchase.id}`;
+                        })
+                        .catch(e => alert('Error: ' + e.message));
+                } else {
+                    alert('Error: Firebase no disponible');
+                }
+            };
+        }
+    }, 1000);
+    </script>
 </body>
 </html>
