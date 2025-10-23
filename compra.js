@@ -17,6 +17,8 @@ class PurchaseSystem {
     }
 
     bindElements() {
+        console.log('🔍 Buscando elementos...');
+        
         this.elements = {
             quantity: document.getElementById('quantity-input'),
             btnMinus: document.getElementById('btn-minus'),
@@ -28,15 +30,34 @@ class PurchaseSystem {
             reference: document.getElementById('reference-input'),
             submit: document.getElementById('submit-purchase')
         };
+        
+        console.log('📋 Elementos encontrados:', {
+            submit: !!this.elements.submit,
+            phone: !!this.elements.phone,
+            reference: !!this.elements.reference
+        });
     }
 
     setupEventListeners() {
+        console.log('🔗 Configurando event listeners...');
+        
         this.elements.btnMinus?.addEventListener('click', () => this.changeQuantity(-1));
         this.elements.btnPlus?.addEventListener('click', () => this.changeQuantity(1));
         this.elements.quantity?.addEventListener('input', () => this.updateTotals());
         this.elements.phone?.addEventListener('input', (e) => this.formatPhone(e));
         this.elements.reference?.addEventListener('input', (e) => this.formatReference(e));
-        this.elements.submit?.addEventListener('click', () => this.submitPurchase());
+        
+        // Verificar que el botón existe
+        if (this.elements.submit) {
+            console.log('✅ Botón de compra encontrado, agregando listener');
+            this.elements.submit.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🖱️ Botón de compra clickeado');
+                this.submitPurchase();
+            });
+        } else {
+            console.error('❌ Botón de compra NO encontrado');
+        }
     }
 
     formatCurrency(number) {
