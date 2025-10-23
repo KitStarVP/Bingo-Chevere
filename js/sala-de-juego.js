@@ -18,6 +18,7 @@ class GameRoom {
         this.setupAudio();
         this.loadCards();
         this.generateNumbersGrid();
+        this.loadInitialGameState();
         this.startGameMonitoring();
         this.updateGameInfo();
         this.loadCurrentPattern();
@@ -204,10 +205,6 @@ class GameRoom {
             if (!card.marked) card.marked = [];
             if (card.autoMode === undefined) card.autoMode = true;
             if (!card.id) card.id = Date.now() + Math.random();
-            
-            if (card.autoMode && this.calledNumbers.length > 0) {
-                this.autoMarkCard(card);
-            }
         });
 
         console.log('Cartones activos:', this.cards.length);
@@ -215,7 +212,15 @@ class GameRoom {
         if (this.cards.length === 0) {
             this.showWaitingState();
         } else {
-            this.renderCards();
+            // Auto-marcar después de cargar estado inicial
+            setTimeout(() => {
+                this.cards.forEach(card => {
+                    if (card.autoMode && this.calledNumbers.length > 0) {
+                        this.autoMarkCard(card);
+                    }
+                });
+                this.renderCards();
+            }, 1000);
         }
     }
 
@@ -627,6 +632,60 @@ class GameRoom {
     }
 
     // === GAME MONITORING ===
+    loadInitialGameState() {
+        if (!window.firebase) {
+            console.log('Firebase no disponible para cargar estado inicial');
+            return;
+        }
+        
+        const { database, ref, get } = window.firebase;
+        
+        // Cargar estado del juego
+        get(ref(database, 'gameState')).then((snapshot) => {
+            const gameState = snapshot.val();
+            if (gameState) {
+                this.gameActive = gameState.gameActive || false;
+                this.currentRound = gameState.currentRound || 1;
+                this.isPaused = gameState.isPaused || false;
+                this.currentPattern = gameState.currentPattern;
+                this.currentGameId = gameState.gameId;
+                
+                console.log('✅ Estado inicial cargado:', gameState);
+                
+                if (this.isPaused) {
+                    this.showPauseAlert();
+                }
+            }
+        });
+        
+        // Cargar números cantados
+        get(ref(database, 'calledNumbers')).then((snapshot) => {
+            const numbers = snapshot.val();
+            if (numbers && Array.isArray(numbers)) {
+                this.calledNumbers = [...numbers];
+                console.log('✅ Números cantados cargados:', numbers.length);
+                
+                // Marcar números en el historial
+                numbers.forEach(num => this.markNumberCalled(num));
+                
+                // Mostrar último número si existe
+                if (numbers.length > 0) {
+                    const lastNumber = numbers[numbers.length - 1];
+                    this.updateLastNumber(lastNumber);
+                }
+                
+                // Auto-marcar cartones con números ya cantados
+                this.cards.forEach(card => {
+                    if (card.autoMode) {
+                        this.autoMarkCard(card);
+                    }
+                });
+                
+                this.renderCards();
+            }
+        });
+    }
+    
     startGameMonitoring() {
         // Inicializar Firebase listeners
         this.initFirebaseListeners();
