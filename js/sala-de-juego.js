@@ -832,9 +832,8 @@ class GameRoom {
                 this.markNumberCalled(num);
                 this.autoMarkAllCards(num);
                 
-                if (isLatest) {
-                    this.speakNumber(num);
-                }
+                // Cantar TODOS los números nuevos, no solo el último
+                this.speakNumber(num);
             });
             
             this.saveCards();
@@ -939,11 +938,39 @@ class GameRoom {
 
     // === UI UPDATES ===
     updateGameInfo() {
+        // Obtener premios desde Firebase
+        if (window.firebase) {
+            const { database, ref, get } = window.firebase;
+            
+            get(ref(database, 'gameState')).then((snapshot) => {
+                const gameState = snapshot.val();
+                if (gameState && gameState.prizes) {
+                    const roundPrize = this.currentRound === 1 ? 
+                        gameState.prizes.round1 || 0 : 
+                        gameState.prizes.round2 || 0;
+                    
+                    document.getElementById('current-prize').textContent = Math.round(roundPrize);
+                } else {
+                    // Fallback: calcular desde compras verificadas
+                    this.calculatePrizeFromSales();
+                }
+            }).catch(() => {
+                // Si falla Firebase, usar fallback
+                this.calculatePrizeFromSales();
+            });
+        } else {
+            // Si no hay Firebase, usar fallback
+            this.calculatePrizeFromSales();
+        }
+        
+        document.getElementById('current-round').textContent = this.currentRound;
+    }
+    
+    calculatePrizeFromSales() {
         const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
         const totalSales = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0) * 60;
         const roundPrize = this.currentRound === 1 ? totalSales * 0.25 : totalSales * 0.50;
-
-        document.getElementById('current-round').textContent = this.currentRound;
+        
         document.getElementById('current-prize').textContent = Math.round(roundPrize);
     }
 
