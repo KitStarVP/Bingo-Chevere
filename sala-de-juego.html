@@ -16,8 +16,19 @@
     <header class="game-header">
         <div class="header-content">
             <div class="game-info">
-                <span class="round-info">R<span id="current-round">1</span>/2</span>
-                <span class="prize-info">BsF <span id="current-prize">450</span></span>
+                <div class="round-display">
+                    <div class="round-label">RONDA</div>
+                    <div class="round-number">
+                        <span id="current-round">1</span><span class="round-total">/2</span>
+                    </div>
+                </div>
+                <div class="prize-display">
+                    <div class="prize-label">PREMIO</div>
+                    <div class="prize-amount">
+                        <span class="currency">BsF</span>
+                        <span id="current-prize">0</span>
+                    </div>
+                </div>
             </div>
             <div class="numbers-display">
                 <div class="mini-ball" id="mini-ball" style="display: none;">
@@ -185,5 +196,73 @@
     </script>
 
     <script src="js/sala-de-juego.js"></script>
+    
+    <!-- Mantener pantalla activa -->
+    <script>
+        let wakeLock = null;
+        
+        // Activar al cargar la página
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Intentar Wake Lock API (navegadores modernos)
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Pantalla activa con Wake Lock API');
+                } else {
+                    // Fallback para navegadores antiguos
+                    createKeepAwakeVideo();
+                    console.log('Pantalla activa con video invisible');
+                }
+            } catch (err) {
+                // Si falla, usar video invisible
+                createKeepAwakeVideo();
+                console.log('Pantalla activa con video fallback');
+            }
+        });
+        
+        // Crear video invisible para mantener pantalla activa
+        function createKeepAwakeVideo() {
+            const video = document.createElement('video');
+            video.setAttribute('muted', '');
+            video.setAttribute('playsinline', '');
+            video.setAttribute('loop', '');
+            video.style.position = 'fixed';
+            video.style.top = '-1px';
+            video.style.left = '-1px';
+            video.style.width = '1px';
+            video.style.height = '1px';
+            video.style.opacity = '0';
+            video.style.pointerEvents = 'none';
+            
+            // Crear fuente de video (1 segundo de video negro)
+            const canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 1;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, 1, 1);
+            
+            const stream = canvas.captureStream(1);
+            video.srcObject = stream;
+            
+            document.body.appendChild(video);
+            video.play().catch(() => {});
+        }
+        
+        // Liberar al salir de la página
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        });
+        
+        window.addEventListener('beforeunload', () => {
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        });
+    </script>
 </body>
 </html>

@@ -155,13 +155,13 @@ class GameRoom {
         
         if (!window.firebase) {
             console.error('❌ Firebase no disponible - no se pueden cargar cartones');
-            this.showWaitingState();
+            this.showAccessBlocked();
             return;
         }
         
         if (!userPhone) {
             console.error('❌ Teléfono de usuario no encontrado');
-            this.showWaitingState();
+            this.showAccessBlocked();
             return;
         }
         
@@ -184,11 +184,11 @@ class GameRoom {
             } else {
                 console.log('⚠️ No hay cartones en Firebase para:', cleanPhone);
                 this.cards = [];
-                this.showWaitingState();
+                this.showAccessBlocked();
             }
         }, (error) => {
             console.error('❌ Error cargando cartones desde Firebase:', error);
-            this.showWaitingState();
+            this.showAccessBlocked();
         });
     }
     
@@ -210,7 +210,7 @@ class GameRoom {
         console.log('Cartones activos:', this.cards.length);
 
         if (this.cards.length === 0) {
-            this.showWaitingState();
+            this.showAccessBlocked();
         } else {
             // Auto-marcar después de cargar estado inicial
             setTimeout(() => {
@@ -232,6 +232,19 @@ class GameRoom {
         waitingState.style.display = 'block';
         
         // Ocultar elementos del juego cuando no hay cartones
+        this.hideGameElements();
+    }
+    
+    showAccessBlocked() {
+        const container = document.getElementById('cards-container');
+        const waitingState = document.getElementById('waiting-state');
+        const accessBlocked = document.getElementById('access-blocked');
+        
+        container.innerHTML = '';
+        waitingState.style.display = 'none';
+        accessBlocked.style.display = 'block';
+        
+        // Ocultar elementos del juego
         this.hideGameElements();
     }
 
@@ -1400,8 +1413,8 @@ class GameRoom {
                     return card;
                 });
                 
-                // Mostrar estado de espera inmediatamente
-                this.showWaitingState();
+                // Mostrar acceso bloqueado inmediatamente
+                this.showAccessBlocked();
             }
         })
         .catch(error => {

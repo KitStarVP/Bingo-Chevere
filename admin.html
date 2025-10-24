@@ -2357,6 +2357,9 @@
             // Marcar cartones como vencidos
             expireAllCardsInFirebase();
             
+            // Activar cartones de próxima partida
+            activateNextGameCards();
+            
             showPopup('Bingo Cancelado', 'El bingo ha sido cancelado');
             updateStats();
         });
@@ -2428,6 +2431,9 @@
                 
                 // Marcar cartones como vencidos en Firebase
                 expireAllCardsInFirebase();
+                
+                // Activar cartones de próxima partida
+                activateNextGameCards();
                 
                 // Limpiar Firebase
                 if (window.firebase) {
@@ -4153,6 +4159,34 @@
             set(ref(database, `purchases/${purchase.id}`), purchase)
                 .then(() => console.log('✅ Compra actualizada en Firebase'))
                 .catch(error => console.error('❌ Error actualizando compra:', error));
+        }
+        
+        // Activar cartones de próxima partida
+        function activateNextGameCards() {
+            if (!window.firebase) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            
+            // Buscar compras marcadas para próxima partida
+            get(ref(database, 'purchases')).then((snapshot) => {
+                const purchases = snapshot.val();
+                if (!purchases) return;
+                
+                const nextGamePurchases = Object.values(purchases).filter(p => 
+                    p.status === 'verified' && p.forNextGame === true
+                );
+                
+                console.log('Activando cartones de próxima partida:', nextGamePurchases.length);
+                
+                // Generar cartones para cada compra
+                nextGamePurchases.forEach(purchase => {
+                    generateCardsForPlayer(purchase.phone, purchase.cartones);
+                    
+                    // Quitar marca de próxima partida
+                    purchase.forNextGame = false;
+                    set(ref(database, `purchases/${purchase.id}`), purchase);
+                });
+            });
         }
         
         // FUNCIONES FIREBASE PARA ESTADO DEL JUEGO
