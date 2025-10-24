@@ -15,9 +15,12 @@ class GameRoom {
 
     init() {
         console.log('🎮 Iniciando nueva sala de juego...');
+        
+        // Generar grid de números primero
+        this.generateNumbersGrid();
+        
         this.setupAudio();
         this.loadCards();
-        this.generateNumbersGrid();
         this.loadInitialGameState();
         this.startGameMonitoring();
         this.updateGameInfo();
@@ -39,6 +42,7 @@ class GameRoom {
         if ('speechSynthesis' in window) {
             this.speech = window.speechSynthesis;
             this.audioActivated = false;
+            this.audioAttempts = 0;
             this.loadVoices();
             
             // Cargar voces cuando estén disponibles
@@ -46,49 +50,95 @@ class GameRoom {
                 speechSynthesis.onvoiceschanged = () => this.loadVoices();
             }
             
-            // Activar audio en cualquier interacción del usuario
-            const activateEvents = ['touchstart', 'click', 'keydown', 'mousedown'];
+            // Activar audio en múltiples eventos para máxima compatibilidad
+            const activateEvents = ['touchstart', 'click', 'keydown', 'mousedown', 'touchend', 'pointerdown'];
             activateEvents.forEach(event => {
-                document.addEventListener(event, () => this.activateAudio(), { once: true });
+                document.addEventListener(event, () => {
+                    if (!this.audioActivated) {
+                        this.activateAudio();
+                    }
+                }, { once: false }); // Permitir múltiples intentos
             });
             
-            // Forzar activación después de 2 segundos
-            setTimeout(() => this.activateAudio(), 2000);
+            // Intentos periódicos de activación
+            const tryActivation = () => {
+                if (!this.audioActivated && this.audioAttempts < 5) {
+                    this.audioAttempts++;
+                    this.activateAudio();
+                    setTimeout(tryActivation, 3000);
+                }
+            };
+            
+            setTimeout(tryActivation, 1000);
+            
+            console.log('🔊 Sistema de audio configurado');
+        } else {
+            console.log('❌ SpeechSynthesis no disponible en este navegador');
+            this.audioEnabled = false;
         }
     }
 
     loadVoices() {
         this.voices = this.speech.getVoices();
         
-        // Buscar voz en español o usar la primera disponible
-        this.spanishVoice = this.voices.find(v => 
+        // Buscar la mejor voz en español disponible
+        const spanishVoices = this.voices.filter(v => 
             v.lang.startsWith('es') || 
             v.name.toLowerCase().includes('spanish') ||
-            v.name.toLowerCase().includes('español')
-        ) || this.voices[0];
+            v.name.toLowerCase().includes('español') ||
+            v.name.toLowerCase().includes('maria') ||
+            v.name.toLowerCase().includes('diego')
+        );
         
-        console.log('Voces disponibles:', this.voices.length);
-        console.log('Voz seleccionada:', this.spanishVoice?.name || 'Ninguna');
+        // Preferir voces locales sobre las de red
+        this.spanishVoice = spanishVoices.find(v => v.localService) || 
+                           spanishVoices[0] || 
+                           this.voices[0];
+        
+        console.log('🎤 Voces disponibles:', this.voices.length);
+        console.log('🎤 Voz seleccionada:', this.spanishVoice?.name || 'Ninguna');
+        console.log('🎤 Idioma de voz:', this.spanishVoice?.lang || 'Desconocido');
+        console.log('🎤 Servicio local:', this.spanishVoice?.localService || false);
     }
 
     activateAudio() {
-        if (this.speech && !this.audioActivated) {
+        if (this.speech) {
             try {
-                // Cancelar cualquier síntesis anterior
+                // Siempre intentar reactivar para asegurar compatibilidad
                 this.speech.cancel();
                 
                 // Crear utterance silencioso para activar
                 const utterance = new SpeechSynthesisUtterance(' ');
                 utterance.volume = 0.01;
-                utterance.rate = 10;
+                utterance.rate = 2;
+                utterance.pitch = 1;
                 
+                utterance.onend = () => {
+                    this.audioActivated = true;
+                    console.log('✅ Audio activado correctamente');
+                };
+                
+                utterance.onerror = (e) => {
+                    console.log('⚠️ Error en activación, pero continuando:', e.error);
+                    this.audioActivated = true;
+                };
+                
+                // Intentar hablar para activar
                 this.speech.speak(utterance);
-                this.audioActivated = true;
                 
-                console.log('Audio activado correctamente');
+                // Marcar como activado después de un tiempo corto
+                setTimeout(() => {
+                    this.audioActivated = true;
+                    console.log('✅ Audio marcado como activado');
+                }, 500);
+                
             } catch (error) {
-                console.error('Error activando audio:', error);
+                console.error('❌ Error activando audio:', error);
+                this.audioActivated = true; // Marcar como activado para intentar funcionar
             }
+        } else {
+            console.log('⚠️ SpeechSynthesis no disponible');
+            this.audioActivated = false;
         }
     }
 
@@ -102,50 +152,77 @@ class GameRoom {
         }
 
         try {
-            // Asegurar que el audio esté activado
-            if (!this.audioActivated) {
-                this.activateAudio();
-            }
+            // Forzar activación de audio en cada llamada
+            this.activateAudio();
             
-            // Cancelar síntesis anterior
+            // Cancelar síntesis anterior completamente
             this.speech.cancel();
             
-            const letter = this.getBingoLetter(number);
-            const text = `${letter} ${number}`;
-            
-            console.log('Hablando número:', text);
-            
-            const utterance = new SpeechSynthesisUtterance(text);
-            
-            // Configurar voz
-            if (this.spanishVoice) {
-                utterance.voice = this.spanishVoice;
-            }
-            
-            // Configuración optimizada para móviles y PC
-            utterance.rate = 0.7;
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
-            utterance.lang = 'es-ES';
-            
-            // Eventos para debug
-            utterance.onstart = () => console.log('Iniciando síntesis de:', text);
-            utterance.onend = () => console.log('Terminó síntesis de:', text);
-            utterance.onerror = (e) => console.error('Error en síntesis:', e);
-            
-            // Hablar con retry en caso de fallo
-            this.speech.speak(utterance);
-            
-            // Backup: intentar de nuevo si no funciona
+            // Esperar un momento para que se cancele
             setTimeout(() => {
-                if (this.speech.speaking === false && this.speech.pending === false) {
-                    console.log('Reintentando síntesis...');
-                    this.speech.speak(utterance);
+                const letter = this.getBingoLetter(number);
+                const text = `${letter} ${number} repito ${letter} ${number}`;
+                
+                console.log('🔊 Cantando número:', text);
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Configurar voz si está disponible
+                if (this.spanishVoice) {
+                    utterance.voice = this.spanishVoice;
                 }
-            }, 500);
+                
+                // Configuración optimizada para compatibilidad
+                utterance.rate = 0.9;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                utterance.lang = 'es-ES';
+                
+                // Eventos mejorados
+                utterance.onstart = () => {
+                    console.log('✅ Iniciando síntesis de:', text);
+                };
+                
+                utterance.onend = () => {
+                    console.log('✅ Terminó síntesis de:', text);
+                };
+                
+                utterance.onerror = (e) => {
+                    console.error('❌ Error en síntesis:', e.error);
+                    // Fallback inmediato con configuración mínima
+                    this.fallbackSpeech(letter, number);
+                };
+                
+                // Intentar hablar con manejo de errores
+                try {
+                    this.speech.speak(utterance);
+                } catch (speakError) {
+                    console.error('❌ Error al hablar:', speakError);
+                    this.fallbackSpeech(letter, number);
+                }
+                
+            }, 100);
             
         } catch (error) {
-            console.error('Error en speakNumber:', error);
+            console.error('❌ Error general en speakNumber:', error);
+            this.fallbackSpeech(this.getBingoLetter(number), number);
+        }
+    }
+    
+    fallbackSpeech(letter, number) {
+        try {
+            console.log('🔄 Intentando fallback de voz...');
+            const simpleText = `${letter} ${number}`;
+            const fallbackUtterance = new SpeechSynthesisUtterance(simpleText);
+            fallbackUtterance.rate = 1.0;
+            fallbackUtterance.volume = 1.0;
+            fallbackUtterance.lang = 'es';
+            
+            this.speech.speak(fallbackUtterance);
+        } catch (e) {
+            console.error('❌ Fallback también falló:', e);
+            // Mostrar toast como último recurso
+            this.showToast(`🔊 ${letter}${number}`);
         }
     }
 
@@ -212,15 +289,20 @@ class GameRoom {
         if (this.cards.length === 0) {
             this.showAccessBlocked();
         } else {
-            // Auto-marcar después de cargar estado inicial
-            setTimeout(() => {
-                this.cards.forEach(card => {
-                    if (card.autoMode && this.calledNumbers.length > 0) {
-                        this.autoMarkCard(card);
-                    }
-                });
-                this.renderCards();
-            }, 1000);
+            // Si hay cartones pero no hay juego activo, mostrar estado de espera
+            if (!this.gameActive) {
+                this.showWaitingForGame();
+            } else {
+                // Auto-marcar después de cargar estado inicial
+                setTimeout(() => {
+                    this.cards.forEach(card => {
+                        if (card.autoMode && this.calledNumbers.length > 0) {
+                            this.autoMarkCard(card);
+                        }
+                    });
+                    this.renderCards();
+                }, 1000);
+            }
         }
     }
 
@@ -233,6 +315,22 @@ class GameRoom {
         
         // Ocultar elementos del juego cuando no hay cartones
         this.hideGameElements();
+    }
+    
+    showWaitingForGame() {
+        const container = document.getElementById('cards-container');
+        
+        container.innerHTML = `
+            <div class="waiting-content" style="text-align: center; padding: 4rem 2rem;">
+                <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 3rem 2rem; border: 1px solid rgba(255,255,255,0.2);">
+                    <h2 style="color: white; font-size: 2rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">⏳ Esperando Juego</h2>
+                    <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 2rem;">Tienes cartones listos. Esperando que el administrador inicie el próximo juego.</p>
+                    <div style="background: rgba(52,152,219,0.2); padding: 1rem; border-radius: 10px; margin: 1rem 0;">
+                        <p style="color: #3498db; font-weight: 600;">Cartones: ${this.cards.length}</p>
+                    </div>
+                </div>
+            </div>
+        `;
     }
     
     showAccessBlocked() {
@@ -653,7 +751,7 @@ class GameRoom {
         
         const { database, ref, get } = window.firebase;
         
-        // Cargar estado del juego
+        // Cargar estado del juego con manejo de errores
         get(ref(database, 'gameState')).then((snapshot) => {
             const gameState = snapshot.val();
             if (gameState) {
@@ -665,38 +763,86 @@ class GameRoom {
                 
                 console.log('✅ Estado inicial cargado:', gameState);
                 
+                // Solo expirar si hay finalización explícita
+                if (gameState.gameFinalized || gameState.bothRoundsCompleted) {
+                    this.markCardsExpired('Juego ya finalizado');
+                    return;
+                }
+                
                 if (this.isPaused) {
                     this.showPauseAlert();
                 }
+                
+                this.updateGameInfo();
+            } else {
+                console.log('⏸️ No hay juego activo - cartones disponibles para próximo juego');
+                this.gameActive = false;
+            }
+        }).catch(error => {
+            console.error('❌ Error cargando estado inicial:', error);
+            // En caso de error, no expirar cartones
+            this.gameActive = false;
+        });
+        
+        // Cargar números cantados con mejor manejo
+        get(ref(database, 'calledNumbers')).then((snapshot) => {
+            let numbers = snapshot.val();
+            
+            // Manejar diferentes formatos
+            if (numbers && typeof numbers === 'object' && !Array.isArray(numbers)) {
+                numbers = Object.values(numbers);
+            }
+
+            if (numbers && Array.isArray(numbers) && numbers.length > 0) {
+                const normalizedNumbers = numbers.map(item => 
+                    (item && typeof item === 'object' && item.number !== undefined) ? item.number : item
+                ).filter(item => typeof item === 'number' && item >= 1 && item <= 75);
+
+                this.calledNumbers = [...normalizedNumbers];
+                console.log('✅ Números cantados cargados:', this.calledNumbers.length);
+                
+                // Procesar números existentes
+                this.processExistingNumbers();
+            } else {
+                console.log('📝 No hay números cantados aún');
+                this.calledNumbers = [];
+            }
+        }).catch(error => {
+            console.error('❌ Error cargando números cantados:', error);
+            this.calledNumbers = [];
+        });
+    }
+    
+    processExistingNumbers() {
+        // Generar grid de historial primero
+        this.generateNumbersGrid();
+        
+        // Marcar números en el historial sin animación
+        this.calledNumbers.forEach(num => {
+            const cell = document.getElementById(`num-${num}`);
+            if (cell) {
+                cell.classList.add('called');
+                cell.style.background = '#3498db';
+                cell.style.color = 'white';
             }
         });
         
-        // Cargar números cantados
-        get(ref(database, 'calledNumbers')).then((snapshot) => {
-            const numbers = snapshot.val();
-            if (numbers && Array.isArray(numbers)) {
-                this.calledNumbers = [...numbers];
-                console.log('✅ Números cantados cargados:', numbers.length);
-                
-                // Marcar números en el historial
-                numbers.forEach(num => this.markNumberCalled(num));
-                
-                // Mostrar último número si existe
-                if (numbers.length > 0) {
-                    const lastNumber = numbers[numbers.length - 1];
-                    this.updateLastNumber(lastNumber);
+        // Mostrar últimos números
+        if (this.calledNumbers.length > 0) {
+            const lastNumber = this.calledNumbers[this.calledNumbers.length - 1];
+            const letter = this.getBingoLetter(lastNumber);
+            this.updateRecentNumbers(letter, lastNumber);
+        }
+        
+        // Auto-marcar cartones con números ya cantados
+        setTimeout(() => {
+            this.cards.forEach(card => {
+                if (card.autoMode) {
+                    this.autoMarkCard(card);
                 }
-                
-                // Auto-marcar cartones con números ya cantados
-                this.cards.forEach(card => {
-                    if (card.autoMode) {
-                        this.autoMarkCard(card);
-                    }
-                });
-                
-                this.renderCards();
-            }
-        });
+            });
+            this.renderCards();
+        }, 300);
     }
     
     startGameMonitoring() {
@@ -718,32 +864,123 @@ class GameRoom {
         
         const { database, ref, onValue } = window.firebase;
         
-        // Escuchar cambios en el estado del juego
+        // Escuchar cambios en el estado del juego con manejo de errores
         onValue(ref(database, 'gameState'), (snapshot) => {
-            const firebaseState = snapshot.val();
-            if (firebaseState) {
-                console.log('Estado recibido de Firebase:', firebaseState);
-                this.handleFirebaseGameState(firebaseState);
+            try {
+                const firebaseState = snapshot.val();
+                if (firebaseState) {
+                    console.log('📡 Estado recibido de Firebase:', firebaseState);
+                    this.handleFirebaseGameState(firebaseState);
+                } else {
+                    console.log('⚠️ Estado del juego es null - posible cancelación');
+                    this.handleGameCancellation();
+                }
+            } catch (error) {
+                console.error('❌ Error procesando estado del juego:', error);
             }
+        }, (error) => {
+            console.error('❌ Error en listener de gameState:', error);
         });
         
-        // Escuchar números cantados
+        // Escuchar números cantados con manejo mejorado
         onValue(ref(database, 'calledNumbers'), (snapshot) => {
-            const firebaseNumbers = snapshot.val();
-            if (firebaseNumbers && Array.isArray(firebaseNumbers)) {
-                console.log('Números recibidos de Firebase:', firebaseNumbers.length);
-                this.handleFirebaseNumbers(firebaseNumbers);
+            try {
+                let firebaseNumbers = snapshot.val();
+                
+                // Manejar diferentes formatos de Firebase
+                if (firebaseNumbers && typeof firebaseNumbers === 'object' && !Array.isArray(firebaseNumbers)) {
+                    firebaseNumbers = Object.values(firebaseNumbers);
+                }
+
+                if (firebaseNumbers && Array.isArray(firebaseNumbers) && firebaseNumbers.length > 0) {
+                    console.log('📡 Números recibidos de Firebase:', firebaseNumbers.length);
+                    this.handleFirebaseNumbers(firebaseNumbers);
+                } else if (firebaseNumbers === null || (Array.isArray(firebaseNumbers) && firebaseNumbers.length === 0)) {
+                    console.log('🔄 Lista de números reiniciada');
+                    this.handleNumbersReset();
+                }
+            } catch (error) {
+                console.error('❌ Error procesando números cantados:', error);
+            }
+        }, (error) => {
+            console.error('❌ Error en listener de calledNumbers:', error);
+        });
+        
+        // Escuchar verificaciones de BINGO
+        onValue(ref(database, 'bingoVerifications'), (snapshot) => {
+            try {
+                const verifications = snapshot.val();
+                if (verifications) {
+                    this.handleBingoVerifications(verifications);
+                }
+            } catch (error) {
+                console.error('❌ Error procesando verificaciones:', error);
             }
         });
         
-        console.log('✅ Firebase listeners iniciados');
+        console.log('✅ Firebase listeners iniciados con manejo de errores');
+    }
+    
+    handleGameCancellation() {
+        console.log('🚫 Detectada cancelación del juego');
+        this.gameActive = false;
+        // Solo expirar si hay una cancelación explícita
+        this.resetGameAlerts();
+        this.showToast('⏸️ No hay juego activo. Esperando próximo juego.');
+    }
+    
+    handleNumbersReset() {
+        console.log('🔄 Reiniciando números cantados');
+        this.calledNumbers = [];
+        
+        // Limpiar visualizaciones
+        const recentNumbers = document.querySelectorAll('.recent-number');
+        recentNumbers.forEach(num => {
+            num.textContent = '--';
+            num.classList.remove('latest');
+        });
+        
+        // Limpiar historial
+        const calledCells = document.querySelectorAll('.number-cell.called');
+        calledCells.forEach(cell => {
+            cell.classList.remove('called');
+            cell.style.background = '';
+            cell.style.color = '';
+            cell.style.transform = '';
+        });
+        
+        // Ocultar mini-bola
+        const miniBall = document.getElementById('mini-ball');
+        if (miniBall) {
+            miniBall.style.display = 'none';
+            miniBall.classList.remove('show');
+        }
+        
+        // Re-renderizar cartones
+        this.renderCards();
+    }
+    
+    handleBingoVerifications(verifications) {
+        const userPhone = localStorage.getItem('userPhone');
+        if (!userPhone) return;
+        
+        Object.values(verifications).forEach(verification => {
+            if (verification.phone === userPhone && verification.processed) {
+                if (verification.isCorrect && verification.isWinner) {
+                    this.showWinnerAlert(verification);
+                } else if (!verification.isCorrect) {
+                    this.showToast('❌ BINGO incorrecto verificado');
+                    this.enableAllBingoButtons();
+                }
+            }
+        });
     }
     
     handleFirebaseGameState(firebaseState) {
         console.log('📲 Estado recibido de Firebase:', firebaseState);
         
         // Verificar finalización del juego PRIMERO
-        if (firebaseState.gameFinalized || firebaseState.bothRoundsCompleted) {
+        if (firebaseState && (firebaseState.gameFinalized || firebaseState.bothRoundsCompleted)) {
             console.log('🏁 Juego finalizado - expirando cartones');
             this.markCardsExpired('Juego finalizado por admin');
             this.gameActive = false;
@@ -752,13 +989,12 @@ class GameRoom {
             return;
         }
         
-        // Si el juego fue cancelado (gameState = null)
+        // Si no hay estado del juego, simplemente no hay juego activo (NO cancelado)
         if (!firebaseState || firebaseState === null) {
-            console.log('❌ Juego cancelado');
+            console.log('⏸️ No hay juego activo - cartones siguen vigentes');
             this.gameActive = false;
-            this.markCardsExpired('Juego cancelado');
             this.resetGameAlerts();
-            this.showCancelAlert();
+            // NO expirar cartones - solo esperar
             return;
         }
         
@@ -788,6 +1024,11 @@ class GameRoom {
             this.updateGameInfo();
         }
         
+        // Si no hay juego activo pero hay cartones, mostrar espera
+        if (!this.gameActive && this.cards.length > 0) {
+            this.showWaitingForGame();
+        }
+        
         // Manejar cambios de pausa
         if (pauseChanged) {
             if (this.isPaused) {
@@ -811,32 +1052,43 @@ class GameRoom {
     
     handleFirebaseNumbers(firebaseNumbers) {
         if (!Array.isArray(firebaseNumbers)) return;
-        
-        // Convertir a números simples y filtrar nuevos
-        const currentNumbers = this.calledNumbers.map(item => 
-            typeof item === 'object' ? item.number : item
-        );
-        
-        const newNumbers = firebaseNumbers.filter(num => !currentNumbers.includes(num));
-        
+
+        // Normalizar SIEMPRE la lista de Firebase para asegurar que sean números primitivos
+        const allFirebaseNumbers = firebaseNumbers.map(item => 
+            (item && typeof item === 'object' && item.number !== undefined) ? item.number : item
+        ).filter(item => typeof item === 'number' && item >= 1 && item <= 75);
+
+        // Filtrar para encontrar solo los números que no tenemos
+        const newNumbers = allFirebaseNumbers.filter(num => !this.calledNumbers.includes(num));
+
         if (newNumbers.length > 0) {
             console.log('📢 Procesando nuevos números:', newNumbers);
-            
-            // Agregar números al array local
-            this.calledNumbers.push(...newNumbers);
-            
-            // Procesar cada número
+
+            // Procesar cada número nuevo inmediatamente para mejor sincronización
             newNumbers.forEach((num, index) => {
-                const isLatest = index === newNumbers.length - 1;
-                this.updateLastNumber(num);
-                this.markNumberCalled(num);
-                this.autoMarkAllCards(num);
+                // Agregar a la lista local inmediatamente
+                if (!this.calledNumbers.includes(num)) {
+                    this.calledNumbers.push(num);
+                }
                 
-                // Cantar TODOS los números nuevos, no solo el último
-                this.speakNumber(num);
+                // Procesar con delay mínimo para efectos visuales
+                setTimeout(() => {
+                    console.log(`🎯 Procesando número ${num}`);
+                    this.updateLastNumber(num);
+                    this.markNumberCalled(num);
+                    this.autoMarkAllCards(num);
+                    this.speakNumber(num);
+                }, index * 1500); // 1.5 segundos entre números
             });
+
+            // Actualizar lista completa para sincronización
+            this.calledNumbers = [...allFirebaseNumbers];
             
-            this.saveCards();
+            // Guardar cambios
+            setTimeout(() => {
+                this.saveCards();
+                this.renderCards();
+            }, newNumbers.length * 1500 + 500);
         }
     }
     
@@ -855,6 +1107,9 @@ class GameRoom {
         this.hideWinnerAlert();
         this.hidePauseAlert();
         
+        // Renderizar cartones cuando el juego inicia
+        this.renderCards();
+        
         if (this.currentRound === 1) {
             this.showPatternButton();
         } else {
@@ -872,8 +1127,9 @@ class GameRoom {
     }
     
     handleGameEnded() {
-        this.markCardsExpired();
-        this.showToast('🏁 Juego terminado. Compra nuevos cartones.');
+        // Solo mostrar estado de espera, no expirar cartones automáticamente
+        this.showWaitingForGame();
+        this.showToast('⏸️ Juego terminado. Esperando próximo juego.');
         this.resetGameAlerts();
         this.hidePatternButton();
         // Resetear flag para próximo juego
@@ -975,16 +1231,27 @@ class GameRoom {
     }
 
     updateLastNumber(number) {
-        // Solo mostrar si el usuario tiene cartones
-        if (this.cards.length === 0) return;
-        
         const letter = this.getBingoLetter(number);
         
-        // Mostrar mini bola en header
-        this.showMiniBall(letter, number);
+        console.log('🔄 Actualizando último número:', letter + number);
+        
+        // Mostrar mini bola en header con delay
+        setTimeout(() => {
+            this.showMiniBall(letter, number);
+        }, 200);
         
         // Actualizar últimos 3 números
-        this.updateRecentNumbers(letter, number);
+        setTimeout(() => {
+            this.updateRecentNumbers(letter, number);
+        }, 400);
+        
+        // Actualizar título de la página
+        document.title = `🎯 ${letter}${number} - Bingo Chévere`;
+        
+        // Restaurar título después de 5 segundos
+        setTimeout(() => {
+            document.title = 'Sala de Juego - Bingo Chévere';
+        }, 5000);
     }
 
     showMiniBall(letter, number) {
@@ -992,50 +1259,75 @@ class GameRoom {
         const ballLetter = document.getElementById('mini-ball-letter');
         const ballNumber = document.getElementById('mini-ball-number');
         
-        if (!miniBall || !ballLetter || !ballNumber) return;
+        if (!miniBall || !ballLetter || !ballNumber) {
+            console.log('⚠️ Elementos de mini-bola no encontrados');
+            return;
+        }
+        
+        console.log('🎱 Mostrando mini-bola:', letter + number);
         
         // Ocultar bola anterior si existe
         miniBall.classList.remove('show');
+        miniBall.style.display = 'none';
         
         setTimeout(() => {
             ballLetter.textContent = letter;
             ballNumber.textContent = number;
             
             miniBall.style.display = 'flex';
+            miniBall.style.opacity = '0';
+            miniBall.style.transform = 'translate(-50%, -50%) scale(0.5)';
+            
+            // Forzar reflow
+            miniBall.offsetHeight;
+            
             miniBall.style.animation = 'ballPop 0.6s ease-out';
             miniBall.classList.add('show');
             
-            // Ocultar después de 3 segundos
+            console.log('✅ Mini-bola mostrada correctamente');
+            
+            // Ocultar después de 4 segundos
             setTimeout(() => {
                 miniBall.classList.remove('show');
                 setTimeout(() => {
                     miniBall.style.display = 'none';
-                }, 400);
-            }, 3000);
-        }, 100);
+                }, 500);
+            }, 4000);
+        }, 150);
     }
 
     updateRecentNumbers(letter, number) {
         const recentNumbers = document.querySelectorAll('.recent-number');
+        if (!recentNumbers.length) return;
         
-        // Obtener los últimos 3 números como números simples
-        const previousNumbers = this.calledNumbers.slice(-4, -1).map(item => 
+        // Obtener los últimos 3 números cantados
+        const lastThreeNumbers = this.calledNumbers.slice(-3).map(item => 
             typeof item === 'object' ? item.number : item
-        );
+        ).filter(num => typeof num === 'number');
         
-        // Limpiar todos los números
+        console.log('🔄 Actualizando números recientes:', lastThreeNumbers);
+        
+        // Limpiar todos los números primero
         recentNumbers.forEach(num => {
             num.textContent = '--';
             num.classList.remove('latest');
         });
         
-        // Mostrar los 3 números anteriores
-        previousNumbers.forEach((num, index) => {
+        // Mostrar los últimos 3 números en orden correcto
+        lastThreeNumbers.forEach((num, index) => {
             if (recentNumbers[index] && typeof num === 'number') {
                 const numLetter = this.getBingoLetter(num);
                 recentNumbers[index].textContent = `${numLetter}${num}`;
+                recentNumbers[index].style.opacity = '1';
+                
+                // Marcar el último como más destacado
+                if (index === lastThreeNumbers.length - 1) {
+                    recentNumbers[index].classList.add('latest');
+                }
             }
         });
+        
+        console.log('✅ Números recientes actualizados correctamente');
     }
 
     getBingoLetter(number) {
@@ -1153,37 +1445,91 @@ class GameRoom {
     // === HISTORY MODAL ===
     generateNumbersGrid() {
         const grid = document.getElementById('numbers-grid');
-        if (!grid) return;
+        if (!grid) {
+            console.log('⚠️ Grid de números no encontrado');
+            return;
+        }
 
         grid.innerHTML = '';
         
         const sections = [
-            { start: 1, end: 15 },   // B
-            { start: 16, end: 30 },  // I
-            { start: 31, end: 45 },  // N
-            { start: 46, end: 60 },  // G
-            { start: 61, end: 75 }   // O
+            { start: 1, end: 15, letter: 'B' },   // B
+            { start: 16, end: 30, letter: 'I' },  // I
+            { start: 31, end: 45, letter: 'N' },  // N
+            { start: 46, end: 60, letter: 'G' },  // G
+            { start: 61, end: 75, letter: 'O' }   // O
         ];
 
         sections.forEach(section => {
             const sectionDiv = document.createElement('div');
             sectionDiv.className = 'number-section';
             
+            // Agregar header de letra
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'section-header';
+            headerDiv.textContent = section.letter;
+            headerDiv.style.cssText = `
+                background: #3498db;
+                color: white;
+                text-align: center;
+                font-weight: 900;
+                padding: 0.3rem;
+                grid-column: 1 / -1;
+                border-radius: 4px;
+                margin-bottom: 2px;
+            `;
+            sectionDiv.appendChild(headerDiv);
+            
             for (let i = section.start; i <= section.end; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'number-cell';
                 cell.textContent = i;
                 cell.id = `num-${i}`;
+                
+                // Marcar si ya fue cantado
+                if (this.calledNumbers.includes(i)) {
+                    cell.classList.add('called');
+                    cell.style.background = '#3498db';
+                    cell.style.color = 'white';
+                }
+                
                 sectionDiv.appendChild(cell);
             }
             
             grid.appendChild(sectionDiv);
         });
+        
+        console.log('✅ Grid de números generado correctamente');
     }
 
     markNumberCalled(number) {
         const cell = document.getElementById(`num-${number}`);
-        if (cell) cell.classList.add('called');
+        if (cell && !cell.classList.contains('called')) {
+            cell.classList.add('called');
+            cell.style.transform = 'scale(1.1)';
+            cell.style.background = '#3498db';
+            cell.style.color = 'white';
+            
+            // Animación de marcado
+            setTimeout(() => {
+                cell.style.transform = 'scale(1)';
+            }, 300);
+            
+            console.log('✅ Número marcado en historial:', number);
+        } else if (!cell) {
+            console.log('⚠️ Celda no encontrada para número:', number);
+            // Regenerar grid si no existe
+            this.generateNumbersGrid();
+            // Intentar marcar de nuevo
+            setTimeout(() => {
+                const newCell = document.getElementById(`num-${number}`);
+                if (newCell) {
+                    newCell.classList.add('called');
+                    newCell.style.background = '#3498db';
+                    newCell.style.color = 'white';
+                }
+            }, 100);
+        }
     }
 
     showHistory() {

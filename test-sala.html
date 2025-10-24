@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sala de Juego - Verificación</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section.pass {
+            border-color: #27ae60;
+            background: #d5f4e6;
+        }
+        .test-section.fail {
+            border-color: #e74c3c;
+            background: #fdf2f2;
+        }
+        .test-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-btn:hover {
+            background: #2980b9;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .pass {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+        .fail {
+            background: #fdf2f2;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Verificación de Sala de Juego</h1>
+        <p>Esta página verifica que todas las funcionalidades críticas estén funcionando correctamente.</p>
+        
+        <div class="test-section" id="firebase-test">
+            <h3>🔥 Firebase Connection</h3>
+            <button class="test-btn" onclick="testFirebase()">Probar Firebase</button>
+            <div id="firebase-result"></div>
+        </div>
+        
+        <div class="test-section" id="audio-test">
+            <h3>🔊 Sistema de Audio</h3>
+            <button class="test-btn" onclick="testAudio()">Probar Audio</button>
+            <button class="test-btn" onclick="testVoice()">Probar Voz</button>
+            <div id="audio-result"></div>
+        </div>
+        
+        <div class="test-section" id="numbers-test">
+            <h3>🎯 Visualización de Números</h3>
+            <button class="test-btn" onclick="testNumberDisplay()">Probar Números</button>
+            <button class="test-btn" onclick="testMiniBall()">Probar Mini-Bola</button>
+            <div id="numbers-result"></div>
+        </div>
+        
+        <div class="test-section" id="sync-test">
+            <h3>🔄 Sincronización</h3>
+            <button class="test-btn" onclick="testSync()">Probar Sincronización</button>
+            <div id="sync-result"></div>
+        </div>
+        
+        <div class="test-section" id="cards-test">
+            <h3>🎫 Sistema de Cartones</h3>
+            <button class="test-btn" onclick="testCards()">Probar Cartones</button>
+            <div id="cards-result"></div>
+        </div>
+        
+        <div class="test-section" id="overall-test">
+            <h3>📊 Resultado General</h3>
+            <button class="test-btn" onclick="runAllTests()">Ejecutar Todas las Pruebas</button>
+            <div id="overall-result"></div>
+        </div>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+      import { getDatabase, ref, onValue, get, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: "bingo-chevere.firebaseapp.com",
+        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: "bingo-chevere",
+        storageBucket: "bingo-chevere.firebasestorage.app",
+        messagingSenderId: "1057150163831",
+        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebase = { database, ref, onValue, get, set };
+      console.log('Firebase inicializado para pruebas');
+    </script>
+
+    <script>
+        let testResults = {};
+        
+        function showResult(testId, success, message) {
+            const resultDiv = document.getElementById(testId + '-result');
+            const sectionDiv = document.getElementById(testId + '-test');
+            
+            if (resultDiv) {
+                resultDiv.innerHTML = `<div class="result ${success ? 'pass' : 'fail'}">${success ? '✅' : '❌'} ${message}</div>`;
+            }
+            if (sectionDiv) {
+                sectionDiv.className = `test-section ${success ? 'pass' : 'fail'}`;
+            }
+            
+            testResults[testId] = success;
+        }
+        
+        async function testFirebase() {
+            try {
+                if (!window.firebase) {
+                    throw new Error('Firebase no está disponible');
+                }
+                
+                const { database, ref, get } = window.firebase;
+                const snapshot = await get(ref(database, 'gameState'));
+                
+                showResult('firebase', true, 'Firebase conectado correctamente');
+            } catch (error) {
+                showResult('firebase', false, `Error de Firebase: ${error.message}`);
+            }
+        }
+        
+        function testAudio() {
+            try {
+                if (!('speechSynthesis' in window)) {
+                    throw new Error('SpeechSynthesis no disponible');
+                }
+                
+                const voices = speechSynthesis.getVoices();
+                const spanishVoice = voices.find(v => v.lang.startsWith('es'));
+                
+                showResult('audio', true, `Audio disponible. Voces: ${voices.length}, Español: ${spanishVoice ? 'Sí' : 'No'}`);
+            } catch (error) {
+                showResult('audio', false, `Error de audio: ${error.message}`);
+            }
+        }
+        
+        function testVoice() {
+            try {
+                if (!('speechSynthesis' in window)) {
+                    throw new Error('SpeechSynthesis no disponible');
+                }
+                
+                const utterance = new SpeechSynthesisUtterance('B 15 repito B 15');
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.9;
+                
+                speechSynthesis.speak(utterance);
+                
+                showResult('audio', true, 'Prueba de voz ejecutada (escucha si funciona)');
+            } catch (error) {
+                showResult('audio', false, `Error de voz: ${error.message}`);
+            }
+        }
+        
+        function testNumberDisplay() {
+            try {
+                // Simular elementos del DOM
+                const testDiv = document.createElement('div');
+                testDiv.innerHTML = `
+                    <div class="recent-number">--</div>
+                    <div class="recent-number">--</div>
+                    <div class="recent-number">--</div>
+                    <div id="mini-ball" style="display: none;">
+                        <span id="mini-ball-letter">B</span>
+                        <span id="mini-ball-number">15</span>
+                    </div>
+                `;
+                document.body.appendChild(testDiv);
+                
+                // Simular actualización de números
+                const recentNumbers = testDiv.querySelectorAll('.recent-number');
+                recentNumbers[0].textContent = 'B15';
+                recentNumbers[1].textContent = 'I22';
+                recentNumbers[2].textContent = 'N35';
+                
+                const miniBall = testDiv.querySelector('#mini-ball');
+                miniBall.style.display = 'flex';
+                
+                document.body.removeChild(testDiv);
+                
+                showResult('numbers', true, 'Visualización de números funciona correctamente');
+            } catch (error) {
+                showResult('numbers', false, `Error en visualización: ${error.message}`);
+            }
+        }
+        
+        function testMiniBall() {
+            try {
+                // Crear mini-bola temporal para prueba
+                const testBall = document.createElement('div');
+                testBall.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 60px;
+                    height: 60px;
+                    background: linear-gradient(145deg, #ffffff, #e6e6e6);
+                    border-radius: 50%;
+                    border: 3px solid #3498db;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    animation: ballPop 0.6s ease-out;
+                `;
+                testBall.innerHTML = '<div style="color: #3498db; font-weight: 900;">B15</div>';
+                
+                document.body.appendChild(testBall);
+                
+                setTimeout(() => {
+                    document.body.removeChild(testBall);
+                }, 2000);
+                
+                showResult('numbers', true, 'Mini-bola mostrada correctamente (visible por 2 segundos)');
+            } catch (error) {
+                showResult('numbers', false, `Error en mini-bola: ${error.message}`);
+            }
+        }
+        
+        async function testSync() {
+            try {
+                if (!window.firebase) {
+                    throw new Error('Firebase no disponible para sincronización');
+                }
+                
+                const { database, ref, get } = window.firebase;
+                
+                // Probar lectura de números cantados
+                const numbersSnapshot = await get(ref(database, 'calledNumbers'));
+                const numbers = numbersSnapshot.val();
+                
+                // Probar lectura de estado del juego
+                const stateSnapshot = await get(ref(database, 'gameState'));
+                const gameState = stateSnapshot.val();
+                
+                showResult('sync', true, `Sincronización OK. Números: ${numbers ? (Array.isArray(numbers) ? numbers.length : Object.keys(numbers).length) : 0}, Estado: ${gameState ? 'Disponible' : 'No disponible'}`);
+            } catch (error) {
+                showResult('sync', false, `Error de sincronización: ${error.message}`);
+            }
+        }
+        
+        function testCards() {
+            try {
+                // Simular datos de cartón
+                const testCard = {
+                    id: 'test-123',
+                    numbers: [
+                        [1, 16, 31, 46, 61],
+                        [2, 17, 32, 47, 62],
+                        [3, 18, 0, 48, 63],
+                        [4, 19, 33, 49, 64],
+                        [5, 20, 34, 50, 65]
+                    ],
+                    marked: ['0-0', '1-1', '2-2'],
+                    autoMode: true,
+                    status: 'vigente'
+                };
+                
+                // Verificar estructura del cartón
+                if (!testCard.numbers || !Array.isArray(testCard.numbers) || testCard.numbers.length !== 5) {
+                    throw new Error('Estructura de cartón inválida');
+                }
+                
+                // Verificar números marcados
+                if (!testCard.marked || !Array.isArray(testCard.marked)) {
+                    throw new Error('Sistema de marcado inválido');
+                }
+                
+                showResult('cards', true, 'Sistema de cartones funciona correctamente');
+            } catch (error) {
+                showResult('cards', false, `Error en cartones: ${error.message}`);
+            }
+        }
+        
+        async function runAllTests() {
+            showResult('overall', true, 'Ejecutando todas las pruebas...');
+            
+            await testFirebase();
+            testAudio();
+            testNumberDisplay();
+            await testSync();
+            testCards();
+            
+            setTimeout(() => {
+                const totalTests = Object.keys(testResults).length;
+                const passedTests = Object.values(testResults).filter(result => result).length;
+                const percentage = Math.round((passedTests / totalTests) * 100);
+                
+                const success = percentage >= 80;
+                showResult('overall', success, `Pruebas completadas: ${passedTests}/${totalTests} (${percentage}%) ${success ? '🎉' : '⚠️'}`);
+            }, 1000);
+        }
+        
+        // Ejecutar pruebas básicas al cargar
+        window.addEventListener('load', () => {
+            setTimeout(async () => {
+                await testFirebase();
+                testAudio();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

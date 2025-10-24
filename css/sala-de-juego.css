@@ -101,31 +101,48 @@ body {
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%);
-    width: 60px;
-    height: 60px;
+    transform: translate(-50%, -50%) scale(0.5);
+    width: 65px;
+    height: 65px;
     background: linear-gradient(145deg, #ffffff, #e6e6e6);
     border-radius: 50%;
     border: 3px solid #3498db;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    z-index: 10;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    z-index: 15;
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
-    transition: all 0.4s ease;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 .mini-ball.show {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+    display: flex;
 }
 
 @keyframes ballPop {
-    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    0% { 
+        transform: translate(-50%, -50%) scale(0.3); 
+        opacity: 0;
+        box-shadow: 0 0 0 rgba(52,152,219,0);
+    }
+    30% { 
+        transform: translate(-50%, -50%) scale(1.2); 
+        opacity: 0.8;
+        box-shadow: 0 8px 25px rgba(52,152,219,0.6);
+    }
+    60% { 
+        transform: translate(-50%, -50%) scale(0.95); 
+        opacity: 1;
+        box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+    }
+    100% { 
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
 }
 
 /* Segundo header para números recientes */
@@ -134,14 +151,15 @@ body {
     top: 70px;
     left: 0;
     right: 0;
-    height: 50px;
-    background: rgba(255,255,255,0.9);
-    backdrop-filter: blur(10px);
+    height: 55px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(15px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 999;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
+    border-bottom: 2px solid rgba(52,152,219,0.2);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .mini-ball-content {
@@ -170,21 +188,38 @@ body {
 }
 
 .recent-number {
-    background: rgba(52,152,219,0.1);
+    background: rgba(52,152,219,0.15);
     color: #3498db;
-    padding: 0.2rem 0.4rem;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    min-width: 30px;
+    padding: 0.3rem 0.5rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 35px;
     text-align: center;
-    border: 1px solid rgba(52,152,219,0.3);
+    border: 2px solid rgba(52,152,219,0.3);
+    transition: all 0.3s ease;
+    opacity: 0.7;
 }
 
 .recent-number.latest {
     background: #3498db;
     color: white;
-    animation: pulse 2s infinite;
+    border-color: #2980b9;
+    opacity: 1;
+    transform: scale(1.1);
+    animation: recentPulse 2s infinite;
+    box-shadow: 0 2px 8px rgba(52,152,219,0.4);
+}
+
+@keyframes recentPulse {
+    0%, 100% { 
+        transform: scale(1.1);
+        box-shadow: 0 2px 8px rgba(52,152,219,0.4);
+    }
+    50% { 
+        transform: scale(1.15);
+        box-shadow: 0 4px 12px rgba(52,152,219,0.6);
+    }
 }
 
 
@@ -306,21 +341,39 @@ body {
 }
 
 .card-cell.called {
-    background: #f39c12;
-    color: white;
-    border-color: #e67e22;
-    animation: numberCalled 0.5s ease-out;
+    background: #f39c12 !important;
+    color: white !important;
+    border: 2px solid #e67e22 !important;
+    animation: cardNumberCalled 0.8s ease-out;
+    box-shadow: 0 2px 6px rgba(243,156,18,0.4);
 }
 
 .card-cell.marked.called {
-    background: #3498db;
-    border-color: #2980b9;
+    background: #3498db !important;
+    border: 2px solid #2980b9 !important;
+    box-shadow: 0 2px 6px rgba(52,152,219,0.4);
 }
 
-@keyframes numberCalled {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+@keyframes cardNumberCalled {
+    0% { 
+        transform: scale(1);
+        background: #e74c3c !important;
+        box-shadow: 0 0 0 rgba(231,76,60,0);
+    }
+    25% { 
+        transform: scale(1.15);
+        background: #f39c12 !important;
+        box-shadow: 0 4px 12px rgba(243,156,18,0.6);
+    }
+    50% { 
+        transform: scale(1.1);
+        background: #f39c12 !important;
+    }
+    100% { 
+        transform: scale(1);
+        background: #f39c12 !important;
+        box-shadow: 0 2px 6px rgba(243,156,18,0.4);
+    }
 }
 
 .card-controls {
@@ -618,13 +671,29 @@ body {
 .numbers-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 3px;
+    gap: 1rem;
+    padding: 1rem 0;
 }
 
 .number-section {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 3px;
+    margin-bottom: 1rem;
+}
+
+.section-header {
+    background: #3498db !important;
+    color: white !important;
+    text-align: center;
+    font-weight: 900;
+    padding: 0.4rem;
+    grid-column: 1 / -1;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(52,152,219,0.3);
 }
 
 .number-cell {
@@ -641,9 +710,31 @@ body {
 }
 
 .number-cell.called {
-    background: #3498db;
-    color: white;
-    transform: scale(1.1);
+    background: #3498db !important;
+    color: white !important;
+    transform: scale(1.05);
+    border: 2px solid #2980b9;
+    box-shadow: 0 2px 8px rgba(52,152,219,0.4);
+    animation: numberHighlight 0.6s ease-out;
+    font-weight: 900;
+}
+
+@keyframes numberHighlight {
+    0% { 
+        background: #f39c12;
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(243,156,18,0);
+    }
+    50% { 
+        background: #e67e22;
+        transform: scale(1.2);
+        box-shadow: 0 4px 15px rgba(243,156,18,0.6);
+    }
+    100% { 
+        background: #3498db;
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(52,152,219,0.4);
+    }
 }
 
 /* Animación de bola */
@@ -949,8 +1040,14 @@ body {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    0%, 100% { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
 }
 
 /* Responsive */

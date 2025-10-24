@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jugando - Bingo Chévere</title>
+    <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="css/new-nav.css">
+    <link rel="stylesheet" href="css/jugando.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header fijo -->
+    <header class="game-header">
+        <div class="header-content">
+            <div class="game-info">
+                <div class="round-display">
+                    <div class="round-label">RONDA</div>
+                    <div class="round-number">
+                        <span id="current-round">1</span><span class="round-total">/2</span>
+                    </div>
+                </div>
+                <div class="prize-display">
+                    <div class="prize-label">PREMIO</div>
+                    <div class="prize-amount">
+                        <span class="currency">BsF</span>
+                        <span id="current-prize">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="numbers-display">
+                <div class="mini-ball" id="mini-ball">
+                    <div class="mini-ball-content">
+                        <span class="mini-ball-letter" id="mini-ball-letter">B</span>
+                        <span class="mini-ball-number" id="mini-ball-number">15</span>
+                    </div>
+                </div>
+            </div>
+            <button class="history-btn" onclick="gameRoom.showHistory()">📊</button>
+            <button class="pattern-btn" onclick="gameRoom.showPattern()">🎯</button>
+        </div>
+    </header>
+
+    <!-- Header números recientes -->
+    <div class="numbers-header">
+        <div class="recent-numbers" id="recent-numbers">
+            <span class="recent-number">--</span>
+            <span class="recent-number">--</span>
+            <span class="recent-number">--</span>
+        </div>
+    </div>
+
+    <!-- Área principal -->
+    <main class="cards-area">
+        <div class="cards-container" id="cards-container"></div>
+        
+        <div class="waiting-state" id="waiting-state" style="display: none;">
+            <div class="waiting-content">
+                <h2>🎫 Sin Cartones</h2>
+                <p>Necesitas comprar cartones para jugar</p>
+                <a href="comprar-cartones.html" class="buy-btn">Comprar Cartones</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal historial -->
+    <div class="history-modal" id="history-modal" onclick="gameRoom.closeHistory()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Números Cantados</h3>
+                <button class="close-btn" onclick="gameRoom.closeHistory()">&times;</button>
+            </div>
+            <div class="numbers-grid" id="numbers-grid"></div>
+        </div>
+    </div>
+
+    <!-- Modal patrón -->
+    <div class="pattern-modal" id="pattern-modal" onclick="gameRoom.closePattern()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Patrón Ronda 1</h3>
+                <button class="close-btn" onclick="gameRoom.closePattern()">&times;</button>
+            </div>
+            <div class="pattern-display">
+                <div class="pattern-card">
+                    <div class="pattern-grid" id="pattern-grid"></div>
+                </div>
+                <p class="pattern-info">Completa este patrón para ganar la Ronda 1</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Alertas -->
+    <div class="bingo-alert" id="bingo-alert">
+        <div class="alert-content">
+            <h3>🎯 ¡BINGO CANTADO!</h3>
+            <p id="bingo-message">Verificando cartón...</p>
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <div class="pause-alert" id="pause-alert">
+        <div class="pause-content">
+            <h2>⏸️ JUEGO PAUSADO</h2>
+            <p>El administrador pausó la ronda</p>
+            <div class="pause-spinner"></div>
+            <p class="pause-info">Esperando que se reanude...</p>
+        </div>
+    </div>
+
+    <div class="winner-alert" id="winner-alert">
+        <div class="winner-content">
+            <h2>🏆 ¡FELICITACIONES!</h2>
+            <p id="winner-message">¡Has ganado el bingo!</p>
+            <div class="winner-prize" id="winner-prize">BsF 450</div>
+            <button class="close-winner" onclick="gameRoom.closeWinnerAlert()">Continuar</button>
+        </div>
+    </div>
+
+    <div class="access-blocked" id="access-blocked">
+        <div class="blocked-content">
+            <h3>🚫 Acceso Restringido</h3>
+            <p>Necesitas comprar cartones para acceder a la sala de juego</p>
+            <a href="comprar-cartones.html" class="buy-btn">Comprar Cartones</a>
+        </div>
+    </div>
+
+    <!-- Navegación -->
+    <nav class="new-bottom-nav">
+        <a href="index.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span class="new-nav-label">Inicio</span>
+        </a>
+        <a href="comprar-cartones.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
+            <span class="new-nav-label">Cartones</span>
+        </a>
+        <a href="jugando.html" class="new-nav-item active">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span class="new-nav-label">Jugar</span>
+        </a>
+        <a href="premios.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C17.15 18.75 18 20.24 18 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+            <span class="new-nav-label">Premios</span>
+        </a>
+        <a href="perfil.html" class="new-nav-item">
+            <svg class="new-nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="new-nav-label">Perfil</span>
+        </a>
+    </nav>
+
+    <!-- Firebase -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+      import { getDatabase, ref, onValue, get, set, push } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: "bingo-chevere.firebaseapp.com",
+        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: "bingo-chevere",
+        storageBucket: "bingo-chevere.firebasestorage.app",
+        messagingSenderId: "1057150163831",
+        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebase = { database, ref, onValue, get, set, push };
+      console.log('🔥 Firebase inicializado');
+    </script>
+
+    <script src="js/jugando.js"></script>
+</body>
+</html>
