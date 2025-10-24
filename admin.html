@@ -1911,15 +1911,17 @@
         }
         
         function checkPendingBingo() {
-            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
-            const pendingBingo = localStorage.getItem('pendingBingoVerification');
+            if (!window.firebase) return;
             
-            if (pendingBingo) {
-                const bingoData = JSON.parse(pendingBingo);
-                showBingoPending(bingoData);
-            } else {
-                showNoBingo();
-            }
+            const { database, ref, onValue } = window.firebase;
+            onValue(ref(database, 'pendingBingoVerification'), (snapshot) => {
+                const pendingBingo = snapshot.val();
+                if (pendingBingo) {
+                    showBingoPending(pendingBingo);
+                } else {
+                    showNoBingo();
+                }
+            });
         }
         
         function showBingoPending(bingoData) {
@@ -1938,14 +1940,17 @@
             document.getElementById('bingo-pending').style.display = 'none';
         }
         
-        function verifyWinner() {
-            const pendingBingo = localStorage.getItem('pendingBingoVerification');
-            if (!pendingBingo) {
+        async function verifyWinner() {
+            if (!window.firebase) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            const snapshot = await get(ref(database, 'pendingBingoVerification'));
+            const bingoData = snapshot.val();
+            
+            if (!bingoData) {
                 console.log('No hay BINGO pendiente para verificar');
                 return;
             }
-            
-            const bingoData = JSON.parse(pendingBingo);
             console.log('Verificando ganador:', bingoData);
             
             // Determinar si es línea o cartón lleno
@@ -1958,7 +1963,7 @@
                 cartonId: bingoData.cartonId || 'C123',
                 phone: bingoData.phone || '0414-1234567',
                 type: bingoData.typeText || (isLine ? 'Línea' : 'Cartón Lleno'),
-                amount: calculatePrizeAmount(),
+                amount: await calculatePrizeAmount(),
                 date: new Date().toISOString().split('T')[0],
                 time: new Date().toLocaleTimeString('es-VE', { hour12: false }),
                 round: bingoData.round || currentRound,
@@ -1973,17 +1978,20 @@
             bingoWinners.unshift(winner);
             if (bingoWinners.length > 50) bingoWinners = bingoWinners.slice(0, 50);
             
-            // Crear premio pendiente
+            // Crear premio pendiente con información completa
             const prize = {
                 id: Date.now() + 1,
                 cartonId: winner.cartonId,
                 phone: winner.phone,
+                userName: bingoData.userName || `Usuario ${winner.phone.slice(-4)}`,
                 type: winner.type,
                 amount: winner.amount,
                 date: winner.date,
                 time: winner.time,
                 status: 'pending',
-                winnerId: winner.id
+                winnerId: winner.id,
+                round: currentRound,
+                gameId: bingoData.gameId || Date.now()
             };
             
             if (window.firebase) {
@@ -1995,7 +2003,7 @@
             // Crear resultado de verificación para el jugador
             const verificationResult = {
                 isCorrect: true,
-                isWinner: bingoData.phone === localStorage.getItem('userPhone'),
+                isWinner: bingoData.phone === bingoData.phone,
                 winnerCard: winner.cartonId,
                 type: winner.type,
                 typeText: winner.type,
@@ -2003,14 +2011,15 @@
                 gameEnded: isBingo || currentRound === 2
             };
             
-            localStorage.setItem('bingoVerificationResult', JSON.stringify(verificationResult));
+            await set(ref(database, 'bingoVerificationResult'), verificationResult);
             
-            // Limpiar verificación pendiente y alerta global
-            localStorage.removeItem('pendingBingoVerification');
-            localStorage.removeItem('globalBingoAlert');
+            // Limpiar verificación pendiente en Firebase
+            await set(ref(database, 'pendingBingoVerification'), null);
+            await set(ref(database, 'globalBingoAlert'), null);
             
             // Actualizar estado del juego
-            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            const gameStateSnapshot = await get(ref(database, 'gameState'));
+            const gameState = gameStateSnapshot.val() || {};
             
             if (isLine && currentRound === 1) {
                 // Línea en ronda 1 - continuar a ronda 2
@@ -2039,7 +2048,7 @@
                 showPopup('BINGO Verificado', `¡${winner.type} verificado! Premio: BsF ${winner.amount}. Juego terminado.`);
             }
             
-            localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+            await set(ref(database, 'gameState'), gameState);
             
             // Actualizar displays
             loadWinners();
@@ -2049,7 +2058,10 @@
             updateStats();
         }
         
-        function rejectWinner() {
+        async function rejectWinner() {
+            if (!window.firebase) return;
+            
+            const { database, ref, get, set } = window.firebase;
             console.log('Rechazando BINGO');
             
             // Crear resultado de verificación negativo
@@ -2059,29 +2071,45 @@
                 message: 'BINGO incorrecto'
             };
             
-            localStorage.setItem('bingoVerificationResult', JSON.stringify(verificationResult));
+            await set(ref(database, 'bingoVerificationResult'), verificationResult);
             
-            // Limpiar verificación pendiente y alerta global
-            localStorage.removeItem('pendingBingoVerification');
-            localStorage.removeItem('globalBingoAlert');
+            // Limpiar verificación pendiente en Firebase
+            await set(ref(database, 'pendingBingoVerification'), null);
+            await set(ref(database, 'globalBingoAlert'), null);
             
             // Reanudar juego
-            const gameState = JSON.parse(localStorage.getItem('bingoGameState') || '{}');
+            const gameStateSnapshot = await get(ref(database, 'gameState'));
+            const gameState = gameStateSnapshot.val() || {};
             gameState.isPaused = false;
             delete gameState.pauseReason;
             delete gameState.pauseTimestamp;
-            localStorage.setItem('bingoGameState', JSON.stringify(gameState));
+            await set(ref(database, 'gameState'), gameState);
             
             showPopup('BINGO Rechazado', 'El BINGO fue rechazado. El juego continúa.');
         }
         
-        function calculatePrizeAmount() {
+        async function calculatePrizeAmount() {
             // Calcular desde allPayments (ya cargado desde Firebase)
             const verifiedPurchases = allPayments.filter(p => p.status === 'verified');
             const totalRecaudado = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0) * 60;
             const totalParaPremios = totalRecaudado * 0.75;
             const roundPrize = currentRound === 1 ? totalParaPremios * 0.25 : totalParaPremios * 0.75;
-            return Math.round(roundPrize * 100) / 100;
+            
+            // Verificar si hay múltiples ganadores en esta ronda
+            const { database, ref, get } = window.firebase;
+            const winnersSnapshot = await get(ref(database, 'winners'));
+            const allWinners = winnersSnapshot.val() ? Object.values(winnersSnapshot.val()) : [];
+            
+            // Contar ganadores de la ronda actual del juego actual
+            const currentGameWinners = allWinners.filter(w => 
+                w.round === currentRound && 
+                w.date === new Date().toISOString().split('T')[0]
+            );
+            
+            const winnersCount = currentGameWinners.length + 1; // +1 por el ganador actual
+            const dividedPrize = roundPrize / winnersCount;
+            
+            return Math.round(dividedPrize * 100) / 100;
         }
         
         // GESTIÓN DE PREMIOS
@@ -2116,7 +2144,8 @@
                     <div class="prize-header">
                         <div>
                             <strong>Cartón: ${prize.cartonId}</strong>
-                            <div class="prize-info">${prize.phone} • ${prize.type}</div>
+                            <div class="prize-info">${prize.userName || 'Usuario'} • ${prize.phone}</div>
+                            <div class="prize-info">${prize.type} • Ronda ${prize.round || 1}</div>
                         </div>
                         <div class="prize-amount">BsF ${prize.amount}</div>
                     </div>
@@ -3104,10 +3133,17 @@
             set(ref(database, 'calledNumbers'), []);
             
             // Cantar números cada 5 segundos
-            callingInterval = setInterval(() => {
+            callingInterval = setInterval(async () => {
                 if (!gameActive) {
                     console.log('❌ Juego no activo, deteniendo');
                     stopAutomaticCalling();
+                    return;
+                }
+                
+                // Verificar si hay BINGO pendiente
+                const pendingSnapshot = await get(ref(database, 'pendingBingoVerification'));
+                if (pendingSnapshot.exists()) {
+                    console.log('⏸️ BINGO pendiente, pausando cantado');
                     return;
                 }
                 
@@ -3150,8 +3186,8 @@
         
         function generateRandomPatternPositions() {
             const positions = [];
-            const patternSize = Math.floor(Math.random() * 7) + 12; // 12-18 casillas
-            const maxCells = 20;
+            const patternSize = Math.floor(Math.random() * 5) + 8; // 8-12 casillas
+            const maxCells = 12;
             const usedPositions = new Set();
             
             while (positions.length < Math.min(patternSize, maxCells)) {
