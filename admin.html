@@ -251,7 +251,7 @@
                     <span style="margin: 0 0.5rem; color: #666;">o</span>
                     <input type="tel" id="user-phone-search" placeholder="Buscar por teléfono">
                     <button onclick="searchUser()" class="admin-btn small">Buscar</button>
-                    <button onclick="loadAllUsers()" class="admin-btn small">Actualizar Lista</button>
+                    <button onclick="loadAllUsers(true)" class="admin-btn small">Actualizar Lista</button>
                 </div>
                 
                 <!-- Estadísticas de Usuarios -->
@@ -1774,7 +1774,7 @@
                         loadInitialAdminState();
                         loadPurchasesFromFirebase();
                         loadWinnersFromFirebase();
-                        loadAllUsers();
+                        loadAllUsers(false);
                     }
                     
                     updatePaymentStats();
@@ -3103,7 +3103,7 @@
             set(ref(database, 'gameState'), initialState);
             set(ref(database, 'calledNumbers'), []);
             
-            // Cantar números cada 3 segundos
+            // Cantar números cada 5 segundos
             callingInterval = setInterval(() => {
                 if (!gameActive) {
                     console.log('❌ Juego no activo, deteniendo');
@@ -3129,6 +3129,9 @@
                 
                 console.log('📢 Cantando:', randomNumber);
                 
+                // Cantar número con voz
+                callNumberWithVoice(randomNumber);
+                
                 // Actualizar Firebase inmediatamente
                 set(ref(database, 'calledNumbers'), calledNumbers);
                 set(ref(database, 'gameState'), {
@@ -3142,7 +3145,7 @@
                     gameId: initialState.gameId
                 });
                 
-            }, 3000);
+            }, 5000);
         }
         
         function generateRandomPatternPositions() {
@@ -3171,6 +3174,10 @@
                 clearInterval(callingInterval);
                 callingInterval = null;
             }
+            // Detener síntesis de voz
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+            }
         }
 
         function getBingoLetter(number) {
@@ -3181,15 +3188,48 @@
             if (number >= 61 && number <= 75) return 'O';
             return '';
         }
+        
+        // Función para cantar números con voz
+        function callNumberWithVoice(number) {
+            if (!('speechSynthesis' in window)) {
+                console.log('Síntesis de voz no disponible');
+                return;
+            }
+            
+            const letter = getBingoLetter(number);
+            const numberCall = `${letter}${number}`;
+            
+            // Primera llamada
+            const utterance1 = new SpeechSynthesisUtterance(numberCall);
+            utterance1.lang = 'es-ES';
+            utterance1.rate = 0.8;
+            utterance1.volume = 1;
+            
+            // Segunda llamada (repito)
+            const utterance2 = new SpeechSynthesisUtterance(`repito ${numberCall}`);
+            utterance2.lang = 'es-ES';
+            utterance2.rate = 0.8;
+            utterance2.volume = 1;
+            
+            // Cantar primera vez
+            speechSynthesis.speak(utterance1);
+            
+            // Cantar segunda vez después de pausa
+            utterance1.onend = () => {
+                setTimeout(() => {
+                    speechSynthesis.speak(utterance2);
+                }, 300);
+            };
+        }
 
         // Actualizar stats cada 10 segundos
         setInterval(updateStats, 10000);
         
         // Cargar todos los usuarios
-        function loadAllUsers() {
+        function loadAllUsers(showFeedback = false) {
             if (!window.firebase) {
                 console.error('❌ Firebase no disponible');
-                showPopup('Error', 'Firebase no disponible');
+                if (showFeedback) showPopup('Error', 'Firebase no disponible');
                 return;
             }
             
@@ -3199,12 +3239,12 @@
                 if (users) {
                     updateUserDropdown(users);
                     updateUserStats(users);
-                    showPopup('Lista Actualizada', `${Object.keys(users).length} usuarios cargados`);
+                    if (showFeedback) showPopup('Lista Actualizada', `${Object.keys(users).length} usuarios cargados`);
                 } else {
                     // Limpiar dropdown si no hay usuarios
                     const dropdown = document.getElementById('user-dropdown');
                     dropdown.innerHTML = '<option value="">No hay usuarios registrados</option>';
-                    showPopup('Sin Usuarios', 'No se encontraron usuarios registrados');
+                    if (showFeedback) showPopup('Sin Usuarios', 'No se encontraron usuarios registrados');
                 }
             });
         }
