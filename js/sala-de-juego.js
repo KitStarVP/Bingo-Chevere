@@ -361,6 +361,8 @@ class GameRoom {
         this.showGameElements();
 
         this.cards.forEach(card => {
+            // Verificar completitud antes de renderizar
+            this.updateCardCompletionStatus(card);
             const cardElement = this.createCardElement(card);
             container.appendChild(cardElement);
         });
@@ -370,28 +372,45 @@ class GameRoom {
         const cardDiv = document.createElement('div');
         cardDiv.className = 'bingo-card';
         
-        // Asegurar autoMode
+        // Asegurar autoMode y estado
         if (card.autoMode === undefined) card.autoMode = true;
+        if (card.missedOpportunity === undefined) card.missedOpportunity = false;
+        if (card.numbersWhenCompleted === undefined) card.numbersWhenCompleted = null;
         
         const cardCode = card.code || `C${card.id}`;
         const hasBingo = this.checkBingo(card);
+        const hasPattern = this.checkPattern(card);
         const hasLine = this.checkLine(card);
-        const canCallBingo = hasBingo || hasLine;
         
+        // LÓGICA MEJORADA DE DETECCIÓN
+        let canCallBingo = false;
         let bingoClass = '';
         let bingoText = 'BINGO';
         
-        if (hasBingo) {
+        if (card.missedOpportunity) {
+            bingoClass = 'missed-opportunity';
+            bingoText = '❌ OPORTUNIDAD PERDIDA';
+            canCallBingo = false;
+        } else if (hasBingo) {
             bingoClass = 'has-bingo';
             bingoText = '🏆 CARTÓN LLENO';
-        } else if (hasLine) {
+            canCallBingo = true;
+        } else if (this.currentRound === 1 && hasPattern) {
+            bingoClass = 'has-pattern';
+            bingoText = '🎯 PATRÓN COMPLETO';
+            canCallBingo = true;
+        } else if (this.currentRound === 2 && hasLine) {
             bingoClass = 'has-line';
-            bingoText = this.currentRound === 1 ? '🎯 PATRÓN' : '📏 LÍNEA';
+            bingoText = '📏 LÍNEA COMPLETA';
+            canCallBingo = true;
         }
         
-        // Crear elementos manualmente para evitar problemas con onclick
+        // Crear elementos con estado mejorado
+        const modeStatus = card.autoMode ? '🤖 AUTO' : '✋ MANUAL';
+        const cardStatus = card.missedOpportunity ? ' missed-card' : '';
+        
         cardDiv.innerHTML = `
-            <div class="card-header">ID-${cardCode}</div>
+            <div class="card-header${cardStatus}">ID-${cardCode} (${modeStatus})</div>
             <div class="bingo-letters">
                 <span>B</span>
                 <span>I</span>
@@ -405,10 +424,10 @@ class GameRoom {
             <div class="card-controls">
                 <div class="mode-selector">
                     <button class="mode-option ${card.autoMode ? 'active' : ''}" data-card-id="${card.id}" data-mode="auto">
-                        Automático
+                        🤖 Auto
                     </button>
                     <button class="mode-option ${!card.autoMode ? 'active' : ''}" data-card-id="${card.id}" data-mode="manual">
-                        Manual
+                        ✋ Manual
                     </button>
                 </div>
                 <button class="bingo-btn ${bingoClass}" data-card-id="${card.id}" data-action="bingo"
@@ -422,6 +441,22 @@ class GameRoom {
         this.addCardEventListeners(cardDiv, card);
 
         return cardDiv;
+    }
+    
+    // Nueva función para actualizar estado de completitud
+    updateCardCompletionStatus(card) {
+        if (card.missedOpportunity) return; // Ya perdió la oportunidad
+        
+        const hasBingo = this.checkBingo(card);
+        const hasPattern = this.checkPattern(card);
+        
+        const isComplete = hasBingo || (this.currentRound === 1 && hasPattern);
+        
+        if (isComplete && !card.numbersWhenCompleted) {
+            // Marcar cuándo se completó
+            card.numbersWhenCompleted = this.calledNumbers.length;
+            console.log(`🎯 Cartón ${card.id} completado en número ${this.calledNumbers.length}`);
+        }
     }
 
     generateCardGrid(card) {
@@ -524,6 +559,9 @@ class GameRoom {
             this.showToast(`✅ Marcado: ${this.getBingoLetter(number)}${number}`);
         }
 
+        // Verificar completitud después de marcar/desmarcar
+        this.updateCardCompletionStatus(card);
+        
         console.log('💾 Guardando cambios...');
         this.saveCards();
         this.renderCards();
@@ -619,9 +657,9 @@ class GameRoom {
     }
 
     checkLine(card) {
-        // En ronda 1, verificar patrón en lugar de líneas
+        // En ronda 1, NO verificar líneas, solo patrones
         if (this.currentRound === 1) {
-            return this.checkPattern(card);
+            return false; // En ronda 1 solo importa el patrón
         }
         
         // Ronda 2: verificar líneas tradicionales
@@ -724,12 +762,21 @@ class GameRoom {
             return;
         }
         
-        const { database, ref, push } = window.firebase;
+        const { database, ref, set } = window.firebase;
         
-        // Enviar BINGO para verificación del admin
-        push(ref(database, 'pendingBingos'), bingoData)
+        // Enviar BINGO para verificación del admin (usar set en lugar de push)
+        set(ref(database, 'pendingBingoVerification'), bingoData)
             .then(() => {
                 console.log('✅ BINGO enviado a Firebase para verificación');
+                // También crear alerta global
+                return set(ref(database, 'globalBingoAlert'), {
+                    ...bingoData,
+                    timestamp: Date.now(),
+                    alertType: 'bingo_verification'
+                });
+            })
+            .then(() => {
+                console.log('✅ Alerta global de BINGO creada');
             })
             .catch(error => {
                 console.error('❌ Error enviando BINGO:', error);
@@ -909,15 +956,16 @@ class GameRoom {
             console.error('❌ Error en listener de calledNumbers:', error);
         });
         
-        // Escuchar verificaciones de BINGO
-        onValue(ref(database, 'bingoVerifications'), (snapshot) => {
+        // Escuchar resultado de verificación de BINGO
+        onValue(ref(database, 'bingoVerificationResult'), (snapshot) => {
             try {
-                const verifications = snapshot.val();
-                if (verifications) {
-                    this.handleBingoVerifications(verifications);
+                const result = snapshot.val();
+                if (result) {
+                    console.log('📝 Resultado de verificación recibido:', result);
+                    this.handleVerificationResult(result);
                 }
             } catch (error) {
-                console.error('❌ Error procesando verificaciones:', error);
+                console.error('❌ Error procesando resultado de verificación:', error);
             }
         });
         
@@ -963,24 +1011,30 @@ class GameRoom {
         this.renderCards();
     }
     
-    handleBingoVerifications(verifications) {
-        const userPhone = localStorage.getItem('userPhone');
-        if (!userPhone) return;
-        
-        Object.values(verifications).forEach(verification => {
-            if (verification.phone === userPhone && verification.processed) {
-                if (verification.isCorrect && verification.isWinner) {
-                    this.showWinnerAlert(verification);
-                } else if (!verification.isCorrect) {
-                    this.showToast('❌ BINGO incorrecto verificado');
-                    this.enableAllBingoButtons();
-                }
-            }
-        });
-    }
+    // Función removida - ahora se usa handleVerificationResult
     
     handleFirebaseGameState(firebaseState) {
         console.log('📲 Estado recibido de Firebase:', firebaseState);
+        
+        // Verificar cambio de ronda - MANTENER NÚMEROS Y MARCAS
+        const previousRound = this.currentRound;
+        if (firebaseState && firebaseState.currentRound !== previousRound) {
+            console.log(`🔄 Cambio de ronda: ${previousRound} → ${firebaseState.currentRound}`);
+            this.currentRound = firebaseState.currentRound;
+            
+            // NO limpiar números ni marcas - solo cambiar objetivo
+            if (this.currentRound === 2) {
+                this.showToast('➡️ Ronda 2: Objetivo cambiado a CARTÓN LLENO');
+                // Resetear oportunidades perdidas para nueva ronda
+                this.cards.forEach(card => {
+                    card.missedOpportunity = false;
+                    card.numbersWhenCompleted = null;
+                });
+            }
+            
+            this.renderCards(); // Re-renderizar con nuevos objetivos
+            return;
+        }
         
         // SOLO expirar cartones EN_USO cuando se cierra bingo
         if (firebaseState && firebaseState.bingoClosed && firebaseState.expireCards) {
@@ -1029,19 +1083,17 @@ class GameRoom {
             this.showToast('🆕 Nuevo juego iniciado!');
         }
         
-        // Actualizar estado local
+        // Actualizar estado local (sin cambiar ronda aquí)
         const previousGameActive = this.gameActive;
-        const previousRound = this.currentRound;
         const wasPaused = this.isPaused;
         
         this.gameActive = firebaseState.gameActive || false;
-        this.currentRound = firebaseState.currentRound || 1;
+        // currentRound ya se actualizó arriba si cambió
         this.isPaused = firebaseState.isPaused || false;
         
         // Detectar cambios importantes
         const gameStarted = !previousGameActive && this.gameActive;
         const gameEnded = previousGameActive && !this.gameActive;
-        const roundChanged = previousRound !== this.currentRound;
         const pauseChanged = wasPaused !== this.isPaused;
         
         if (gameStarted) {
@@ -1050,9 +1102,6 @@ class GameRoom {
         } else if (gameEnded) {
             console.log('⏹️ Juego terminado');
             this.handleGameEnded();
-        } else if (roundChanged) {
-            console.log('🔄 Ronda cambiada a:', this.currentRound);
-            this.updateGameInfo();
         }
         
         // Si no hay juego activo pero hay cartones, mostrar espera
@@ -1196,22 +1245,29 @@ class GameRoom {
     }
 
     handleVerificationResult(result) {
-        if (result.isCorrect) {
-            if (result.isWinner) {
-                // El jugador actual ganó
-                this.showWinnerAlert(result);
-            } else {
-                // Otro jugador ganó
-                this.showToast(`🏆 ${result.winnerCard} ganó con ${result.type}`);
-            }
-            
-            if (result.gameEnded) {
-                this.showToast('🏁 Partida finalizada');
-            } else {
-                this.showToast('➡️ Avanzando a la siguiente ronda');
-            }
-        } else {
+        const userPhone = localStorage.getItem('userPhone');
+        
+        if (result.isCorrect && result.isWinner) {
+            // El jugador actual ganó
+            this.showWinnerAlert(result);
+            this.showToast(`🏆 ¡Ganaste ${result.typeText}! Premio: BsF ${result.prize}`);
+        } else if (result.isCorrect && !result.isWinner) {
+            // Otro jugador ganó
+            this.showToast(`🏆 ${result.winnerCard} ganó con ${result.typeText}`);
+            this.enableAllBingoButtons();
+        } else if (!result.isCorrect) {
+            // BINGO incorrecto
             this.showToast('❌ BINGO incorrecto. El juego continúa.');
+            this.enableAllBingoButtons();
+        }
+        
+        // Manejar fin de juego
+        if (result.gameEnded) {
+            this.showToast('🏁 Partida finalizada');
+        } else if (result.isCorrect && result.isWinner) {
+            if (this.currentRound === 1) {
+                this.showToast('➡️ Avanzando a Ronda 2 - Cartón Lleno');
+            }
         }
     }
 
@@ -1774,6 +1830,19 @@ class GameRoom {
                         }
                     }
                 }
+                
+                // AUTO-DETECCIÓN: Verificar si completó patrón/cartón después de marcar
+                if (card.autoMode && !card.missedOpportunity) {
+                    const hasBingo = this.checkBingo(card);
+                    const hasPattern = this.checkPattern(card);
+                    
+                    if (hasBingo || (hasPattern && this.currentRound === 1)) {
+                        console.log(`🎯 AUTO-BINGO DETECTADO en cartón ${card.id}`);
+                        setTimeout(() => {
+                            this.autoCallBingo(card.id);
+                        }, 1000); // Delay para que el usuario vea la marca
+                    }
+                }
             }
         });
 
@@ -1781,6 +1850,9 @@ class GameRoom {
             console.log(`Auto-marcado ${this.getBingoLetter(number)}${number} en ${markedCards} cartones`);
             this.saveCards();
             this.renderCards();
+            
+            // Verificar oportunidades perdidas en modo manual
+            this.checkMissedOpportunities();
         }
     }
 
@@ -1920,6 +1992,43 @@ class GameRoom {
         })
         .catch(error => {
             console.error('❌ Error guardando cartones en Firebase:', error);
+        });
+    }
+    
+    // AUTO-CALL BINGO para modo automático
+    autoCallBingo(cardId) {
+        const card = this.cards.find(c => c.id == cardId);
+        if (!card || !card.autoMode || card.missedOpportunity) return;
+        
+        console.log(`🤖 AUTO-CANTANDO BINGO para cartón ${cardId}`);
+        
+        // Mostrar alerta de auto-detección
+        this.showToast('🤖 ¡BINGO detectado automáticamente! Enviando...');
+        
+        // Llamar función normal de BINGO
+        this.callBingo(cardId);
+    }
+    
+    // Verificar oportunidades perdidas
+    checkMissedOpportunities() {
+        this.cards.forEach(card => {
+            if (card.autoMode || card.missedOpportunity) return; // Solo para modo manual
+            
+            const hasBingo = this.checkBingo(card);
+            const hasPattern = this.checkPattern(card);
+            const isComplete = hasBingo || (this.currentRound === 1 && hasPattern);
+            
+            if (isComplete && card.numbersWhenCompleted) {
+                const numbersPassed = this.calledNumbers.length - card.numbersWhenCompleted;
+                
+                if (numbersPassed >= 2) {
+                    console.log(`❌ Cartón ${card.id} perdió la oportunidad (${numbersPassed} números después)`);
+                    card.missedOpportunity = true;
+                    
+                    this.showToast(`❌ Cartón ${card.code || card.id}: Perdiste la oportunidad de ganar`);
+                    this.saveCards();
+                }
+            }
         });
     }
 }

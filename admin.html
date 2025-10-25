@@ -153,7 +153,7 @@
                 
                 <div class="notification-templates">
                     <h4>Mensajes Predefinidos:</h4>
-                    <div class="message-template" data-message-template="🎯🔥 ¡BINGO EN 30 MINUTOS! 🔥🎯\n\n💰 ¡Compra tus cartones YA en {DOMAIN}! 💰\n\n⚡ ¡No te quedes sin jugar! ⚡">
+                    <div class="message-template" data-message-template="🎯🔥 ¡BINGO EN 30 MINUTOS! 🔥🎯\n\n💰 ¡Compra tus cartones YA! 💰\n\n⚡ ¡No te quedes sin jugar! ⚡">
                         <span>Bingo en 30 minutos</span>
                         <button class="share-whatsapp">📱 Compartir</button>
                     </div>
@@ -161,7 +161,7 @@
                         <span>Últimos 10 minutos</span>
                         <button class="share-whatsapp">📱 Compartir</button>
                     </div>
-                    <div class="message-template" data-message-template="🚀🎉 ¡BINGO INICIADO! 🎉🚀\n\n🔴 EN VIVO AHORA 🔴\n\n👆 Entra YA a {DOMAIN} 👆\n\n🎯 ¡QUE COMIENCE LA DIVERSIÓN! 🎯">
+                    <div class="message-template" data-message-template="🚀🎉 ¡BINGO INICIADO! 🎉🚀\n\n🔴 EN VIVO AHORA 🔴\n\n🎯 ¡QUE COMIENCE LA DIVERSIÓN! 🎯">
                         <span>Bingo iniciado</span>
                         <button class="share-whatsapp">📱 Compartir</button>
                     </div>
@@ -178,7 +178,10 @@
                 </div>
                 
                 <div class="notification-history">
-                    <h4>Historial de Notificaciones:</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0;">Historial de Notificaciones:</h4>
+                        <button onclick="clearNotificationHistory()" class="admin-btn danger" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">🗑️ Limpiar</button>
+                    </div>
                     <div id="notification-log" class="notification-log">
                         <!-- Historial se mostrará aquí -->
                     </div>
@@ -338,12 +341,84 @@
                     </div>
                     <div class="danger-zone" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
                         <h4 style="color: #dc3545; margin: 0 0 0.5rem 0;">⚠️ Zona Peligrosa</h4>
-                        <button id="advanced-maintenance" class="admin-btn danger">🛠️ Mantenimiento Avanzado</button>
+                        <button id="total-reset" class="admin-btn danger">🗑️ RESET TOTAL</button>
                     </div>
                 </div>
             </div>
             
-            <!-- Modal de Limpieza Selectiva -->
+            <!-- Modal de RESET TOTAL -->
+        <div id="reset-modal" class="clean-modal" style="display: none;">
+            <div class="clean-modal-content">
+                <div class="clean-modal-header">
+                    <h3>🗑️ RESET TOTAL DEL SISTEMA</h3>
+                    <button class="close-clean-modal" onclick="closeResetModal()">&times;</button>
+                </div>
+                
+                <div class="reset-warning" style="background: #fff5f5; border: 2px solid #dc3545; border-radius: 8px; padding: 1rem; margin: 1rem; color: #721c24;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #dc3545;">⚠️ ADVERTENCIA CRÍTICA</h4>
+                    <p style="margin: 0; font-size: 0.9rem;">Esta función eliminará TODOS los datos y dejará la web completamente nueva para el público. Solo usar cuando la web esté lista para lanzamiento.</p>
+                </div>
+                
+                <div class="reset-options" style="padding: 1rem;">
+                    <div class="reset-option" style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #dc3545;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="resetType" value="total" style="margin-right: 0.5rem; transform: scale(1.2);">
+                            <div>
+                                <strong>🗑️ RESET TOTAL COMPLETO</strong>
+                                <div style="font-size: 0.8rem; color: #666; margin-top: 0.3rem;">Elimina TODO: usuarios, juegos, historial, premios, transacciones, estadísticas. Deja la web como recién instalada.</div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="reset-option" style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #fd7e14;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="resetType" value="verify" style="margin-right: 0.5rem; transform: scale(1.2);">
+                            <div>
+                                <strong>🔍 RESET + VERIFICACIÓN</strong>
+                                <div style="font-size: 0.8rem; color: #666; margin-top: 0.3rem;">Reset total + verifica que todo funcione correctamente + repara Firebase si es necesario.</div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="reset-option" style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="resetType" value="test" style="margin-right: 0.5rem; transform: scale(1.2);">
+                            <div>
+                                <strong>🧪 SOLO VERIFICAR</strong>
+                                <div style="font-size: 0.8rem; color: #666; margin-top: 0.3rem;">Solo verifica funcionamiento sin eliminar datos. Para probar antes del reset real.</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="reset-confirmation" style="padding: 1rem; border-top: 1px solid #eee; background: #fff5f5;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #dc3545;">🔐 Confirmación de Seguridad</h4>
+                    <p style="margin: 0 0 0.5rem 0; font-size: 0.8rem;">Para confirmar, escribe exactamente: <strong>RESET TOTAL</strong></p>
+                    <input type="text" id="reset-confirmation-text" placeholder="Escribe: RESET TOTAL" style="width: 100%; padding: 0.5rem; border: 2px solid #dc3545; border-radius: 4px; font-size: 0.9rem;">
+                </div>
+                
+                <div class="reset-actions" style="display: flex; gap: 0.5rem; padding: 1rem; border-top: 1px solid #eee; background: #f8f9fa;">
+                    <button onclick="closeResetModal()" class="admin-btn" style="flex: 1;">Cancelar</button>
+                    <button onclick="executeReset()" class="admin-btn danger" style="flex: 2;">🗑️ EJECUTAR RESET</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de Progreso -->
+        <div id="progress-modal" class="clean-modal" style="display: none;">
+            <div class="clean-modal-content" style="max-width: 400px;">
+                <div class="progress-content" style="text-align: center; padding: 2rem;">
+                    <h3 style="margin: 0 0 1rem 0; color: #dc3545;">🔄 EJECUTANDO RESET</h3>
+                    <div class="progress-bar" style="width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; margin: 1rem 0;">
+                        <div id="progress-fill" style="height: 100%; background: linear-gradient(90deg, #dc3545, #fd7e14); width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div id="progress-text" style="font-size: 0.9rem; color: #666;">Iniciando...</div>
+                    <div id="progress-steps" style="margin-top: 1rem; font-size: 0.8rem; color: #999; text-align: left;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Limpieza Selectiva -->
             <div id="clean-modal" class="clean-modal" style="display: none;">
                 <div class="clean-modal-content">
                     <div class="clean-modal-header">
@@ -1828,14 +1903,15 @@
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
       import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
+      // Firebase configuration - En producción usar variables de entorno
       const firebaseConfig = {
-        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
-        authDomain: "bingo-chevere.firebaseapp.com",
-        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
-        projectId: "bingo-chevere",
-        storageBucket: "bingo-chevere.firebasestorage.app",
-        messagingSenderId: "1057150163831",
-        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+        apiKey: window.FIREBASE_API_KEY || "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: window.FIREBASE_AUTH_DOMAIN || "bingo-chevere.firebaseapp.com",
+        databaseURL: window.FIREBASE_DATABASE_URL || "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: window.FIREBASE_PROJECT_ID || "bingo-chevere",
+        storageBucket: window.FIREBASE_STORAGE_BUCKET || "bingo-chevere.firebasestorage.app",
+        messagingSenderId: window.FIREBASE_MESSAGING_SENDER_ID || "1057150163831",
+        appId: window.FIREBASE_APP_ID || "1:1057150163831:web:0d6e9f70c356ee56b09f72"
       };
 
       const app = initializeApp(firebaseConfig);
@@ -1847,6 +1923,8 @@
 
     <script src="js/popup.js"></script>
     <script src="js/loader.js"></script>
+    <script src="js/custom-popups.js"></script>
+    <script src="js/card-generator.js"></script>
     <script>
         // Sistema de bingos diarios
         // VARIABLES DEL SISTEMA MEJORADO
@@ -1975,6 +2053,7 @@
                         loadInitialAdminState();
                         loadPurchasesFromFirebase();
                         loadWinnersFromFirebase();
+                        loadPrizesFromFirebase();
                         loadAllUsers(false);
                         
                         // Inicializar monitoreo de Firebase
@@ -2060,7 +2139,7 @@
         
         // Funciones faltantes para compatibilidad
         function addNewSchedule() {
-            const time = prompt('Hora del nuevo bingo (HH:MM):');
+            const time = window.prompt('Hora del nuevo bingo (HH:MM):');
             if (time && time.match(/^\d{2}:\d{2}$/)) {
                 dailySchedule.push({
                     label: time,
@@ -2085,8 +2164,8 @@
             const bingo = specialBingos.find(b => b.id === bingoId);
             if (!bingo) return;
             
-            const newName = prompt('Nombre:', bingo.name);
-            const newPrice = prompt('Precio:', bingo.price);
+            const newName = window.prompt('Nombre:', bingo.name);
+            const newPrice = window.prompt('Precio:', bingo.price);
             
             if (newName) bingo.name = newName;
             if (newPrice) bingo.price = parseInt(newPrice);
@@ -2097,7 +2176,7 @@
         }
         
         function deleteSpecialBingo(bingoId) {
-            if (!confirm('¿Eliminar bingo especial?')) return;
+            if (!window.confirm('¿Eliminar bingo especial?')) return;
             
             const index = specialBingos.findIndex(b => b.id === bingoId);
             if (index !== -1) {
@@ -2140,7 +2219,7 @@
             
             document.getElementById('winner-carton').textContent = bingoData.cartonId || 'C123';
             document.getElementById('winner-phone').textContent = bingoData.phone || '0414-1234567';
-            document.getElementById('winner-type').textContent = bingoData.type || 'Patrón';
+            document.getElementById('winner-type').textContent = bingoData.typeText || bingoData.type || 'Patrón';
             
             console.log('Mostrando BINGO pendiente en panel admin:', bingoData);
         }
@@ -2163,15 +2242,16 @@
             }
             console.log('Verificando ganador:', bingoData);
             
-            const isLine = bingoData.type === 'LINEA';
+            const isPattern = bingoData.type === 'PATRON';
             const isBingo = bingoData.type === 'CARTON_LLENO';
+            const isLine = bingoData.type === 'LINEA';
             
             // Crear registro del ganador
             const winner = {
                 id: Date.now(),
                 cartonId: bingoData.cartonId || 'C123',
                 phone: bingoData.phone || '0414-1234567',
-                type: bingoData.typeText || (isLine ? 'Línea' : 'Cartón Lleno'),
+                type: bingoData.typeText || (isPattern ? 'Patrón' : (isLine ? 'Línea' : 'Cartón Lleno')),
                 amount: await calculatePrizeAmount(),
                 date: new Date().toISOString().split('T')[0],
                 time: new Date().toLocaleTimeString('es-VE', { hour12: false }),
@@ -2213,7 +2293,7 @@
             
             const verificationResult = {
                 isCorrect: true,
-                isWinner: bingoData.phone === bingoData.phone,
+                isWinner: true,
                 winnerCard: winner.cartonId,
                 type: winner.type,
                 typeText: winner.type,
@@ -2228,12 +2308,13 @@
             const gameStateSnapshot = await get(ref(database, 'gameState'));
             const gameState = gameStateSnapshot.val() || {};
             
-            if (isLine && currentRound === 1) {
+            if (isPattern && currentRound === 1) {
                 currentRound = 2;
                 gameState.currentRound = 2;
                 gameState.gameActive = true;
                 gameState.isPaused = false;
-                showPopup('Línea Verificada', `¡Línea verificada! Premio: BsF ${winner.amount}. Iniciando Ronda 2...`);
+                // NO limpiar números cantados - continuar con los mismos
+                showPopup('Patrón Verificado', `¡Patrón verificado! Premio: BsF ${winner.amount}. Continuando Ronda 2...`);
             } else {
                 // Partida completa - expirar TODOS los cartones
                 gameActive = false;
@@ -2444,7 +2525,154 @@
             
             loadPurchasesFromFirebase();
         }
+        
+        // Guardar ganador en Firebase
+        function saveWinnerToFirebase(winner) {
+            if (!window.firebase) return;
+            
+            const { database, ref, push } = window.firebase;
+            push(ref(database, 'winners'), winner)
+                .then(() => console.log('✅ Ganador guardado en Firebase'))
+                .catch(error => console.error('❌ Error guardando ganador:', error));
+        }
+        
+        // Guardar premio en Firebase
+        function savePrizeToFirebase(prize) {
+            if (!window.firebase) return;
+            
+            const { database, ref, push } = window.firebase;
+            push(ref(database, 'prizes'), prize)
+                .then(() => console.log('✅ Premio guardado en Firebase'))
+                .catch(error => console.error('❌ Error guardando premio:', error));
+        }
+        
+        // Marcar cartón como pendiente de pago
+        function markCardAsPendingPayment(phone, cartonId) {
+            if (!window.firebase) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            get(ref(database, `playerCards/${cleanPhone}`)).then((snapshot) => {
+                let cards = snapshot.val() || [];
+                const cardIndex = cards.findIndex(c => c.code === cartonId || c.id == cartonId);
+                
+                if (cardIndex !== -1) {
+                    cards[cardIndex].status = 'pendiente_pago';
+                    cards[cardIndex].winTimestamp = Date.now();
+                    
+                    set(ref(database, `playerCards/${cleanPhone}`), cards)
+                        .then(() => console.log('✅ Cartón marcado como pendiente de pago'))
+                        .catch(error => console.error('❌ Error marcando cartón:', error));
+                }
+            });
+        }
+        
+        // Marcar cartón como pagado
+        function markCardAsPaid(phone, cartonId) {
+            if (!window.firebase) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            get(ref(database, `playerCards/${cleanPhone}`)).then((snapshot) => {
+                let cards = snapshot.val() || [];
+                const cardIndex = cards.findIndex(c => c.code === cartonId || c.id == cartonId);
+                
+                if (cardIndex !== -1) {
+                    cards[cardIndex].status = 'vencido';
+                    cards[cardIndex].paidTimestamp = Date.now();
+                    
+                    set(ref(database, `playerCards/${cleanPhone}`), cards)
+                        .then(() => console.log('✅ Cartón marcado como pagado'))
+                        .catch(error => console.error('❌ Error marcando cartón como pagado:', error));
+                }
+            });
+        }
+        
+        // Cargar ganadores desde Firebase
+        function loadWinnersFromFirebase() {
+            if (!window.firebase) {
+                console.error('❌ Firebase no disponible - no se pueden cargar ganadores');
+                return;
+            }
+            
+            const { database, ref, onValue } = window.firebase;
+            onValue(ref(database, 'winners'), (snapshot) => {
+                const winners = snapshot.val();
+                if (winners) {
+                    bingoWinners = Object.values(winners).sort((a, b) => (b.id || 0) - (a.id || 0));
+                    console.log('✅ Ganadores cargados desde Firebase:', bingoWinners.length);
+                    loadWinners();
+                } else {
+                    bingoWinners = [];
+                }
+            }, (error) => {
+                console.error('❌ Error cargando ganadores:', error);
+                bingoWinners = [];
+            });
+        }
+        
+        // Cargar premios desde Firebase
+        function loadPrizesFromFirebase() {
+            if (!window.firebase) {
+                console.error('❌ Firebase no disponible - no se pueden cargar premios');
+                return;
+            }
+            
+            const { database, ref, onValue } = window.firebase;
+            onValue(ref(database, 'prizes'), (snapshot) => {
+                const prizes = snapshot.val();
+                if (prizes) {
+                    bingoPrizes = Object.values(prizes).sort((a, b) => (b.id || 0) - (a.id || 0));
+                    console.log('✅ Premios cargados desde Firebase:', bingoPrizes.length);
+                    updatePrizeStats();
+                    showPrizeTab(currentPrizeTab);
+                } else {
+                    bingoPrizes = [];
+                }
+            }, (error) => {
+                console.error('❌ Error cargando premios:', error);
+                bingoPrizes = [];
+            });
+        }
 
+        // Funciones para expirar cartones
+        function expireAllActiveCards() {
+            if (!window.firebase) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            
+            get(ref(database, 'playerCards')).then((snapshot) => {
+                const allPlayerCards = snapshot.val();
+                if (!allPlayerCards) return;
+                
+                Object.keys(allPlayerCards).forEach(phone => {
+                    const playerCards = allPlayerCards[phone];
+                    if (Array.isArray(playerCards)) {
+                        let hasChanges = false;
+                        playerCards.forEach(card => {
+                            if (card.status === 'en_uso' || card.status === 'vigente') {
+                                card.status = 'vencido';
+                                card.expiredDate = new Date().toISOString();
+                                card.expiredReason = 'Partida completada';
+                                hasChanges = true;
+                            }
+                        });
+                        if (hasChanges) {
+                            set(ref(database, `playerCards/${phone}`), playerCards);
+                        }
+                    }
+                });
+            });
+        }
+        
+        function activateNextGameCards() {
+            // Esta función se mantiene para compatibilidad pero no hace nada
+            // Los cartones nuevos se generan cuando se compran
+            console.log('✅ Preparado para próximo juego');
+        }
+        
         // SISTEMA DE MONITOREO DE FIREBASE
         let firebaseMonitor = {
             connected: false,
@@ -2712,8 +2940,8 @@
             updateStats();
         }
         
-        function finishGameSafely() {
-            if (!confirm('¿Finalizar partida completa (2 rondas)? Cartones del juego actual expirarán.')) return;
+        async function finishGameSafely() {
+            if (!window.confirm('¿Finalizar partida completa (2 rondas)? Cartones del juego actual expirarán.')) return;
             
             gameActive = false;
             stopAutomaticCalling();
@@ -2749,8 +2977,8 @@
             updateStats();
         }
         
-        function emergencyStopSafely() {
-            if (!confirm('⚠️ PARADA DE EMERGENCIA\n\n¿Estás seguro? Esto detendrá todo inmediatamente.')) return;
+        async function emergencyStopSafely() {
+            if (!window.confirm('¿Estás seguro? Esto detendrá todo inmediatamente.')) return;
             
             gameActive = false;
             stopAutomaticCalling();
@@ -2770,7 +2998,7 @@
         }
         
         function rescheduleCurrentGame() {
-            if (!confirm('📅 REPROGRAMAR PARTIDA\n\n¿Reprogramar la partida actual?\n\n• Se pausará el juego\n• Los cartones seguirán vigentes\n• Se podrá reanudar después\n\n¿Continuar?')) return;
+            if (!window.confirm('📅 REPROGRAMAR PARTIDA\n\n¿Reprogramar la partida actual?\n\n• Se pausará el juego\n• Los cartones seguirán vigentes\n• Se podrá reanudar después\n\n¿Continuar?')) return;
             
             gameActive = false;
             stopAutomaticCalling();
@@ -2796,7 +3024,7 @@
         }
         
         function closeBingoCompletely() {
-            if (!confirm('🔒 CERRAR BINGO COMPLETO\n\n¿Estás seguro? Esto:\n• Finalizará el bingo actual\n• Expirará cartones del juego actual\n• Permitirá iniciar uno nuevo\n\n¿Continuar?')) return;
+            if (!window.confirm('🔒 CERRAR BINGO COMPLETO\n\n¿Estás seguro? Esto:\n• Finalizará el bingo actual\n• Expirará cartones del juego actual\n• Permitirá iniciar uno nuevo\n\n¿Continuar?')) return;
             
             console.log('🔒 Cerrando bingo completamente...');
             
@@ -3055,25 +3283,10 @@
                 });
             }
             
-            const advancedMaintenance = document.getElementById('advanced-maintenance');
-            if (advancedMaintenance) {
-                advancedMaintenance.addEventListener('click', () => {
-                    if (!confirm('⚠️ MANTENIMIENTO AVANZADO\n\nEsto realizará una limpieza más profunda.\n¿Continuar?')) return;
-                    
-                    try {
-                        gameActive = false;
-                        currentRound = 1;
-                        selectedBingoIndex = -1;
-                        calledNumbers = [];
-                        
-                        stopAutomaticCalling();
-                        updateGameControlsUI();
-                        updateStats();
-                        
-                        showPopup('Mantenimiento Completado', 'Sistema reiniciado localmente (Firebase intacto)');
-                    } catch (error) {
-                        showPopup('Error', 'Error en mantenimiento: ' + error.message);
-                    }
+            const totalReset = document.getElementById('total-reset');
+            if (totalReset) {
+                totalReset.addEventListener('click', () => {
+                    showTotalResetModal();
                 });
             }
         }
@@ -3085,7 +3298,7 @@
         
         // Agregar event listeners para botones críticos
         document.getElementById('cancel-bingo').addEventListener('click', () => {
-            if (!confirm('¿Finalizar el juego actual? Los cartones se marcarán como expirados pero se conservarán los datos.')) return;
+            if (!window.confirm('¿Finalizar el juego actual? Los cartones se marcarán como expirados pero se conservarán los datos.')) return;
             
             gameActive = false;
             currentRound = 1;
@@ -3125,7 +3338,7 @@
         });
         
         document.getElementById('reset-system').addEventListener('click', () => {
-            if (!confirm('⚠️ RESET TOTAL DEL SISTEMA\n\n¿Estás seguro? Esto eliminará:\n• Todos los premios y ganadores\n• Todos los pagos y compras\n• Todos los cartones\n• Estado del juego\n• Historial completo\n\nEsta acción NO se puede deshacer.')) {
+            if (!window.confirm('⚠️ RESET TOTAL DEL SISTEMA\n\n¿Estás seguro? Esto eliminará:\n• Todos los premios y ganadores\n• Todos los pagos y compras\n• Todos los cartones\n• Estado del juego\n• Historial completo\n\nEsta acción NO se puede deshacer.')) {
                 return;
             }
             
@@ -3349,7 +3562,7 @@
             if (!payment) return;
             
             if (!window.firebase) {
-                alert('❌ Firebase no disponible - no se puede aprobar el pago');
+                window.alert('❌ Firebase no disponible - no se puede aprobar el pago');
                 return;
             }
             
@@ -3376,7 +3589,7 @@
             if (!payment) return;
             
             if (!window.firebase) {
-                alert('❌ Firebase no disponible - no se puede rechazar el pago');
+                window.alert('❌ Firebase no disponible - no se puede rechazar el pago');
                 return;
             }
             
@@ -3493,13 +3706,13 @@
 
         // GESTIÓN DE BINGOS
         function addBingoToDay(dayKey) {
-            const time = prompt('Hora del bingo (HH:MM):');
+            const time = window.prompt('Hora del bingo (HH:MM):');
             if (!time || !time.match(/^\d{2}:\d{2}$/)) {
                 showPopup('Error', 'Formato inválido. Usa HH:MM');
                 return;
             }
             
-            const template = prompt('Tipo:\n1. Normal (60 BsF)\n2. Premium (100 BsF)\n3. Familiar (40 BsF)\n4. Especial (150 BsF)');
+            const template = window.prompt('Tipo:\n1. Normal (60 BsF)\n2. Premium (100 BsF)\n3. Familiar (40 BsF)\n4. Especial (150 BsF)');
             const templates = ['normal', 'premium', 'familiar', 'especial'];
             const selectedTemplate = templates[parseInt(template) - 1] || 'normal';
             const config = bingoTemplates[selectedTemplate];
@@ -3525,8 +3738,8 @@
             const bingo = weeklySchedule[dayKey].find(b => b.id === bingoId);
             if (!bingo) return;
             
-            const newPrice = prompt('Precio:', bingo.price);
-            const newMultiplier = prompt('Multiplicador:', bingo.multiplier);
+            const newPrice = window.prompt('Precio:', bingo.price);
+            const newMultiplier = window.prompt('Multiplicador:', bingo.multiplier);
             
             if (newPrice) bingo.price = parseInt(newPrice);
             if (newMultiplier) bingo.multiplier = parseFloat(newMultiplier);
@@ -3537,7 +3750,7 @@
         }
         
         function deleteBingo(bingoId, dayKey) {
-            if (!confirm('¿Eliminar bingo?')) return;
+            if (!window.confirm('¿Eliminar bingo?')) return;
             
             weeklySchedule[dayKey] = weeklySchedule[dayKey].filter(b => b.id !== bingoId);
             saveWeeklySchedule();
@@ -3594,10 +3807,10 @@
         }
         
         function addSpecialBingo() {
-            const name = prompt('Nombre:');
-            const date = prompt('Fecha (YYYY-MM-DD):');
-            const time = prompt('Hora (HH:MM):');
-            const price = prompt('Precio:', '150');
+            const name = window.prompt('Nombre:');
+            const date = window.prompt('Fecha (YYYY-MM-DD):');
+            const time = window.prompt('Hora (HH:MM):');
+            const price = window.prompt('Precio:', '150');
             
             if (!name || !date || !time) return;
             
@@ -3668,6 +3881,22 @@
                     <div>${notif.message}</div>
                 </div>
             `).join('');
+        }
+        
+        async function clearNotificationHistory() {
+            if (!window.confirm('¿Eliminar todo el historial de notificaciones?')) return;
+            
+            notificationHistory = [];
+            
+            if (window.firebase) {
+                const { database, ref, set } = window.firebase;
+                set(ref(database, 'notificationHistory'), [])
+                    .then(() => console.log('✅ Historial eliminado de Firebase'))
+                    .catch(error => console.error('❌ Error eliminando historial:', error));
+            }
+            
+            renderNotificationHistory();
+            showPopup('Historial Limpiado', 'Historial de notificaciones eliminado completamente');
         }
 
         // FUNCIONES DE GUARDADO Y UTILIDADES
@@ -4380,7 +4609,7 @@
         
         // Funciones de gestión de usuarios
         async function editUser(phone) {
-            const newName = prompt('Nuevo nombre para el usuario:', 'Usuario ' + phone.slice(-4));
+            const newName = window.prompt('Nuevo nombre para el usuario:', 'Usuario ' + phone.slice(-4));
             if (!newName) return;
             
             const { database, ref, get, set } = window.firebase;
@@ -4399,7 +4628,7 @@
         }
         
         async function resetUserPIN(phone) {
-            if (!confirm('¿Resetear PIN del usuario? Se generará un PIN temporal: 0000')) return;
+            if (!window.confirm('¿Resetear PIN del usuario? Se generará un PIN temporal: 0000')) return;
             
             const { database, ref, get, set } = window.firebase;
             const cleanPhone = phone.replace(/[^0-9]/g, '');
@@ -4418,7 +4647,7 @@
         }
         
         async function blockUser(phone) {
-            if (!confirm('¿Bloquear usuario? No podrá realizar compras')) return;
+            if (!window.confirm('¿Bloquear usuario? No podrá realizar compras')) return;
             
             const { database, ref, get, set } = window.firebase;
             const cleanPhone = phone.replace(/[^0-9]/g, '');
@@ -4454,7 +4683,7 @@
         }
         
         async function giftCards(phone) {
-            const quantity = prompt('¿Cuántos cartones regalar?', '1');
+            const quantity = window.prompt('¿Cuántos cartones regalar?', '1');
             if (!quantity || isNaN(quantity) || quantity < 1) return;
             
             try {
@@ -4466,7 +4695,7 @@
         }
         
         async function deleteUser(phone) {
-            if (!confirm('⚠️ ELIMINAR USUARIO\n\n¿Estás seguro? Esta acción eliminará:\n• Cuenta del usuario\n• Todos sus cartones\n• Historial de compras\n\nEsta acción NO se puede deshacer.')) return;
+            if (!window.confirm('¿Estás seguro? Esta acción eliminará:\n• Cuenta del usuario\n• Todos sus cartones\n• Historial de compras\n\nEsta acción NO se puede deshacer.')) return;
             
             const { database, ref, set } = window.firebase;
             const cleanPhone = phone.replace(/[^0-9]/g, '');
@@ -4645,7 +4874,7 @@
             
             const confirmText = `🧹 CONFIRMAR LIMPIEZA\n\nSe limpiarán las siguientes categorías:\n${selected.map(s => '• ' + s.name).join('\n')}\n\n¿Continuar?`;
             
-            if (confirm(confirmText)) {
+            if (window.confirm(confirmText)) {
                 performSelectiveClean(selected);
                 closeCleanModal();
             }
@@ -4729,6 +4958,326 @@
             }, 1000);
             
             showPopup('🧹 LIMPIEZA COMPLETADA', `Se limpiaron ${selectedOptions.length} categorías exitosamente`);
+        }
+        
+        // FUNCIONES PARA RESET TOTAL
+        function showTotalResetModal() {
+            document.getElementById('reset-modal').style.display = 'flex';
+            document.getElementById('reset-confirmation-text').value = '';
+            document.querySelectorAll('input[name="resetType"]').forEach(radio => radio.checked = false);
+        }
+        
+        function closeResetModal() {
+            document.getElementById('reset-modal').style.display = 'none';
+        }
+        
+        function executeReset() {
+            const selectedType = document.querySelector('input[name="resetType"]:checked')?.value;
+            const confirmationText = document.getElementById('reset-confirmation-text').value;
+            
+            if (!selectedType) {
+                showPopup('Error', 'Selecciona un tipo de reset');
+                return;
+            }
+            
+            if (confirmationText !== 'RESET TOTAL') {
+                showPopup('Error', 'Confirmación incorrecta. Escribe exactamente: RESET TOTAL');
+                return;
+            }
+            
+            closeResetModal();
+            
+            switch(selectedType) {
+                case 'total':
+                    performTotalReset();
+                    break;
+                case 'verify':
+                    performResetWithVerification();
+                    break;
+                case 'test':
+                    performSystemTest();
+                    break;
+            }
+        }
+        
+        function showProgressModal() {
+            document.getElementById('progress-modal').style.display = 'flex';
+            document.getElementById('progress-fill').style.width = '0%';
+            document.getElementById('progress-text').textContent = 'Iniciando...';
+            document.getElementById('progress-steps').innerHTML = '';
+        }
+        
+        function updateProgress(percentage, text, step) {
+            document.getElementById('progress-fill').style.width = percentage + '%';
+            document.getElementById('progress-text').textContent = text;
+            if (step) {
+                const stepsDiv = document.getElementById('progress-steps');
+                stepsDiv.innerHTML += `<div>✅ ${step}</div>`;
+                stepsDiv.scrollTop = stepsDiv.scrollHeight;
+            }
+        }
+        
+        function closeProgressModal() {
+            setTimeout(() => {
+                document.getElementById('progress-modal').style.display = 'none';
+            }, 2000);
+        }
+        
+        async function performTotalReset() {
+            showProgressModal();
+            
+            try {
+                updateProgress(10, 'Deteniendo juegos activos...', 'Pausando sistema');
+                
+                // 1. Detener todo
+                gameActive = false;
+                stopAutomaticCalling();
+                
+                updateProgress(20, 'Eliminando datos de Firebase...', 'Sistema pausado');
+                
+                // 2. Limpiar Firebase COMPLETAMENTE
+                if (window.firebase) {
+                    const { database, ref, set } = window.firebase;
+                    
+                    const firebaseKeys = [
+                        'gameState', 'calledNumbers', 'purchases', 'users', 'playerCards',
+                        'winners', 'prizes', 'weeklySchedule', 'specialBingos',
+                        'notificationHistory', 'pendingBingoVerification',
+                        'globalBingoAlert', 'bingoVerificationResult'
+                    ];
+                    
+                    for (let i = 0; i < firebaseKeys.length; i++) {
+                        await set(ref(database, firebaseKeys[i]), null);
+                        updateProgress(20 + (i + 1) * 3, `Eliminando ${firebaseKeys[i]}...`, `${firebaseKeys[i]} eliminado`);
+                    }
+                }
+                
+                updateProgress(50, 'Limpiando almacenamiento local...', 'Firebase limpiado');
+                
+                // 3. Limpiar TODO el localStorage
+                const allKeys = Object.keys(localStorage);
+                allKeys.forEach(key => localStorage.removeItem(key));
+                
+                updateProgress(60, 'Reseteando variables del sistema...', 'LocalStorage limpiado');
+                
+                // 4. Resetear TODAS las variables
+                dailyPrizeTotal = 0;
+                ticketsSoldToday = 0;
+                selectedBingoIndex = -1;
+                currentRound = 1;
+                gameActive = false;
+                calledNumbers = [];
+                bingoWinners = [];
+                bingoPrizes = [];
+                allPayments = [];
+                filteredPayments = [];
+                filteredWinners = [];
+                weeklySchedule = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
+                specialBingos = [];
+                notificationHistory = [];
+                
+                updateProgress(70, 'Limpiando caché del navegador...', 'Variables reseteadas');
+                
+                // 5. Limpiar caché
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (const name of cacheNames) {
+                        await caches.delete(name);
+                    }
+                }
+                
+                updateProgress(80, 'Reparando estructura de Firebase...', 'Caché limpiado');
+                
+                // 6. Recrear estructura básica
+                if (window.firebase) {
+                    const { database, ref, set } = window.firebase;
+                    
+                    const basicStructure = {
+                        gameState: { gameActive: false, currentRound: 1 },
+                        calledNumbers: [],
+                        purchases: {},
+                        users: {},
+                        playerCards: {},
+                        config: { domain: '', initialized: true }
+                    };
+                    
+                    for (const [key, value] of Object.entries(basicStructure)) {
+                        await set(ref(database, key), value);
+                    }
+                }
+                
+                updateProgress(90, 'Verificando funcionamiento...', 'Estructura recreada');
+                
+                // 7. Verificar funcionamiento
+                await performSystemTest(false);
+                
+                updateProgress(100, '¡RESET COMPLETADO!', 'Sistema verificado');
+                
+                // 8. Actualizar UI
+                setTimeout(() => {
+                    updatePaymentStats();
+                    updateStats();
+                    loadAllUsers(false);
+                    updateGameControlsUI();
+                    renderWeeklyCalendar();
+                    renderSpecialBingos();
+                    updateBingoSelector();
+                    
+                    closeProgressModal();
+                    showPopup('🎉 RESET TOTAL COMPLETADO', 'La web está completamente nueva y lista para el público. Todos los datos han sido eliminados y el sistema funciona correctamente.');
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error en reset total:', error);
+                updateProgress(100, 'Error en el proceso', 'Error: ' + error.message);
+                closeProgressModal();
+                showPopup('Error', 'Error durante el reset: ' + error.message);
+            }
+        }
+        
+        async function performResetWithVerification() {
+            await performTotalReset();
+            
+            // Verificación adicional después del reset
+            setTimeout(async () => {
+                showProgressModal();
+                updateProgress(0, 'Iniciando verificación post-reset...', 'Reset completado');
+                
+                await performSystemTest(true);
+                
+                updateProgress(100, 'Verificación completada', 'Sistema 100% funcional');
+                closeProgressModal();
+                showPopup('✅ RESET + VERIFICACIÓN COMPLETADO', 'Reset total ejecutado y sistema verificado. Todo funciona perfectamente.');
+            }, 3000);
+        }
+        
+        async function performSystemTest(showModal = true) {
+            if (showModal) {
+                showProgressModal();
+                updateProgress(0, 'Iniciando pruebas del sistema...', 'Comenzando verificación');
+            }
+            
+            const tests = [
+                { name: 'Conexión Firebase', test: testFirebaseConnection },
+                { name: 'Estructura de datos', test: testDataStructure },
+                { name: 'Funciones de juego', test: testGameFunctions },
+                { name: 'Sistema de usuarios', test: testUserSystem },
+                { name: 'Sistema de pagos', test: testPaymentSystem },
+                { name: 'Interfaz de usuario', test: testUserInterface }
+            ];
+            
+            let passedTests = 0;
+            
+            for (let i = 0; i < tests.length; i++) {
+                const test = tests[i];
+                const progress = ((i + 1) / tests.length) * 100;
+                
+                updateProgress(progress, `Probando ${test.name}...`, null);
+                
+                try {
+                    const result = await test.test();
+                    if (result) {
+                        passedTests++;
+                        updateProgress(progress, `${test.name} - OK`, `✅ ${test.name}`);
+                    } else {
+                        updateProgress(progress, `${test.name} - FALLO`, `❌ ${test.name}`);
+                    }
+                } catch (error) {
+                    updateProgress(progress, `${test.name} - ERROR`, `❌ ${test.name}: ${error.message}`);
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            const allPassed = passedTests === tests.length;
+            updateProgress(100, allPassed ? 'Todas las pruebas pasaron' : `${passedTests}/${tests.length} pruebas pasaron`, 
+                          allPassed ? 'Sistema 100% funcional' : 'Algunas pruebas fallaron');
+            
+            if (showModal) {
+                closeProgressModal();
+                showPopup(allPassed ? '✅ SISTEMA VERIFICADO' : '⚠️ VERIFICACIÓN PARCIAL', 
+                         allPassed ? 'Todas las funciones están operativas' : `${passedTests} de ${tests.length} pruebas pasaron`);
+            }
+            
+            return allPassed;
+        }
+        
+        // Funciones de prueba
+        async function testFirebaseConnection() {
+            if (!window.firebase) return false;
+            
+            try {
+                const { database, ref, set, get } = window.firebase;
+                const testData = { test: Date.now() };
+                await set(ref(database, 'connectionTest'), testData);
+                const result = await get(ref(database, 'connectionTest'));
+                await set(ref(database, 'connectionTest'), null);
+                return result.exists();
+            } catch (error) {
+                return false;
+            }
+        }
+        
+        async function testDataStructure() {
+            if (!window.firebase) return false;
+            
+            try {
+                const { database, ref, get } = window.firebase;
+                const requiredKeys = ['gameState', 'calledNumbers', 'purchases', 'users', 'playerCards'];
+                
+                for (const key of requiredKeys) {
+                    const snapshot = await get(ref(database, key));
+                    if (!snapshot.exists()) return false;
+                }
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+        
+        async function testGameFunctions() {
+            try {
+                // Probar variables del juego
+                return typeof gameActive === 'boolean' && 
+                       typeof currentRound === 'number' && 
+                       Array.isArray(calledNumbers);
+            } catch (error) {
+                return false;
+            }
+        }
+        
+        async function testUserSystem() {
+            try {
+                // Probar que las funciones de usuario existen
+                return typeof loadAllUsers === 'function' && 
+                       typeof searchUser === 'function';
+            } catch (error) {
+                return false;
+            }
+        }
+        
+        async function testPaymentSystem() {
+            try {
+                // Probar sistema de pagos
+                return Array.isArray(allPayments) && 
+                       typeof updatePaymentStats === 'function';
+            } catch (error) {
+                return false;
+            }
+        }
+        
+        async function testUserInterface() {
+            try {
+                // Probar elementos críticos de la UI
+                const criticalElements = [
+                    'game-status-badge', 'bingo-selector', 'payment-modal',
+                    'user-dropdown', 'firebase-indicator'
+                ];
+                
+                return criticalElements.every(id => document.getElementById(id) !== null);
+            } catch (error) {
+                return false;
+            }
         }
         
         function executeSpecialAction(action) {

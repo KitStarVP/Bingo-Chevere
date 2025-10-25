@@ -178,14 +178,15 @@
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
       import { getDatabase, ref, onValue, get, set, push } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
+      // Firebase configuration - En producción usar variables de entorno
       const firebaseConfig = {
-        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
-        authDomain: "bingo-chevere.firebaseapp.com",
-        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
-        projectId: "bingo-chevere",
-        storageBucket: "bingo-chevere.firebasestorage.app",
-        messagingSenderId: "1057150163831",
-        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+        apiKey: window.FIREBASE_API_KEY || "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: window.FIREBASE_AUTH_DOMAIN || "bingo-chevere.firebaseapp.com",
+        databaseURL: window.FIREBASE_DATABASE_URL || "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: window.FIREBASE_PROJECT_ID || "bingo-chevere",
+        storageBucket: window.FIREBASE_STORAGE_BUCKET || "bingo-chevere.firebasestorage.app",
+        messagingSenderId: window.FIREBASE_MESSAGING_SENDER_ID || "1057150163831",
+        appId: window.FIREBASE_APP_ID || "1:1057150163831:web:0d6e9f70c356ee56b09f72"
       };
 
       const app = initializeApp(firebaseConfig);
