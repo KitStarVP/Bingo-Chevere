@@ -63,30 +63,75 @@
                 </div>
             </div>
             
-            <!-- CONTROLES DE JUEGO AVANZADOS -->
+            <!-- ESTADO DE FIREBASE -->
+            <div class="admin-card">
+                <h2>🔥 Estado de Firebase</h2>
+                <div class="firebase-status">
+                    <div class="status-indicator" id="firebase-indicator">
+                        <div class="status-dot"></div>
+                        <span id="firebase-status-text">Verificando...</span>
+                    </div>
+                    <div class="firebase-details">
+                        <div class="detail-item">
+                            <span>Conexión:</span>
+                            <span id="connection-status">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Última sync:</span>
+                            <span id="last-sync">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Datos activos:</span>
+                            <span id="active-data">--</span>
+                        </div>
+                    </div>
+                    <button id="test-firebase" class="admin-btn small">🔍 Test Conexión</button>
+                </div>
+            </div>
+
+            <!-- CONTROLES DE JUEGO MEJORADOS -->
             <div class="admin-card">
                 <h2>🎮 Controles del Juego</h2>
                 
                 <div class="game-controls" id="game-controls">
                     <div class="control-section">
-                        <h4>Selección de Bingo:</h4>
+                        <h4>Estado Actual:</h4>
+                        <div class="game-status-display" id="game-status-display">
+                            <div class="status-badge" id="game-status-badge">⏸️ Inactivo</div>
+                            <div class="game-info">
+                                <span>Ronda: <strong id="current-round-display">1</strong></span>
+                                <span>Números: <strong id="numbers-called-display">0</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <h4>Iniciar Juego:</h4>
                         <select id="bingo-selector" class="bingo-select">
                             <option value="">Seleccionar bingo...</option>
                         </select>
-                        <button id="start-instant-bingo" class="admin-btn warning" style="width: 100%; margin-top: 0.5rem;">⚡ Iniciar Bingo Instantáneo</button>
+                        <div class="start-options">
+                            <button id="start-scheduled" class="control-btn start" disabled>▶️ Iniciar Programado</button>
+                            <button id="start-instant" class="control-btn warning">⚡ Bingo Instantáneo</button>
+                        </div>
                     </div>
                     
-                    <div class="control-buttons" id="control-buttons">
-                        <button id="start-round" class="control-btn start" disabled>▶️ Iniciar Ronda</button>
-                        <button id="pause-round" class="control-btn pause" style="display: none;">⏸️ Pausar</button>
-                        <button id="resume-round" class="control-btn resume" style="display: none;">▶️ Reanudar</button>
-                        <button id="end-round" class="control-btn end">⏹️ Finalizar Ronda</button>
+                    <div class="control-section" id="active-controls" style="display: none;">
+                        <h4>Controles Activos:</h4>
+                        <div class="control-buttons">
+                            <button id="pause-game" class="control-btn pause">⏸️ Pausar</button>
+                            <button id="resume-game" class="control-btn resume" style="display: none;">▶️ Reanudar</button>
+                            <button id="reschedule-game" class="control-btn secondary">📅 Reprogramar</button>
+                            <button id="next-round" class="control-btn secondary">➡️ Siguiente Ronda</button>
+                            <button id="finish-game" class="control-btn end">🏁 Finalizar Juego</button>
+                            <button id="close-bingo" class="control-btn warning">🔒 Cerrar Bingo Completo</button>
+                        </div>
                     </div>
                     
-                    <div class="critical-actions">
-                        <h4>⚠️ Acciones Críticas:</h4>
-                        <button id="cancel-bingo" class="control-btn cancel">🛑 Cancelar Bingo</button>
-                        <button id="reset-system" class="control-btn reset">🔄 Reset Sistema</button>
+                    <div class="control-section emergency-section">
+                        <h4>🚨 Emergencia:</h4>
+                        <button id="emergency-stop" class="control-btn cancel">🛑 Parada de Emergencia</button>
+                        <small>Solo usar en caso de problemas graves</small>
                     </div>
                 </div>
             </div>
@@ -275,19 +320,26 @@
                 </div>
             </div>
 
-            <!-- LIMPIEZA SELECTIVA DE BASE DE DATOS -->
+            <!-- MANTENIMIENTO SEGURO -->
             <div class="admin-card">
-                <h2>🧹 Limpieza del Sistema</h2>
-                <div class="clean-zone">
+                <h2>🔧 Mantenimiento del Sistema</h2>
+                <div class="maintenance-zone">
                     <p style="color: #28a745; font-weight: 600; text-align: center; margin-bottom: 0.5rem;">
-                        📝 Limpieza Selectiva
+                        🛡️ Mantenimiento Seguro
                     </p>
                     <p style="font-size: 0.8rem; color: #666; text-align: center; margin-bottom: 1rem;">
-                        Selecciona qué datos limpiar para dejar el sistema como nuevo
+                        Limpieza que NO afecta Firebase ni la comunicación
                     </p>
-                    <button id="open-clean-modal" class="admin-btn primary" style="width: 100%;">
-                        🧹 ABRIR PANEL DE LIMPIEZA
-                    </button>
+                    <div class="maintenance-options">
+                        <button id="clear-cache" class="admin-btn secondary">📋 Limpiar Caché</button>
+                        <button id="clear-logs" class="admin-btn secondary">📄 Limpiar Logs</button>
+                        <button id="reset-ui" class="admin-btn secondary">🔄 Reset Interfaz</button>
+                        <button id="optimize-system" class="admin-btn primary">⚡ Optimizar Sistema</button>
+                    </div>
+                    <div class="danger-zone" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                        <h4 style="color: #dc3545; margin: 0 0 0.5rem 0;">⚠️ Zona Peligrosa</h4>
+                        <button id="advanced-maintenance" class="admin-btn danger">🛠️ Mantenimiento Avanzado</button>
+                    </div>
                 </div>
             </div>
             
@@ -1486,6 +1538,17 @@
             color: white;
         }
         
+        .control-btn.warning {
+            background: #ff6b35;
+            color: white;
+            border: 2px solid #e55a2b;
+        }
+        
+        .control-btn.warning:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+        }
+        
         .control-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -1619,6 +1682,144 @@
         .domain-status.configured {
             background: #d4edda;
             color: #155724;
+        }
+        
+        /* ESTILOS PARA ESTADO DE FIREBASE */
+        .firebase-status {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: pulse-dot 2s infinite;
+        }
+        
+        .status-dot.connected {
+            background: #28a745;
+        }
+        
+        .status-dot.connecting {
+            background: #ffc107;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .firebase-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.3rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            font-size: 0.8rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* ESTILOS PARA CONTROLES MEJORADOS */
+        .game-status-display {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: #6c757d;
+            color: white;
+        }
+        
+        .status-badge.active {
+            background: #28a745;
+        }
+        
+        .status-badge.paused {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .game-info {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+        }
+        
+        .start-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .emergency-section {
+            border-top: 2px solid #dc3545;
+            padding-top: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        
+        .emergency-section h4 {
+            color: #dc3545;
+        }
+        
+        .emergency-section small {
+            display: block;
+            color: #666;
+            font-size: 0.7rem;
+            margin-top: 0.3rem;
+        }
+        
+        /* ESTILOS PARA MANTENIMIENTO SEGURO */
+        .maintenance-zone {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .maintenance-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .danger-zone {
+            background: #fff5f5;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .danger-zone h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
         }
     </style>
 
@@ -1775,12 +1976,21 @@
                         loadPurchasesFromFirebase();
                         loadWinnersFromFirebase();
                         loadAllUsers(false);
+                        
+                        // Inicializar monitoreo de Firebase
+                        firebaseMonitor.init();
                     }
                     
                     updatePaymentStats();
                     updateStats();
                     initializeVerificationSystem();
                     initializeNewSystem();
+                    
+                    // Inicializar todos los controles
+                    initAllAdminControls();
+                    initFirebaseControls();
+                    initMaintenanceControls();
+                    updateGameControlsUI();
                     
                     // Actualizar pagos cada 2 segundos
                     setInterval(() => {
@@ -1953,7 +2163,6 @@
             }
             console.log('Verificando ganador:', bingoData);
             
-            // Determinar si es línea o cartón lleno
             const isLine = bingoData.type === 'LINEA';
             const isBingo = bingoData.type === 'CARTON_LLENO';
             
@@ -1970,7 +2179,6 @@
                 bingoTime: bingoData.timestamp || new Date().toISOString()
             };
             
-            // Guardar ganador
             if (window.firebase) {
                 saveWinnerToFirebase(winner);
             }
@@ -1978,7 +2186,7 @@
             bingoWinners.unshift(winner);
             if (bingoWinners.length > 50) bingoWinners = bingoWinners.slice(0, 50);
             
-            // Crear premio pendiente con información completa
+            // Crear premio pendiente
             const prize = {
                 id: Date.now() + 1,
                 cartonId: winner.cartonId,
@@ -2000,7 +2208,9 @@
             
             bingoPrizes.unshift(prize);
             
-            // Crear resultado de verificación para el jugador
+            // Marcar cartón ganador como pendiente de pago en Firebase
+            markCardAsPendingPayment(bingoData.phone, bingoData.cartonId);
+            
             const verificationResult = {
                 isCorrect: true,
                 isWinner: bingoData.phone === bingoData.phone,
@@ -2012,27 +2222,26 @@
             };
             
             await set(ref(database, 'bingoVerificationResult'), verificationResult);
-            
-            // Limpiar verificación pendiente en Firebase
             await set(ref(database, 'pendingBingoVerification'), null);
             await set(ref(database, 'globalBingoAlert'), null);
             
-            // Actualizar estado del juego
             const gameStateSnapshot = await get(ref(database, 'gameState'));
             const gameState = gameStateSnapshot.val() || {};
             
             if (isLine && currentRound === 1) {
-                // Línea en ronda 1 - continuar a ronda 2
                 currentRound = 2;
                 gameState.currentRound = 2;
                 gameState.gameActive = true;
                 gameState.isPaused = false;
                 showPopup('Línea Verificada', `¡Línea verificada! Premio: BsF ${winner.amount}. Iniciando Ronda 2...`);
             } else {
-                // Cartón lleno o línea en ronda 2 - terminar juego
+                // Partida completa - expirar TODOS los cartones
                 gameActive = false;
                 currentRound = 1;
                 gameState.gameActive = false;
+                gameState.bothRoundsCompleted = true;
+                gameState.gameFinalized = true;
+                gameState.expireCards = true;
                 gameState.currentRound = 1;
                 gameState.isPaused = false;
                 
@@ -2042,15 +2251,15 @@
                 }
                 selectedBingoIndex = -1;
                 
+                // Expirar todos los cartones (partida completa)
                 expireAllActiveCards();
-                resetPrizesAfterCompleteGame();
+                activateNextGameCards();
                 
-                showPopup('BINGO Verificado', `¡${winner.type} verificado! Premio: BsF ${winner.amount}. Juego terminado.`);
+                showPopup('BINGO Verificado', `¡${winner.type} verificado! Premio: BsF ${winner.amount}. Partida completa - todos los cartones expirados.`);
             }
             
             await set(ref(database, 'gameState'), gameState);
             
-            // Actualizar displays
             loadWinners();
             updatePrizeStats();
             showPrizeTab(currentPrizeTab);
@@ -2173,6 +2382,9 @@
                     savePrizeToFirebase(prize);
                 }
                 
+                // Marcar cartón como vencido y pagado
+                markCardAsPaid(prize.phone, prize.cartonId);
+                
                 localStorage.setItem('bingoPrizes', JSON.stringify(bingoPrizes));
                 
                 showPopup('Premio Pagado', `Premio de BsF ${prize.amount} marcado como pagado`);
@@ -2233,28 +2445,400 @@
             loadPurchasesFromFirebase();
         }
 
-        // Controles de rondas
-        document.getElementById('start-round').addEventListener('click', () => {
-            if (selectedBingoIndex === -1) {
-                showPopup('Error', 'Selecciona un horario de bingo primero');
+        // SISTEMA DE MONITOREO DE FIREBASE
+        let firebaseMonitor = {
+            connected: false,
+            lastSync: null,
+            activeData: 0,
+            
+            init() {
+                this.startMonitoring();
+                this.updateUI();
+            },
+            
+            startMonitoring() {
+                if (!window.firebase) return;
+                
+                const { database, ref, onValue } = window.firebase;
+                
+                // Monitor de conexión
+                onValue(ref(database, '.info/connected'), (snapshot) => {
+                    this.connected = snapshot.val();
+                    this.lastSync = new Date();
+                    this.updateUI();
+                });
+                
+                // Monitor de datos activos
+                setInterval(() => {
+                    this.checkActiveData();
+                }, 5000);
+            },
+            
+            async checkActiveData() {
+                if (!window.firebase) return;
+                
+                try {
+                    const { database, ref, get } = window.firebase;
+                    const gameState = await get(ref(database, 'gameState'));
+                    const calledNumbers = await get(ref(database, 'calledNumbers'));
+                    const purchases = await get(ref(database, 'purchases'));
+                    
+                    this.activeData = 0;
+                    if (gameState.exists()) this.activeData++;
+                    if (calledNumbers.exists()) this.activeData++;
+                    if (purchases.exists()) this.activeData++;
+                    
+                    this.updateUI();
+                } catch (error) {
+                    console.error('Error checking data:', error);
+                    this.connected = false;
+                    this.updateUI();
+                }
+            },
+            
+            updateUI() {
+                const indicator = document.getElementById('firebase-indicator');
+                const statusText = document.getElementById('firebase-status-text');
+                const dot = indicator?.querySelector('.status-dot');
+                const connectionStatus = document.getElementById('connection-status');
+                const lastSync = document.getElementById('last-sync');
+                const activeData = document.getElementById('active-data');
+                
+                if (this.connected) {
+                    dot?.classList.add('connected');
+                    dot?.classList.remove('connecting');
+                    if (statusText) statusText.textContent = 'Conectado';
+                } else {
+                    dot?.classList.remove('connected');
+                    dot?.classList.add('connecting');
+                    if (statusText) statusText.textContent = 'Desconectado';
+                }
+                
+                if (connectionStatus) connectionStatus.textContent = this.connected ? 'Activa' : 'Perdida';
+                if (lastSync) lastSync.textContent = this.lastSync ? this.lastSync.toLocaleTimeString() : '--';
+                if (activeData) activeData.textContent = `${this.activeData} nodos`;
+            }
+        };
+        
+        // Controles de rondas mejorados
+        document.getElementById('start-scheduled')?.addEventListener('click', () => {
+            const selector = document.getElementById('bingo-selector');
+            if (!selector.value) {
+                showPopup('Error', 'Selecciona un bingo programado');
                 return;
             }
+            startGameSafely('scheduled', selector.value);
+        });
+        
+        // FUNCIONES SEGURAS PARA CONTROLES DE JUEGO
+        function startGameSafely(type, bingoId = null) {
+            if (gameActive) {
+                showPopup('Error', 'Ya hay un juego activo');
+                return;
+            }
+            
+            console.log('🎮 Iniciando nuevo juego:', type);
+            
+            // Preparar nuevo juego
             gameActive = true;
-            const selectedBingo = dailySchedule[selectedBingoIndex];
+            currentRound = 1;
+            calledNumbers = [];
+            currentPattern = null;
             
-            // Mostrar botón pausar y ocultar iniciar
-            document.getElementById('start-round').style.display = 'none';
-            document.getElementById('pause-round').style.display = 'inline-block';
+            // Generar nuevo ID de juego
+            const newGameId = Date.now();
             
-            // Guardar estado antes de iniciar
-            saveGameState();
+            // Limpiar estado anterior en Firebase
+            if (window.firebase) {
+                const { database, ref, set } = window.firebase;
+                
+                // Limpiar números cantados del juego anterior
+                set(ref(database, 'calledNumbers'), []);
+                
+                // Crear nuevo estado de juego
+                const newGameState = {
+                    gameActive: true,
+                    currentRound: 1,
+                    calledNumbers: [],
+                    currentPattern: null,
+                    gameId: newGameId,
+                    gameType: type,
+                    startedAt: Date.now(),
+                    adminStarted: true,
+                    bingoClosed: false,
+                    readyForNewGame: false
+                };
+                
+                set(ref(database, 'gameState'), newGameState);
+                console.log('✅ Nuevo estado de juego creado en Firebase');
+            }
             
-            // Iniciar cantado automático SOLO cuando el admin presiona el botón
+            // Actualizar UI
+            updateGameControlsUI();
+            
+            // Iniciar cantado automático
             startAutomaticCalling();
             
-            showPopup('Ronda Iniciada', `Iniciando ronda ${currentRound} del bingo de las ${selectedBingo.label}`);
+            const message = type === 'instant' ? '⚡ Bingo instantáneo iniciado' : '📅 Bingo programado iniciado';
+            showPopup('Nuevo Juego', message);
             updateStats();
-        });
+        }
+        
+        function pauseGameSafely() {
+            if (!gameActive) return;
+            
+            gameActive = false;
+            stopAutomaticCalling();
+            
+            // Actualizar Firebase manteniendo datos
+            if (window.firebase) {
+                const { database, ref, set, get } = window.firebase;
+                get(ref(database, 'gameState')).then(snapshot => {
+                    const currentState = snapshot.val() || {};
+                    set(ref(database, 'gameState'), {
+                        ...currentState,
+                        gameActive: false,
+                        isPaused: true,
+                        pauseReason: 'admin_pause',
+                        pauseTimestamp: Date.now()
+                    });
+                });
+            }
+            
+            updateGameControlsUI();
+            showPopup('Juego Pausado', 'El juego ha sido pausado');
+        }
+        
+        function updateGameControlsUI() {
+            const statusBadge = document.getElementById('game-status-badge');
+            const activeControls = document.getElementById('active-controls');
+            const pauseBtn = document.getElementById('pause-game');
+            const resumeBtn = document.getElementById('resume-game');
+            const roundDisplay = document.getElementById('current-round-display');
+            const numbersDisplay = document.getElementById('numbers-called-display');
+            
+            if (statusBadge) {
+                if (gameActive) {
+                    statusBadge.textContent = '▶️ Activo';
+                    statusBadge.className = 'status-badge active';
+                } else {
+                    statusBadge.textContent = '⏸️ Inactivo';
+                    statusBadge.className = 'status-badge';
+                }
+            }
+            
+            if (activeControls) {
+                activeControls.style.display = gameActive ? 'block' : 'none';
+            }
+            
+            if (pauseBtn && resumeBtn) {
+                if (gameActive) {
+                    pauseBtn.style.display = 'inline-block';
+                    resumeBtn.style.display = 'none';
+                } else {
+                    pauseBtn.style.display = 'none';
+                    resumeBtn.style.display = 'inline-block';
+                }
+            }
+            
+            if (roundDisplay) {
+                roundDisplay.textContent = currentRound;
+            }
+            
+            if (numbersDisplay) {
+                numbersDisplay.textContent = calledNumbers.length;
+            }
+        }
+        
+        function saveGameStateToFirebaseSafely() {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            const gameState = {
+                gameActive: gameActive,
+                currentRound: currentRound,
+                calledNumbers: calledNumbers,
+                currentPattern: currentPattern,
+                timestamp: Date.now(),
+                adminControlled: true
+            };
+            
+            set(ref(database, 'gameState'), gameState)
+                .then(() => console.log('✅ Estado guardado en Firebase'))
+                .catch(error => console.error('❌ Error guardando estado:', error));
+        }
+        
+        function resumeGameSafely() {
+            gameActive = true;
+            
+            if (window.firebase) {
+                const { database, ref, set, get } = window.firebase;
+                get(ref(database, 'gameState')).then(snapshot => {
+                    const currentState = snapshot.val() || {};
+                    set(ref(database, 'gameState'), {
+                        ...currentState,
+                        gameActive: true,
+                        isPaused: false,
+                        pauseReason: null,
+                        pauseTimestamp: null
+                    });
+                });
+            }
+            
+            startAutomaticCalling();
+            updateGameControlsUI();
+            showPopup('Juego Reanudado', 'El juego ha sido reanudado');
+        }
+        
+        function nextRoundSafely() {
+            if (currentRound >= 2) {
+                showPopup('Error', 'Ya estás en la última ronda');
+                return;
+            }
+            
+            currentRound = 2;
+            calledNumbers = [];
+            currentPattern = null;
+            
+            saveGameStateToFirebaseSafely();
+            
+            if (window.firebase) {
+                const { database, ref, set } = window.firebase;
+                set(ref(database, 'calledNumbers'), []);
+            }
+            
+            updateGameControlsUI();
+            showPopup('Ronda 2', 'Avanzando a la ronda 2');
+            updateStats();
+        }
+        
+        function finishGameSafely() {
+            if (!confirm('¿Finalizar partida completa (2 rondas)? Cartones del juego actual expirarán.')) return;
+            
+            gameActive = false;
+            stopAutomaticCalling();
+            
+            const currentGameId = Date.now();
+            
+            if (window.firebase) {
+                const { database, ref, set, get } = window.firebase;
+                get(ref(database, 'gameState')).then(snapshot => {
+                    const currentState = snapshot.val() || {};
+                    set(ref(database, 'gameState'), {
+                        ...currentState,
+                        gameActive: false,
+                        bothRoundsCompleted: true,
+                        gameFinalized: true,
+                        expireCards: true,
+                        expireGameId: currentState.gameId || currentGameId,
+                        finalizedBy: 'admin',
+                        finalizedAt: Date.now()
+                    });
+                });
+            }
+            
+            // Expirar solo cartones del juego actual
+            expireCardsFromCurrentGame();
+            
+            currentRound = 1;
+            selectedBingoIndex = -1;
+            activateNextGameCards();
+            
+            updateGameControlsUI();
+            showPopup('Partida Finalizada', 'Partida completa. Cartones del juego actual expirados.');
+            updateStats();
+        }
+        
+        function emergencyStopSafely() {
+            if (!confirm('⚠️ PARADA DE EMERGENCIA\n\n¿Estás seguro? Esto detendrá todo inmediatamente.')) return;
+            
+            gameActive = false;
+            stopAutomaticCalling();
+            
+            if (window.firebase) {
+                const { database, ref, set } = window.firebase;
+                set(ref(database, 'gameState'), {
+                    gameActive: false,
+                    emergencyStop: true,
+                    emergencyAt: Date.now(),
+                    emergencyBy: 'admin'
+                });
+            }
+            
+            updateGameControlsUI();
+            showPopup('Parada de Emergencia', 'Sistema detenido por emergencia');
+        }
+        
+        function rescheduleCurrentGame() {
+            if (!confirm('📅 REPROGRAMAR PARTIDA\n\n¿Reprogramar la partida actual?\n\n• Se pausará el juego\n• Los cartones seguirán vigentes\n• Se podrá reanudar después\n\n¿Continuar?')) return;
+            
+            gameActive = false;
+            stopAutomaticCalling();
+            
+            if (window.firebase) {
+                const { database, ref, set, get } = window.firebase;
+                get(ref(database, 'gameState')).then(snapshot => {
+                    const currentState = snapshot.val() || {};
+                    set(ref(database, 'gameState'), {
+                        ...currentState,
+                        gameActive: false,
+                        isPaused: true,
+                        rescheduled: true,
+                        rescheduledAt: Date.now(),
+                        rescheduledBy: 'admin',
+                        pauseReason: 'rescheduled'
+                    });
+                });
+            }
+            
+            updateGameControlsUI();
+            showPopup('Partida Reprogramada', 'Partida pausada. Los cartones siguen vigentes para cuando se reanude.');
+        }
+        
+        function closeBingoCompletely() {
+            if (!confirm('🔒 CERRAR BINGO COMPLETO\n\n¿Estás seguro? Esto:\n• Finalizará el bingo actual\n• Expirará cartones del juego actual\n• Permitirá iniciar uno nuevo\n\n¿Continuar?')) return;
+            
+            console.log('🔒 Cerrando bingo completamente...');
+            
+            gameActive = false;
+            stopAutomaticCalling();
+            
+            const currentGameId = Date.now();
+            
+            if (window.firebase) {
+                const { database, ref, set, get } = window.firebase;
+                
+                get(ref(database, 'gameState')).then(snapshot => {
+                    const currentState = snapshot.val() || {};
+                    
+                    // Marcar como cerrado CON gameId actual
+                    set(ref(database, 'gameState'), {
+                        ...currentState,
+                        gameActive: false,
+                        bingoClosed: true,
+                        expireCards: true,
+                        expireGameId: currentState.gameId || currentGameId,
+                        closedBy: 'admin',
+                        closedAt: Date.now(),
+                        readyForNewGame: true
+                    });
+                });
+            }
+            
+            // Expirar solo cartones del juego actual
+            expireCardsFromCurrentGame();
+            
+            currentRound = 1;
+            selectedBingoIndex = -1;
+            calledNumbers = [];
+            currentPattern = null;
+            
+            activateNextGameCards();
+            updateGameControlsUI();
+            updateStats();
+            
+            showPopup('🔒 Bingo Cerrado', 'Bingo cerrado. Cartones del juego actual expirados.');
+        }
 
         document.getElementById('pause-round').addEventListener('click', () => {
             if (gameActive) {
@@ -2301,37 +2885,207 @@
             }
         });
 
-        // Event listener para bingo instantáneo
-        document.getElementById('start-instant-bingo').addEventListener('click', () => {
-            if (gameActive) {
-                showPopup('Error', 'Ya hay un bingo en curso');
-                return;
+        // FUNCIONES DE INICIALIZACIÓN DE CONTROLES
+        function initAllAdminControls() {
+            // Controles de juego mejorados
+            const startScheduled = document.getElementById('start-scheduled');
+            if (startScheduled) {
+                startScheduled.addEventListener('click', () => {
+                    const selector = document.getElementById('bingo-selector');
+                    if (!selector.value) {
+                        showPopup('Error', 'Selecciona un bingo programado');
+                        return;
+                    }
+                    startGameSafely('scheduled', selector.value);
+                });
             }
             
-            // Configurar bingo instantáneo
-            selectedBingoIndex = -1; // No programado
-            selectedBingoId = 'instant-' + Date.now();
-            gameActive = true;
-            currentRound = 1;
-            calledNumbers = [];
+            const startInstant = document.getElementById('start-instant');
+            if (startInstant) {
+                startInstant.addEventListener('click', () => {
+                    startGameSafely('instant');
+                });
+            }
             
-            // Mostrar botones correctos
-            document.getElementById('start-round').style.display = 'none';
-            document.getElementById('pause-round').style.display = 'inline-block';
+            const pauseGame = document.getElementById('pause-game');
+            if (pauseGame) {
+                pauseGame.addEventListener('click', () => {
+                    pauseGameSafely();
+                });
+            }
             
-            // Guardar estado
-            saveGameState();
+            const resumeGame = document.getElementById('resume-game');
+            if (resumeGame) {
+                resumeGame.addEventListener('click', () => {
+                    resumeGameSafely();
+                });
+            }
             
-            // Iniciar cantado automático
-            startAutomaticCalling();
+            const nextRound = document.getElementById('next-round');
+            if (nextRound) {
+                nextRound.addEventListener('click', () => {
+                    nextRoundSafely();
+                });
+            }
             
-            showPopup('Bingo Instantáneo', '⚡ Bingo instantáneo iniciado!');
-            updateStats();
+            const finishGame = document.getElementById('finish-game');
+            if (finishGame) {
+                finishGame.addEventListener('click', () => {
+                    finishGameSafely();
+                });
+            }
+            
+            const emergencyStop = document.getElementById('emergency-stop');
+            if (emergencyStop) {
+                emergencyStop.addEventListener('click', () => {
+                    emergencyStopSafely();
+                });
+            }
+            
+            const closeBingo = document.getElementById('close-bingo');
+            if (closeBingo) {
+                closeBingo.addEventListener('click', () => {
+                    closeBingoCompletely();
+                });
+            }
+            
+            const rescheduleGame = document.getElementById('reschedule-game');
+            if (rescheduleGame) {
+                rescheduleGame.addEventListener('click', () => {
+                    rescheduleCurrentGame();
+                });
+            }
+            
+            // Selector de bingo
+            const bingoSelector = document.getElementById('bingo-selector');
+            if (bingoSelector) {
+                bingoSelector.addEventListener('change', function() {
+                    const startBtn = document.getElementById('start-scheduled');
+                    if (startBtn) {
+                        startBtn.disabled = !this.value;
+                    }
+                });
+            }
+        }
+        
+        function initFirebaseControls() {
+            const testFirebase = document.getElementById('test-firebase');
+            if (testFirebase) {
+                testFirebase.addEventListener('click', async () => {
+                    if (!window.firebase) {
+                        showPopup('Error', 'Firebase no disponible');
+                        return;
+                    }
+                    
+                    try {
+                        const { database, ref, set, get } = window.firebase;
+                        const testData = { test: Date.now() };
+                        await set(ref(database, 'connectionTest'), testData);
+                        const result = await get(ref(database, 'connectionTest'));
+                        
+                        if (result.exists()) {
+                            await set(ref(database, 'connectionTest'), null);
+                            showPopup('Test Exitoso', 'Conexión a Firebase funcionando correctamente');
+                        } else {
+                            showPopup('Test Fallido', 'No se pudo leer de Firebase');
+                        }
+                    } catch (error) {
+                        showPopup('Error de Conexión', 'Error: ' + error.message);
+                    }
+                });
+            }
+        }
+        
+        function initMaintenanceControls() {
+            const clearCache = document.getElementById('clear-cache');
+            if (clearCache) {
+                clearCache.addEventListener('click', () => {
+                    if ('caches' in window) {
+                        caches.keys().then(names => {
+                            names.forEach(name => caches.delete(name));
+                            showPopup('Caché Limpiado', 'Caché del navegador eliminado');
+                        });
+                    } else {
+                        showPopup('Caché Limpiado', 'Caché local limpiado');
+                    }
+                });
+            }
+            
+            const clearLogs = document.getElementById('clear-logs');
+            if (clearLogs) {
+                clearLogs.addEventListener('click', () => {
+                    console.clear();
+                    showPopup('Logs Limpiados', 'Consola del navegador limpiada');
+                });
+            }
+            
+            const resetUI = document.getElementById('reset-ui');
+            if (resetUI) {
+                resetUI.addEventListener('click', () => {
+                    document.querySelectorAll('.bingo-alert, .pause-alert, .winner-alert').forEach(alert => {
+                        alert.style.display = 'none';
+                    });
+                    
+                    document.querySelectorAll('input[type="text"], input[type="tel"], textarea').forEach(input => {
+                        if (!input.id.includes('domain')) input.value = '';
+                    });
+                    
+                    showPopup('Interfaz Reseteada', 'Elementos de la interfaz limpiados');
+                });
+            }
+            
+            const optimizeSystem = document.getElementById('optimize-system');
+            if (optimizeSystem) {
+                optimizeSystem.addEventListener('click', () => {
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then(registrations => {
+                            registrations.forEach(registration => registration.unregister());
+                        });
+                    }
+                    
+                    const importantKeys = ['bingoDomain', 'userPhone', 'userProfile'];
+                    const allKeys = Object.keys(localStorage);
+                    allKeys.forEach(key => {
+                        if (!importantKeys.includes(key)) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                    
+                    showPopup('Sistema Optimizado', 'Optimización completada sin afectar Firebase');
+                });
+            }
+            
+            const advancedMaintenance = document.getElementById('advanced-maintenance');
+            if (advancedMaintenance) {
+                advancedMaintenance.addEventListener('click', () => {
+                    if (!confirm('⚠️ MANTENIMIENTO AVANZADO\n\nEsto realizará una limpieza más profunda.\n¿Continuar?')) return;
+                    
+                    try {
+                        gameActive = false;
+                        currentRound = 1;
+                        selectedBingoIndex = -1;
+                        calledNumbers = [];
+                        
+                        stopAutomaticCalling();
+                        updateGameControlsUI();
+                        updateStats();
+                        
+                        showPopup('Mantenimiento Completado', 'Sistema reiniciado localmente (Firebase intacto)');
+                    } catch (error) {
+                        showPopup('Error', 'Error en mantenimiento: ' + error.message);
+                    }
+                });
+            }
+        }
+        
+        // Event listener para bingo instantáneo (legacy)
+        document.getElementById('start-instant-bingo')?.addEventListener('click', () => {
+            startGameSafely('instant');
         });
         
         // Agregar event listeners para botones críticos
         document.getElementById('cancel-bingo').addEventListener('click', () => {
-            if (!confirm('¿Cancelar el bingo actual? Esta acción no se puede deshacer.')) return;
+            if (!confirm('¿Finalizar el juego actual? Los cartones se marcarán como expirados pero se conservarán los datos.')) return;
             
             gameActive = false;
             currentRound = 1;
@@ -2344,11 +3098,17 @@
             document.getElementById('start-round').style.display = 'inline-block';
             document.getElementById('pause-round').style.display = 'none';
             
-            // Limpiar Firebase
+            // Finalizar juego limpiamente en Firebase (NO borrar todo)
             if (window.firebase) {
                 const { database, ref, set } = window.firebase;
-                set(ref(database, 'gameState'), null);
-                set(ref(database, 'calledNumbers'), null);
+                set(ref(database, 'gameState'), {
+                    gameActive: false,
+                    gameFinalized: true,
+                    finalizedBy: 'admin',
+                    timestamp: Date.now()
+                });
+                // Mantener números cantados para historial
+                // set(ref(database, 'calledNumbers'), null); // NO borrar
             }
             
             // Limpiar localStorage
@@ -2360,7 +3120,7 @@
             // Activar cartones de próxima partida
             activateNextGameCards();
             
-            showPopup('Bingo Cancelado', 'El bingo ha sido cancelado');
+            showPopup('Juego Finalizado', 'El juego ha sido finalizado. Los cartones han expirado pero los datos se conservan.');
             updateStats();
         });
         
@@ -3100,19 +3860,19 @@
                 return;
             }
             
-            // Limpiar números para nuevo juego
-            calledNumbers = [];
+            // NO limpiar números si ya hay algunos (para reanudar)
+            if (calledNumbers.length === 0) {
+                calledNumbers = [];
+            }
             
             const gameStartTime = Date.now();
             
             // Generar patrón para ronda 1
-            if (currentRound === 1) {
+            if (currentRound === 1 && !currentPattern) {
                 currentPattern = {
                     name: "Patrón Aleatorio",
                     positions: generateRandomPatternPositions()
                 };
-            } else {
-                currentPattern = null;
             }
             
             console.log('🎮 Iniciando cantado automático');
@@ -3120,14 +3880,15 @@
             // Detener intervalo anterior
             if (callingInterval) {
                 clearInterval(callingInterval);
+                callingInterval = null;
             }
             
             // Actualizar estado inicial en Firebase
-            const { database, ref, set } = window.firebase;
+            const { database, ref, set, get } = window.firebase;
             const initialState = {
                 gameActive: true,
                 currentRound: currentRound,
-                calledNumbers: [],
+                calledNumbers: calledNumbers,
                 currentPattern: currentPattern,
                 gameStartTime: gameStartTime,
                 timestamp: Date.now(),
@@ -3136,58 +3897,77 @@
             };
             
             set(ref(database, 'gameState'), initialState);
-            set(ref(database, 'calledNumbers'), []);
+            set(ref(database, 'calledNumbers'), calledNumbers);
             
-            // Cantar números cada 5 segundos
+            // Cantar números cada 4 segundos (más rápido)
             callingInterval = setInterval(async () => {
-                if (!gameActive) {
-                    console.log('❌ Juego no activo, deteniendo');
-                    stopAutomaticCalling();
-                    return;
-                }
-                
-                // Verificar si hay BINGO pendiente
-                const pendingSnapshot = await get(ref(database, 'pendingBingoVerification'));
-                if (pendingSnapshot.exists()) {
-                    console.log('⏸️ BINGO pendiente, pausando cantado');
-                    return;
-                }
-                
-                const availableNumbers = [];
-                for (let i = 1; i <= 75; i++) {
-                    if (!calledNumbers.includes(i)) {
-                        availableNumbers.push(i);
+                try {
+                    if (!gameActive) {
+                        console.log('❌ Juego no activo, deteniendo');
+                        stopAutomaticCalling();
+                        return;
                     }
+                    
+                    // Verificar si hay BINGO pendiente
+                    const pendingSnapshot = await get(ref(database, 'pendingBingoVerification'));
+                    if (pendingSnapshot.exists()) {
+                        console.log('⏸️ BINGO pendiente, pausando cantado');
+                        return;
+                    }
+                    
+                    const availableNumbers = [];
+                    for (let i = 1; i <= 75; i++) {
+                        if (!calledNumbers.includes(i)) {
+                            availableNumbers.push(i);
+                        }
+                    }
+                    
+                    if (availableNumbers.length === 0) {
+                        console.log('✅ Todos los números cantados');
+                        stopAutomaticCalling();
+                        return;
+                    }
+                    
+                    const randomNumber = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+                    
+                    // Verificar que no esté duplicado
+                    if (calledNumbers.includes(randomNumber)) {
+                        console.log('⚠️ Número duplicado detectado, saltando');
+                        return;
+                    }
+                    
+                    calledNumbers.push(randomNumber);
+                    
+                    console.log('📢 Cantando:', randomNumber);
+                    
+                    // Cantar número con voz
+                    callNumberWithVoice(randomNumber);
+                    
+                    // Actualizar Firebase inmediatamente con verificación
+                    await set(ref(database, 'calledNumbers'), [...calledNumbers]);
+                    
+                    // Actualizar estado del juego
+                    const currentState = {
+                        gameActive: true,
+                        currentRound: currentRound,
+                        calledNumbers: [...calledNumbers],
+                        currentPattern: currentPattern,
+                        gameStartTime: gameStartTime,
+                        timestamp: Date.now(),
+                        adminStarted: true,
+                        lastNumber: randomNumber,
+                        gameId: initialState.gameId
+                    };
+                    
+                    await set(ref(database, 'gameState'), currentState);
+                    
+                    console.log('✅ Número', randomNumber, 'enviado a Firebase');
+                    
+                } catch (error) {
+                    console.error('❌ Error en cantado automático:', error);
                 }
                 
-                if (availableNumbers.length === 0) {
-                    console.log('✅ Todos los números cantados');
-                    stopAutomaticCalling();
-                    return;
-                }
-                
-                const randomNumber = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
-                calledNumbers.push(randomNumber);
-                
-                console.log('📢 Cantando:', randomNumber);
-                
-                // Cantar número con voz
-                callNumberWithVoice(randomNumber);
-                
-                // Actualizar Firebase inmediatamente
-                set(ref(database, 'calledNumbers'), calledNumbers);
-                set(ref(database, 'gameState'), {
-                    gameActive: true,
-                    currentRound: currentRound,
-                    calledNumbers: calledNumbers,
-                    currentPattern: currentPattern,
-                    gameStartTime: gameStartTime,
-                    timestamp: Date.now(),
-                    adminStarted: true,
-                    gameId: initialState.gameId
-                });
-                
-            }, 5000);
+            }, 4000); // 4 segundos entre números
         }
         
         function generateRandomPatternPositions() {
@@ -3211,14 +3991,25 @@
         }
 
         function stopAutomaticCalling() {
-            console.log('Deteniendo cantado automático');
+            console.log('🛑 Deteniendo cantado automático');
+            
+            // Detener intervalo de cantado
             if (callingInterval) {
                 clearInterval(callingInterval);
                 callingInterval = null;
+                console.log('✅ Intervalo de cantado detenido');
             }
+            
             // Detener síntesis de voz
             if ('speechSynthesis' in window) {
                 speechSynthesis.cancel();
+                console.log('✅ Síntesis de voz cancelada');
+            }
+            
+            // Limpiar cualquier timeout pendiente
+            if (window.callingTimeout) {
+                clearTimeout(window.callingTimeout);
+                window.callingTimeout = null;
             }
         }
 
@@ -3725,48 +4516,41 @@
             return hash.toString();
         }
         
-        // Función para expirar todos los cartones activos en Firebase
-        function expireAllCardsInFirebase() {
-            if (!window.firebase) {
-                console.error('❌ Firebase no disponible - no se pueden expirar cartones');
-                return;
-            }
+        // Expirar solo cartones del juego actual
+        function expireCardsFromCurrentGame() {
+            if (!window.firebase) return;
             
             const { database, ref, get, set } = window.firebase;
             
-            // Obtener todos los cartones de todos los jugadores
             get(ref(database, 'playerCards')).then((snapshot) => {
                 const allPlayerCards = snapshot.val();
                 if (!allPlayerCards) return;
                 
-                let hasChanges = false;
-                
-                // Iterar por cada jugador
                 Object.keys(allPlayerCards).forEach(phone => {
                     const playerCards = allPlayerCards[phone];
                     if (Array.isArray(playerCards)) {
+                        let hasChanges = false;
                         playerCards.forEach(card => {
-                            if (card.status === 'en_uso' || card.status === 'vigente') {
+                            // Solo expirar cartones en_uso (que estaban jugando)
+                            if (card.status === 'en_uso') {
                                 card.status = 'vencido';
                                 card.expiredDate = new Date().toISOString();
                                 card.expiredReason = 'Juego completado';
                                 hasChanges = true;
                             }
+                            // Los cartones 'vigente' se mantienen para próximo juego
                         });
+                        if (hasChanges) {
+                            set(ref(database, `playerCards/${phone}`), playerCards);
+                        }
                     }
                 });
-                
-                if (hasChanges) {
-                    // Guardar todos los cartones actualizados
-                    return set(ref(database, 'playerCards'), allPlayerCards);
-                }
-            })
-            .then(() => {
-                console.log('✅ Todos los cartones marcados como vencidos en Firebase');
-            })
-            .catch(error => {
-                console.error('❌ Error expirando cartones:', error);
             });
+        }
+        
+        // Mantener función original para compatibilidad
+        function expireAllCardsInFirebase() {
+            expireCardsFromCurrentGame();
         }
         
         // Función para resetear premios después de partida completa
@@ -4008,10 +4792,14 @@
                     code: generateCardCode(),
                     numbers: generateBingoCard(),
                     marked: [],
-                    status: 'vigente',
+                    status: 'vigente', // SIEMPRE vigente al crear
                     autoMode: true,
                     purchaseDate: new Date().toISOString(),
-                    phone: phone
+                    phone: phone,
+                    // NO agregar fechas de expiración al crear
+                    validUntil: null,
+                    expiredDate: null,
+                    expiredReason: null
                 };
                 cards.push(card);
             }
@@ -4025,7 +4813,7 @@
             allCards.push(...cards);
             localStorage.setItem('playerCards', JSON.stringify(allCards));
             
-            console.log(`Generados ${quantity} cartones para ${phone}`);
+            console.log(`✅ Generados ${quantity} cartones VIGENTES para ${phone}`);
         }
         
         function generateCardCode() {
@@ -4109,10 +4897,25 @@
         function saveCardsToFirebase(phone, cards) {
             if (!window.firebase) return;
             
-            const { database, ref, set } = window.firebase;
-            set(ref(database, `playerCards/${phone.replace(/[^0-9]/g, '')}`), cards)
-                .then(() => console.log('✅ Cartones guardados en Firebase'))
-                .catch(error => console.error('❌ Error guardando cartones:', error));
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            // Obtener cartones existentes y agregar los nuevos
+            get(ref(database, `playerCards/${cleanPhone}`)).then((snapshot) => {
+                let existingCards = snapshot.val() || [];
+                
+                // Asegurar que es un array
+                if (!Array.isArray(existingCards)) {
+                    existingCards = [];
+                }
+                
+                // Agregar nuevos cartones
+                const allCards = [...existingCards, ...cards];
+                
+                return set(ref(database, `playerCards/${cleanPhone}`), allCards);
+            })
+            .then(() => console.log(`✅ ${cards.length} cartones VIGENTES guardados en Firebase para ${phone}`))
+            .catch(error => console.error('❌ Error guardando cartones:', error));
         }
         
         function loadCardsFromFirebase(phone) {
@@ -4167,7 +4970,6 @@
             
             const { database, ref, get, set } = window.firebase;
             
-            // Buscar compras marcadas para próxima partida
             get(ref(database, 'purchases')).then((snapshot) => {
                 const purchases = snapshot.val();
                 if (!purchases) return;
@@ -4178,14 +4980,48 @@
                 
                 console.log('Activando cartones de próxima partida:', nextGamePurchases.length);
                 
-                // Generar cartones para cada compra
                 nextGamePurchases.forEach(purchase => {
                     generateCardsForPlayer(purchase.phone, purchase.cartones);
-                    
-                    // Quitar marca de próxima partida
                     purchase.forNextGame = false;
+                    purchase.validForCurrentGame = true;
                     set(ref(database, `purchases/${purchase.id}`), purchase);
                 });
+            });
+        }
+        
+        // Marcar cartón como pendiente de pago
+        function markCardAsPendingPayment(phone, cartonId) {
+            if (!window.firebase) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            get(ref(database, `playerCards/${cleanPhone}`)).then((snapshot) => {
+                let cards = snapshot.val() || [];
+                const card = cards.find(c => c.code === cartonId || c.id == cartonId);
+                if (card) {
+                    card.status = 'pendiente_pago';
+                    card.bingoTimestamp = Date.now();
+                    set(ref(database, `playerCards/${cleanPhone}`), cards);
+                }
+            });
+        }
+        
+        // Marcar cartón como vencido y pagado
+        function markCardAsPaid(phone, cartonId) {
+            if (!window.firebase) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            get(ref(database, `playerCards/${cleanPhone}`)).then((snapshot) => {
+                let cards = snapshot.val() || [];
+                const card = cards.find(c => c.code === cartonId || c.id == cartonId);
+                if (card) {
+                    card.status = 'vencido_pagado';
+                    card.paidDate = new Date().toISOString();
+                    set(ref(database, `playerCards/${cleanPhone}`), cards);
+                }
             });
         }
         

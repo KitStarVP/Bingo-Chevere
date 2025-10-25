@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Sala - Bingo Chévere</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .test { margin: 15px 0; padding: 15px; border-radius: 8px; }
+        .pass { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .fail { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .demo { margin: 20px 0; padding: 15px; background: #e9ecef; border-radius: 8px; }
+        .mini-ball-demo { width: 50px; height: 50px; background: linear-gradient(145deg, #ffffff, #e6e6e6); border-radius: 50%; border: 3px solid #3498db; display: flex; align-items: center; justify-content: center; margin: 10px auto; animation: ballPop 0.6s ease-out; }
+        @keyframes ballPop { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        .recent-demo { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
+        .recent-demo span { background: #3498db; color: white; padding: 5px 10px; border-radius: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Verificación Rápida - Sala de Juego</h1>
+        <div style="background: rgba(23,162,184,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
+            <strong>📋 Propósito de esta herramienta:</strong><br>
+            • Verificación rápida del estado actual del sistema<br>
+            • Pruebas básicas de conectividad y funcionalidad<br>
+            • Demostración visual de efectos y animaciones<br>
+            • Acceso directo a las páginas principales<br>
+            • Reporte de estado con porcentaje de éxito<br><br>
+            <strong>Uso:</strong> Herramienta de verificación rápida. Se ejecuta automáticamente al cargar y muestra un resumen del estado del sistema.
+        </div>
+        
+        <div id="firebase-test" class="test">
+            <h3>🔥 Firebase</h3>
+            <button class="btn" onclick="testFirebase()">Probar Conexión</button>
+            <div id="firebase-result"></div>
+        </div>
+        
+        <div id="audio-test" class="test">
+            <h3>🔊 Audio</h3>
+            <button class="btn" onclick="testAudio()">Probar Voz</button>
+            <div id="audio-result"></div>
+        </div>
+        
+        <div id="visual-test" class="test">
+            <h3>🎯 Visualización</h3>
+            <button class="btn" onclick="testVisual()">Probar Efectos</button>
+            <div id="visual-result"></div>
+            <div class="demo" id="visual-demo" style="display: none;">
+                <h4>Demo Mini-Bola:</h4>
+                <div class="mini-ball-demo">B15</div>
+                <h4>Demo Números Recientes:</h4>
+                <div class="recent-demo">
+                    <span>B5</span>
+                    <span>I22</span>
+                    <span>N35</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="sync-test" class="test">
+            <h3>🔄 Sincronización</h3>
+            <button class="btn" onclick="testSync()">Probar Firebase Sync</button>
+            <div id="sync-result"></div>
+        </div>
+        
+        <div id="overall-result" class="test">
+            <h3>📊 Resultado</h3>
+            <button class="btn" onclick="runAll()">Ejecutar Todo</button>
+            <div id="overall-status"></div>
+        </div>
+        
+        <div class="demo">
+            <h3>🚀 Acceso Directo</h3>
+            <a href="sala-de-juego.html" class="btn">Ir a Sala de Juego</a>
+            <a href="admin.html" class="btn">Ir a Admin</a>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+      import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: "bingo-chevere.firebaseapp.com",
+        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: "bingo-chevere",
+        storageBucket: "bingo-chevere.firebasestorage.app",
+        messagingSenderId: "1057150163831",
+        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebase = { database, ref, get };
+    </script>
+
+    <script>
+        let results = {};
+        
+        function setResult(testId, success, message) {
+            const div = document.getElementById(testId);
+            const resultDiv = document.getElementById(testId + '-result');
+            
+            div.className = `test ${success ? 'pass' : 'fail'}`;
+            resultDiv.innerHTML = `<strong>${success ? '✅ PASS' : '❌ FAIL'}:</strong> ${message}`;
+            results[testId] = success;
+        }
+        
+        async function testFirebase() {
+            try {
+                if (!window.firebase) throw new Error('Firebase no cargado');
+                
+                const { database, ref, get } = window.firebase;
+                const snapshot = await get(ref(database, 'gameState'));
+                
+                setResult('firebase-test', true, 'Conexión exitosa a Firebase');
+            } catch (error) {
+                setResult('firebase-test', false, error.message);
+            }
+        }
+        
+        function testAudio() {
+            try {
+                if (!('speechSynthesis' in window)) {
+                    throw new Error('SpeechSynthesis no disponible');
+                }
+                
+                const utterance = new SpeechSynthesisUtterance('B 15 repito B 15');
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.9;
+                
+                speechSynthesis.speak(utterance);
+                
+                setResult('audio-test', true, 'Voz reproducida (verifica si escuchas)');
+            } catch (error) {
+                setResult('audio-test', false, error.message);
+            }
+        }
+        
+        function testVisual() {
+            try {
+                const demo = document.getElementById('visual-demo');
+                demo.style.display = 'block';
+                
+                setTimeout(() => {
+                    demo.style.display = 'none';
+                }, 3000);
+                
+                setResult('visual-test', true, 'Efectos visuales mostrados por 3 segundos');
+            } catch (error) {
+                setResult('visual-test', false, error.message);
+            }
+        }
+        
+        async function testSync() {
+            try {
+                if (!window.firebase) throw new Error('Firebase no disponible');
+                
+                const { database, ref, get } = window.firebase;
+                
+                const numbersSnap = await get(ref(database, 'calledNumbers'));
+                const stateSnap = await get(ref(database, 'gameState'));
+                
+                const numbers = numbersSnap.val();
+                const state = stateSnap.val();
+                
+                const numbersCount = numbers ? (Array.isArray(numbers) ? numbers.length : Object.keys(numbers).length) : 0;
+                
+                setResult('sync-test', true, `Sync OK - Números: ${numbersCount}, Estado: ${state ? 'Activo' : 'Inactivo'}`);
+            } catch (error) {
+                setResult('sync-test', false, error.message);
+            }
+        }
+        
+        async function runAll() {
+            setResult('overall-result', true, 'Ejecutando pruebas...');
+            
+            await testFirebase();
+            testAudio();
+            testVisual();
+            await testSync();
+            
+            setTimeout(() => {
+                const total = Object.keys(results).length - 1; // -1 para excluir overall-result
+                const passed = Object.values(results).filter(r => r).length - 1;
+                const percentage = Math.round((passed / total) * 100);
+                
+                const success = percentage >= 75;
+                setResult('overall-result', success, `${passed}/${total} pruebas pasaron (${percentage}%)`);
+            }, 1000);
+        }
+        
+        // Auto-ejecutar al cargar
+        window.addEventListener('load', () => {
+            setTimeout(runAll, 1000);
+        });
+    </script>
+</body>
+</html>

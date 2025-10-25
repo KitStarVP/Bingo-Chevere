@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin-Sala Communication</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .btn.success { background: #28a745; }
+        .btn.danger { background: #dc3545; }
+        .log { background: #000; color: #0f0; padding: 15px; border-radius: 5px; font-family: monospace; height: 200px; overflow-y: auto; margin: 10px 0; }
+        .demo-area { border: 2px dashed #ccc; padding: 20px; margin: 10px 0; text-align: center; }
+        .mini-ball { width: 60px; height: 60px; background: linear-gradient(145deg, #ffffff, #e6e6e6); border-radius: 50%; border: 3px solid #3498db; display: none; align-items: center; justify-content: center; margin: 10px auto; }
+        .recent-numbers { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
+        .recent-number { background: #3498db; color: white; padding: 5px 10px; border-radius: 15px; min-width: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Test Comunicación Admin-Sala</h1>
+        <div style="background: rgba(243,156,18,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #f39c12;">
+            <strong>📋 Propósito de esta herramienta:</strong><br>
+            • Prueba la sincronización entre admin y sala en tiempo real<br>
+            • Simula un admin cantando números y verifica recepción<br>
+            • Monitorea Firebase para detectar problemas de comunicación<br>
+            • Visualiza cómo la sala recibe y procesa los números<br>
+            • Genera logs detallados de toda la comunicación<br><br>
+            <strong>Uso:</strong> Usa el simulador de admin para enviar números y observa cómo la sala los recibe. Ideal para detectar problemas de sincronización.
+        </div>
+        
+        <div class="section">
+            <h3>🎮 Simulador Admin</h3>
+            <button class="btn" onclick="startGame()">▶️ Iniciar Juego</button>
+            <button class="btn success" onclick="callNumber()">📢 Cantar Número</button>
+            <button class="btn danger" onclick="stopGame()">⏹️ Parar Juego</button>
+            <p>Último número cantado: <span id="last-called">--</span></p>
+        </div>
+
+        <div class="section">
+            <h3>📱 Simulador Sala</h3>
+            <div class="demo-area">
+                <div class="mini-ball" id="mini-ball">
+                    <div id="ball-content">B15</div>
+                </div>
+                <div class="recent-numbers">
+                    <span class="recent-number" id="recent-1">--</span>
+                    <span class="recent-number" id="recent-2">--</span>
+                    <span class="recent-number" id="recent-3">--</span>
+                </div>
+                <p>Estado: <span id="sala-status">Esperando...</span></p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📊 Firebase Monitor</h3>
+            <button class="btn" onclick="checkFirebase()">🔍 Verificar Firebase</button>
+            <div id="firebase-data" style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;"></div>
+        </div>
+
+        <div class="section">
+            <h3>📝 Log en Tiempo Real</h3>
+            <div id="log-output" class="log"></div>
+            <button class="btn" onclick="clearLog()">Limpiar Log</button>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+      import { getDatabase, ref, onValue, get, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: "bingo-chevere.firebaseapp.com",
+        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: "bingo-chevere",
+        storageBucket: "bingo-chevere.firebasestorage.app",
+        messagingSenderId: "1057150163831",
+        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebase = { database, ref, onValue, get, set };
+      window.firebaseReady = true;
+      
+      log('🔥 Firebase inicializado');
+    </script>
+
+    <script>
+        let calledNumbers = [];
+        let gameActive = false;
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('log-output');
+            const div = document.createElement('div');
+            div.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(div);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log-output').innerHTML = '';
+        }
+
+        // Esperar Firebase
+        function waitForFirebase() {
+            return new Promise((resolve) => {
+                const check = () => {
+                    if (window.firebaseReady) resolve();
+                    else setTimeout(check, 100);
+                };
+                check();
+            });
+        }
+
+        // Inicializar listeners
+        async function initListeners() {
+            await waitForFirebase();
+            
+            const { database, ref, onValue } = window.firebase;
+            
+            // Listener para gameState
+            onValue(ref(database, 'gameState'), (snapshot) => {
+                const gameState = snapshot.val();
+                log(`📡 GameState recibido: ${JSON.stringify(gameState)}`);
+                
+                if (gameState) {
+                    gameActive = gameState.gameActive || false;
+                    document.getElementById('sala-status').textContent = gameActive ? 'Juego Activo' : 'Juego Inactivo';
+                } else {
+                    gameActive = false;
+                    document.getElementById('sala-status').textContent = 'Sin Estado';
+                }
+            });
+            
+            // Listener para números cantados
+            onValue(ref(database, 'calledNumbers'), (snapshot) => {
+                let numbers = snapshot.val();
+                log(`📡 Numbers recibidos: ${JSON.stringify(numbers)}`);
+                
+                if (numbers) {
+                    // Normalizar números
+                    if (!Array.isArray(numbers)) {
+                        numbers = Object.values(numbers);
+                    }
+                    
+                    const normalizedNumbers = numbers.map(item => 
+                        typeof item === 'object' ? item.number : item
+                    ).filter(num => typeof num === 'number');
+                    
+                    // Detectar nuevos números
+                    const newNumbers = normalizedNumbers.filter(num => !calledNumbers.includes(num));
+                    
+                    if (newNumbers.length > 0) {
+                        log(`🎯 Nuevos números detectados: ${newNumbers.join(', ')}`);
+                        
+                        newNumbers.forEach(num => {
+                            processNewNumber(num);
+                        });
+                        
+                        calledNumbers = [...normalizedNumbers];
+                    }
+                } else {
+                    log('📝 No hay números cantados');
+                    calledNumbers = [];
+                    resetVisuals();
+                }
+            });
+            
+            log('✅ Listeners iniciados');
+        }
+
+        // Procesar nuevo número
+        function processNewNumber(number) {
+            log(`🎯 Procesando número: ${number}`);
+            
+            // Mostrar mini-bola
+            showMiniBall(number);
+            
+            // Actualizar números recientes
+            updateRecentNumbers();
+            
+            // Hablar número
+            speakNumber(number);
+        }
+
+        // Mostrar mini-bola
+        function showMiniBall(number) {
+            const miniBall = document.getElementById('mini-ball');
+            const ballContent = document.getElementById('ball-content');
+            
+            const letter = getBingoLetter(number);
+            ballContent.textContent = letter + number;
+            
+            miniBall.style.display = 'flex';
+            miniBall.style.animation = 'none';
+            
+            setTimeout(() => {
+                miniBall.style.animation = 'pulse 0.5s ease-out';
+            }, 10);
+            
+            setTimeout(() => {
+                miniBall.style.display = 'none';
+            }, 3000);
+            
+            log(`🎱 Mini-bola mostrada: ${letter}${number}`);
+        }
+
+        // Actualizar números recientes
+        function updateRecentNumbers() {
+            const lastThree = calledNumbers.slice(-3);
+            
+            for (let i = 1; i <= 3; i++) {
+                const element = document.getElementById(`recent-${i}`);
+                if (lastThree[i-1]) {
+                    const num = lastThree[i-1];
+                    const letter = getBingoLetter(num);
+                    element.textContent = letter + num;
+                } else {
+                    element.textContent = '--';
+                }
+            }
+            
+            log(`📊 Números recientes actualizados: ${lastThree.join(', ')}`);
+        }
+
+        // Resetear visuales
+        function resetVisuals() {
+            document.getElementById('mini-ball').style.display = 'none';
+            
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`recent-${i}`).textContent = '--';
+            }
+            
+            log('🔄 Visuales reseteados');
+        }
+
+        // Obtener letra BINGO
+        function getBingoLetter(number) {
+            if (number <= 15) return 'B';
+            if (number <= 30) return 'I';
+            if (number <= 45) return 'N';
+            if (number <= 60) return 'G';
+            return 'O';
+        }
+
+        // Hablar número
+        function speakNumber(number) {
+            if ('speechSynthesis' in window) {
+                const letter = getBingoLetter(number);
+                const text = `${letter} ${number} repito ${letter} ${number}`;
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.9;
+                
+                speechSynthesis.speak(utterance);
+                log(`🔊 Hablando: ${text}`);
+            }
+        }
+
+        // === FUNCIONES DE ADMIN SIMULADO ===
+
+        async function startGame() {
+            await waitForFirebase();
+            
+            const { database, ref, set } = window.firebase;
+            
+            const gameState = {
+                gameActive: true,
+                currentRound: 1,
+                gameId: 'test-' + Date.now(),
+                prizes: { round1: 450, round2: 900 }
+            };
+            
+            await set(ref(database, 'gameState'), gameState);
+            log('▶️ Admin: Juego iniciado');
+        }
+
+        async function callNumber() {
+            await waitForFirebase();
+            
+            const { database, ref, get, set } = window.firebase;
+            
+            // Generar número aleatorio
+            const newNumber = Math.floor(Math.random() * 75) + 1;
+            
+            // Obtener números actuales
+            const snapshot = await get(ref(database, 'calledNumbers'));
+            let currentNumbers = snapshot.val() || [];
+            
+            if (!Array.isArray(currentNumbers)) {
+                currentNumbers = Object.values(currentNumbers);
+            }
+            
+            // Agregar nuevo número
+            currentNumbers.push(newNumber);
+            
+            await set(ref(database, 'calledNumbers'), currentNumbers);
+            
+            document.getElementById('last-called').textContent = getBingoLetter(newNumber) + newNumber;
+            log(`📢 Admin: Número cantado ${newNumber}`);
+        }
+
+        async function stopGame() {
+            await waitForFirebase();
+            
+            const { database, ref, set } = window.firebase;
+            
+            await set(ref(database, 'gameState'), null);
+            await set(ref(database, 'calledNumbers'), null);
+            
+            log('⏹️ Admin: Juego parado y datos limpiados');
+        }
+
+        async function checkFirebase() {
+            await waitForFirebase();
+            
+            const { database, ref, get } = window.firebase;
+            
+            const gameStateSnapshot = await get(ref(database, 'gameState'));
+            const numbersSnapshot = await get(ref(database, 'calledNumbers'));
+            
+            const data = {
+                gameState: gameStateSnapshot.val(),
+                calledNumbers: numbersSnapshot.val()
+            };
+            
+            document.getElementById('firebase-data').innerHTML = `
+                <h5>Estado Actual de Firebase:</h5>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            
+            log('🔍 Firebase verificado - ver datos arriba');
+        }
+
+        // Inicializar al cargar
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                initListeners();
+                log('🚀 Test Admin-Sala iniciado');
+                log('💡 Usa los botones de Admin para probar la comunicación');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

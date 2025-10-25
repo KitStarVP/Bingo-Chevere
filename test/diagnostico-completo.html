@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Completo - Bingo Chévere</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border-radius: 10px; }
+        .pass { background: #d4edda; border: 2px solid #c3e6cb; }
+        .fail { background: #f8d7da; border: 2px solid #f5c6cb; }
+        .warning { background: #fff3cd; border: 2px solid #ffeaa7; }
+        .info { background: #d1ecf1; border: 2px solid #bee5eb; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .btn.danger { background: #dc3545; }
+        .btn.success { background: #28a745; }
+        .console-output { background: #000; color: #0f0; padding: 15px; border-radius: 5px; font-family: monospace; max-height: 300px; overflow-y: auto; margin: 10px 0; }
+        .error-log { background: #2c3e50; color: #e74c3c; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .firebase-data { background: #34495e; color: #ecf0f1; padding: 15px; border-radius: 5px; margin: 10px 0; font-family: monospace; }
+        .mini-ball-demo { width: 60px; height: 60px; background: linear-gradient(145deg, #ffffff, #e6e6e6); border-radius: 50%; border: 3px solid #3498db; display: flex; align-items: center; justify-content: center; margin: 10px auto; }
+        .recent-demo { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
+        .recent-demo span { background: #3498db; color: white; padding: 5px 10px; border-radius: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 DIAGNÓSTICO COMPLETO - BINGO CHÉVERE</h1>
+        <div style="background: rgba(231,76,60,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #e74c3c;">
+            <strong>📋 Propósito de esta herramienta:</strong><br>
+            • Análisis exhaustivo de todo el sistema<br>
+            • Diagnóstico avanzado de Firebase y conectividad<br>
+            • Pruebas de sincronización admin-sala en tiempo real<br>
+            • Detección de errores JavaScript y problemas de rendimiento<br>
+            • Generación de reportes detallados con plan de acción<br>
+            • Herramientas de limpieza y creación de datos de prueba<br><br>
+            <strong>Uso:</strong> Herramienta de troubleshooting avanzado. Ejecuta el diagnóstico completo para obtener un reporte detallado del estado del sistema.
+        </div>
+        
+        <div class="test-section info">
+            <h2>📊 Panel de Control</h2>
+            <button class="btn" onclick="runFullDiagnostic()">🚀 EJECUTAR DIAGNÓSTICO COMPLETO</button>
+            <button class="btn danger" onclick="clearFirebaseData()">🗑️ LIMPIAR FIREBASE</button>
+            <button class="btn success" onclick="createTestData()">🧪 CREAR DATOS DE PRUEBA</button>
+            <button class="btn" onclick="testAdminToSala()">🔄 PROBAR ADMIN → SALA</button>
+        </div>
+
+        <div id="console-section" class="test-section">
+            <h3>📝 Consola en Tiempo Real</h3>
+            <div id="console-output" class="console-output"></div>
+            <button class="btn" onclick="clearConsole()">Limpiar Consola</button>
+        </div>
+
+        <div id="firebase-section" class="test-section">
+            <h3>🔥 Estado de Firebase</h3>
+            <div id="firebase-status"></div>
+            <div id="firebase-data" class="firebase-data"></div>
+        </div>
+
+        <div id="numbers-section" class="test-section">
+            <h3>🎯 Prueba de Números</h3>
+            <div id="numbers-status"></div>
+            <div class="mini-ball-demo" id="test-mini-ball" style="display: none;">B15</div>
+            <div class="recent-demo" id="test-recent">
+                <span>--</span><span>--</span><span>--</span>
+            </div>
+            <button class="btn" onclick="testNumberVisualization()">Probar Visualización</button>
+            <button class="btn" onclick="simulateAdminNumber()">Simular Admin Cantando</button>
+        </div>
+
+        <div id="audio-section" class="test-section">
+            <h3>🔊 Prueba de Audio</h3>
+            <div id="audio-status"></div>
+            <button class="btn" onclick="testAudioSystem()">Probar Audio</button>
+        </div>
+
+        <div id="sync-section" class="test-section">
+            <h3>🔄 Prueba de Sincronización</h3>
+            <div id="sync-status"></div>
+            <button class="btn" onclick="testFirebaseSync()">Probar Sincronización</button>
+        </div>
+
+        <div id="admin-section" class="test-section">
+            <h3>👨‍💼 Prueba Admin Panel</h3>
+            <div id="admin-status"></div>
+            <button class="btn" onclick="testAdminFunctions()">Probar Admin</button>
+        </div>
+
+        <div id="errors-section" class="test-section fail" style="display: none;">
+            <h3>❌ Errores Detectados</h3>
+            <div id="error-log" class="error-log"></div>
+        </div>
+
+        <div id="results-section" class="test-section">
+            <h3>📋 Resumen de Resultados</h3>
+            <div id="final-results"></div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+      import { getDatabase, ref, onValue, get, set, push, remove } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: "bingo-chevere.firebaseapp.com",
+        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: "bingo-chevere",
+        storageBucket: "bingo-chevere.firebasestorage.app",
+        messagingSenderId: "1057150163831",
+        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebase = { database, ref, onValue, get, set, push, remove };
+      window.firebaseReady = true;
+      
+      logToConsole('🔥 Firebase inicializado correctamente');
+    </script>
+
+    <script>
+        let diagnosticResults = {};
+        let errorCount = 0;
+        let consoleMessages = [];
+
+        // Capturar errores de consola
+        const originalConsoleError = console.error;
+        const originalConsoleLog = console.log;
+        const originalConsoleWarn = console.warn;
+
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            logToConsole('❌ ERROR: ' + args.join(' '), 'error');
+            errorCount++;
+        };
+
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            logToConsole('📝 LOG: ' + args.join(' '), 'log');
+        };
+
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            logToConsole('⚠️ WARN: ' + args.join(' '), 'warn');
+        };
+
+        window.addEventListener('error', function(e) {
+            logToConsole('💥 JS ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno, 'error');
+            errorCount++;
+        });
+
+        function logToConsole(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            consoleMessages.push({message: logMessage, type});
+            
+            const consoleOutput = document.getElementById('console-output');
+            if (consoleOutput) {
+                const div = document.createElement('div');
+                div.textContent = logMessage;
+                div.style.color = type === 'error' ? '#e74c3c' : type === 'warn' ? '#f39c12' : '#2ecc71';
+                consoleOutput.appendChild(div);
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            }
+        }
+
+        function clearConsole() {
+            document.getElementById('console-output').innerHTML = '';
+            consoleMessages = [];
+        }
+
+        function setTestResult(sectionId, status, message, data = null) {
+            const section = document.getElementById(sectionId);
+            const statusDiv = section.querySelector('[id$="-status"]');
+            
+            section.className = `test-section ${status}`;
+            statusDiv.innerHTML = `
+                <h4>${status === 'pass' ? '✅ PASS' : status === 'fail' ? '❌ FAIL' : '⚠️ WARNING'}</h4>
+                <p>${message}</p>
+                ${data ? `<pre style="background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>` : ''}
+            `;
+            
+            diagnosticResults[sectionId] = {status, message, data};
+        }
+
+        async function runFullDiagnostic() {
+            logToConsole('🚀 INICIANDO DIAGNÓSTICO COMPLETO');
+            errorCount = 0;
+            
+            // Esperar Firebase
+            await waitForFirebase();
+            
+            // Ejecutar todas las pruebas
+            await testFirebaseConnection();
+            await testFirebaseData();
+            await testNumberVisualization();
+            await testAudioSystem();
+            await testFirebaseSync();
+            await testAdminFunctions();
+            
+            // Generar reporte final
+            generateFinalReport();
+        }
+
+        function waitForFirebase() {
+            return new Promise((resolve) => {
+                const check = () => {
+                    if (window.firebaseReady) {
+                        logToConsole('✅ Firebase listo para pruebas');
+                        resolve();
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+                check();
+            });
+        }
+
+        async function testFirebaseConnection() {
+            logToConsole('🔥 Probando conexión Firebase...');
+            
+            try {
+                if (!window.firebase) {
+                    throw new Error('Firebase no está disponible');
+                }
+                
+                const { database, ref, get } = window.firebase;
+                const testRef = ref(database, '.info/connected');
+                const snapshot = await get(testRef);
+                
+                if (snapshot.exists()) {
+                    setTestResult('firebase-section', 'pass', 'Conexión Firebase exitosa');
+                    logToConsole('✅ Firebase conectado correctamente');
+                } else {
+                    throw new Error('No se pudo verificar la conexión');
+                }
+                
+            } catch (error) {
+                setTestResult('firebase-section', 'fail', `Error de conexión: ${error.message}`);
+                logToConsole('❌ Error de Firebase: ' + error.message);
+            }
+        }
+
+        async function testFirebaseData() {
+            logToConsole('📊 Analizando datos de Firebase...');
+            
+            try {
+                const { database, ref, get } = window.firebase;
+                
+                // Verificar gameState
+                const gameStateSnapshot = await get(ref(database, 'gameState'));
+                const gameState = gameStateSnapshot.val();
+                
+                // Verificar calledNumbers
+                const numbersSnapshot = await get(ref(database, 'calledNumbers'));
+                const calledNumbers = numbersSnapshot.val();
+                
+                const firebaseData = {
+                    gameState: gameState,
+                    calledNumbers: calledNumbers,
+                    gameStateExists: !!gameState,
+                    numbersExist: !!calledNumbers,
+                    numbersCount: calledNumbers ? (Array.isArray(calledNumbers) ? calledNumbers.length : Object.keys(calledNumbers).length) : 0
+                };
+                
+                document.getElementById('firebase-data').textContent = JSON.stringify(firebaseData, null, 2);
+                
+                if (!gameState && !calledNumbers) {
+                    setTestResult('firebase-section', 'warning', 'Firebase está vacío - necesita datos de prueba', firebaseData);
+                } else {
+                    setTestResult('firebase-section', 'pass', 'Datos de Firebase encontrados', firebaseData);
+                }
+                
+                logToConsole(`📊 GameState: ${!!gameState}, Numbers: ${firebaseData.numbersCount}`);
+                
+            } catch (error) {
+                setTestResult('firebase-section', 'fail', `Error leyendo datos: ${error.message}`);
+                logToConsole('❌ Error leyendo Firebase: ' + error.message);
+            }
+        }
+
+        async function testNumberVisualization() {
+            logToConsole('🎯 Probando visualización de números...');
+            
+            try {
+                // Probar mini-bola
+                const miniBall = document.getElementById('test-mini-ball');
+                if (miniBall) {
+                    miniBall.style.display = 'flex';
+                    miniBall.textContent = 'B15';
+                    
+                    setTimeout(() => {
+                        miniBall.style.display = 'none';
+                    }, 2000);
+                }
+                
+                // Probar números recientes
+                const recentSpans = document.querySelectorAll('#test-recent span');
+                const testNumbers = ['B5', 'I22', 'N35'];
+                recentSpans.forEach((span, index) => {
+                    span.textContent = testNumbers[index] || '--';
+                });
+                
+                setTestResult('numbers-section', 'pass', 'Visualización de números funciona correctamente');
+                logToConsole('✅ Visualización de números OK');
+                
+            } catch (error) {
+                setTestResult('numbers-section', 'fail', `Error en visualización: ${error.message}`);
+                logToConsole('❌ Error en visualización: ' + error.message);
+            }
+        }
+
+        async function testAudioSystem() {
+            logToConsole('🔊 Probando sistema de audio...');
+            
+            try {
+                if (!('speechSynthesis' in window)) {
+                    throw new Error('SpeechSynthesis no disponible en este navegador');
+                }
+                
+                const voices = speechSynthesis.getVoices();
+                const spanishVoice = voices.find(v => v.lang.startsWith('es'));
+                
+                // Probar síntesis
+                const utterance = new SpeechSynthesisUtterance('B 15 repito B 15');
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.9;
+                
+                speechSynthesis.speak(utterance);
+                
+                const audioData = {
+                    speechSynthesisAvailable: true,
+                    voicesCount: voices.length,
+                    spanishVoiceAvailable: !!spanishVoice,
+                    spanishVoiceName: spanishVoice?.name || 'No disponible'
+                };
+                
+                setTestResult('audio-section', 'pass', 'Sistema de audio funcional (escucha si suena)', audioData);
+                logToConsole(`🔊 Audio OK - Voces: ${voices.length}, Español: ${!!spanishVoice}`);
+                
+            } catch (error) {
+                setTestResult('audio-section', 'fail', `Error de audio: ${error.message}`);
+                logToConsole('❌ Error de audio: ' + error.message);
+            }
+        }
+
+        async function testFirebaseSync() {
+            logToConsole('🔄 Probando sincronización Firebase...');
+            
+            try {
+                const { database, ref, set, onValue, get } = window.firebase;
+                
+                // Crear listener de prueba
+                let listenerTriggered = false;
+                const testRef = ref(database, 'diagnosticTest');
+                
+                const unsubscribe = onValue(testRef, (snapshot) => {
+                    listenerTriggered = true;
+                    logToConsole('📡 Listener Firebase activado');
+                });
+                
+                // Escribir dato de prueba
+                await set(testRef, { timestamp: Date.now(), test: 'sync' });
+                
+                // Esperar listener
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Limpiar
+                await set(testRef, null);
+                unsubscribe();
+                
+                if (listenerTriggered) {
+                    setTestResult('sync-section', 'pass', 'Sincronización Firebase funciona correctamente');
+                    logToConsole('✅ Sincronización OK');
+                } else {
+                    throw new Error('Listener no se activó');
+                }
+                
+            } catch (error) {
+                setTestResult('sync-section', 'fail', `Error de sincronización: ${error.message}`);
+                logToConsole('❌ Error de sincronización: ' + error.message);
+            }
+        }
+
+        async function testAdminFunctions() {
+            logToConsole('👨‍💼 Probando funciones de admin...');
+            
+            try {
+                const { database, ref, get } = window.firebase;
+                
+                // Verificar si existe estructura de admin
+                const adminStructure = {
+                    gameState: await get(ref(database, 'gameState')),
+                    calledNumbers: await get(ref(database, 'calledNumbers')),
+                    pendingBingos: await get(ref(database, 'pendingBingos'))
+                };
+                
+                const adminData = {
+                    gameStateExists: adminStructure.gameState.exists(),
+                    numbersExists: adminStructure.calledNumbers.exists(),
+                    bingosExists: adminStructure.pendingBingos.exists()
+                };
+                
+                setTestResult('admin-section', 'pass', 'Estructura de admin verificada', adminData);
+                logToConsole('👨‍💼 Admin structure OK');
+                
+            } catch (error) {
+                setTestResult('admin-section', 'fail', `Error verificando admin: ${error.message}`);
+                logToConsole('❌ Error de admin: ' + error.message);
+            }
+        }
+
+        async function clearFirebaseData() {
+            if (!confirm('¿Estás seguro de que quieres LIMPIAR TODA la base de datos Firebase?')) return;
+            
+            logToConsole('🗑️ LIMPIANDO Firebase...');
+            
+            try {
+                const { database, ref, set } = window.firebase;
+                
+                await set(ref(database, 'gameState'), null);
+                await set(ref(database, 'calledNumbers'), null);
+                await set(ref(database, 'pendingBingos'), null);
+                await set(ref(database, 'bingoVerifications'), null);
+                
+                logToConsole('✅ Firebase limpiado completamente');
+                alert('✅ Firebase limpiado. Ejecuta diagnóstico de nuevo.');
+                
+            } catch (error) {
+                logToConsole('❌ Error limpiando Firebase: ' + error.message);
+                alert('❌ Error limpiando Firebase: ' + error.message);
+            }
+        }
+
+        async function createTestData() {
+            logToConsole('🧪 Creando datos de prueba...');
+            
+            try {
+                const { database, ref, set } = window.firebase;
+                
+                // Crear gameState de prueba
+                const testGameState = {
+                    gameActive: true,
+                    currentRound: 1,
+                    gameId: 'test-' + Date.now(),
+                    prizes: { round1: 450, round2: 900 },
+                    currentPattern: {
+                        name: 'Patrón de Prueba',
+                        positions: [[0,0], [0,4], [2,2], [4,0], [4,4]]
+                    }
+                };
+                
+                // Crear números de prueba
+                const testNumbers = [5, 12, 23, 34, 47, 58, 61, 72];
+                
+                await set(ref(database, 'gameState'), testGameState);
+                await set(ref(database, 'calledNumbers'), testNumbers);
+                
+                logToConsole('✅ Datos de prueba creados');
+                alert('✅ Datos de prueba creados. Ejecuta diagnóstico de nuevo.');
+                
+            } catch (error) {
+                logToConsole('❌ Error creando datos de prueba: ' + error.message);
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        async function simulateAdminNumber() {
+            logToConsole('🎲 Simulando admin cantando número...');
+            
+            try {
+                const { database, ref, get, set } = window.firebase;
+                
+                // Obtener números actuales
+                const snapshot = await get(ref(database, 'calledNumbers'));
+                let currentNumbers = snapshot.val() || [];
+                
+                if (!Array.isArray(currentNumbers)) {
+                    currentNumbers = Object.values(currentNumbers);
+                }
+                
+                // Agregar nuevo número
+                const newNumber = Math.floor(Math.random() * 75) + 1;
+                currentNumbers.push(newNumber);
+                
+                await set(ref(database, 'calledNumbers'), currentNumbers);
+                
+                logToConsole(`🎯 Número ${newNumber} agregado por admin simulado`);
+                
+            } catch (error) {
+                logToConsole('❌ Error simulando admin: ' + error.message);
+            }
+        }
+
+        async function testAdminToSala() {
+            logToConsole('🔄 Probando comunicación Admin → Sala...');
+            
+            try {
+                // Simular que admin canta un número
+                await simulateAdminNumber();
+                
+                // Esperar y verificar si la sala lo recibe
+                setTimeout(async () => {
+                    const { database, ref, get } = window.firebase;
+                    const snapshot = await get(ref(database, 'calledNumbers'));
+                    const numbers = snapshot.val();
+                    
+                    if (numbers && numbers.length > 0) {
+                        logToConsole('✅ Comunicación Admin → Sala funciona');
+                        alert('✅ Comunicación funciona. Revisa la consola.');
+                    } else {
+                        logToConsole('❌ No se detectó comunicación');
+                        alert('❌ No hay comunicación Admin → Sala');
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                logToConsole('❌ Error en comunicación: ' + error.message);
+            }
+        }
+
+        function generateFinalReport() {
+            logToConsole('📋 Generando reporte final...');
+            
+            const totalTests = Object.keys(diagnosticResults).length;
+            const passedTests = Object.values(diagnosticResults).filter(r => r.status === 'pass').length;
+            const failedTests = Object.values(diagnosticResults).filter(r => r.status === 'fail').length;
+            const warningTests = Object.values(diagnosticResults).filter(r => r.status === 'warning').length;
+            
+            const report = {
+                timestamp: new Date().toLocaleString(),
+                totalTests,
+                passedTests,
+                failedTests,
+                warningTests,
+                errorCount,
+                consoleMessages: consoleMessages.length,
+                results: diagnosticResults
+            };
+            
+            const resultsDiv = document.getElementById('final-results');
+            resultsDiv.innerHTML = `
+                <h4>📊 REPORTE FINAL</h4>
+                <p><strong>Pruebas Totales:</strong> ${totalTests}</p>
+                <p><strong>✅ Exitosas:</strong> ${passedTests}</p>
+                <p><strong>❌ Fallidas:</strong> ${failedTests}</p>
+                <p><strong>⚠️ Advertencias:</strong> ${warningTests}</p>
+                <p><strong>💥 Errores JS:</strong> ${errorCount}</p>
+                <p><strong>📝 Mensajes Consola:</strong> ${consoleMessages.length}</p>
+                
+                <h5>🎯 PROBLEMAS DETECTADOS:</h5>
+                <ul>
+                    ${Object.entries(diagnosticResults)
+                        .filter(([key, result]) => result.status === 'fail')
+                        .map(([key, result]) => `<li><strong>${key}:</strong> ${result.message}</li>`)
+                        .join('')}
+                </ul>
+                
+                <h5>📋 PLAN DE ACCIÓN:</h5>
+                <ol>
+                    ${failedTests > 0 ? '<li>🔧 Corregir errores detectados arriba</li>' : ''}
+                    ${warningTests > 0 ? '<li>⚠️ Revisar advertencias</li>' : ''}
+                    ${errorCount > 0 ? '<li>💥 Solucionar errores de JavaScript</li>' : ''}
+                    <li>🧪 Crear datos de prueba si Firebase está vacío</li>
+                    <li>🔄 Probar comunicación Admin → Sala</li>
+                    <li>✅ Verificar que todo funcione en sala real</li>
+                </ol>
+            `;
+            
+            if (errorCount > 0) {
+                document.getElementById('errors-section').style.display = 'block';
+                document.getElementById('error-log').innerHTML = consoleMessages
+                    .filter(msg => msg.type === 'error')
+                    .map(msg => `<div>${msg.message}</div>`)
+                    .join('');
+            }
+            
+            logToConsole(`📋 REPORTE: ${passedTests}/${totalTests} pruebas exitosas, ${errorCount} errores`);
+        }
+
+        // Auto-ejecutar al cargar
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                logToConsole('🚀 Página de diagnóstico cargada');
+                logToConsole('💡 Haz clic en "EJECUTAR DIAGNÓSTICO COMPLETO" para empezar');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

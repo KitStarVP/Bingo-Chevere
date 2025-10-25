@@ -99,7 +99,6 @@ class PurchaseSystem {
         if (gameActive) {
             this.showGameActiveWarning(phone, reference, quantity);
         } else {
-            // Verificar si el usuario ya existe
             await this.checkUserAndShowPIN(phone, reference, quantity);
         }
     }
@@ -274,10 +273,10 @@ class PurchaseSystem {
     showGameActiveWarning(phone, reference, quantity) {
         const confirmed = confirm(
             '🚨 PARTIDA EN CURSO 🚨\n\n' +
+            'Hay una partida activa (Ronda 1 o 2).\n\n' +
             'Los cartones que compres serán válidos\n' +
-            'SOLO para la PRÓXIMA partida.\n\n' +
-            'Partida actual en progreso...\n' +
-            'Tus cartones estarán listos cuando termine.\n\n' +
+            'SOLO cuando termine la partida actual\n' +
+            '(después de las 2 rondas completas).\n\n' +
             '¿Confirmas comprar para la próxima partida?'
         );
         
@@ -425,7 +424,8 @@ class PurchaseSystem {
             date: new Date().toISOString().split('T')[0],
             status: 'pending',
             timestamp: Date.now(),
-            forNextGame: forNextGame // Marcar si es para próxima partida
+            forNextGame: forNextGame,
+            validForCurrentGame: !forNextGame
         };
         
         const { database, ref, set } = window.firebase;

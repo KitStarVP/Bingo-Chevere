@@ -128,15 +128,20 @@ body {
         opacity: 0;
         box-shadow: 0 0 0 rgba(52,152,219,0);
     }
-    30% { 
+    15% { 
         transform: translate(-50%, -50%) scale(1.2); 
         opacity: 0.8;
         box-shadow: 0 8px 25px rgba(52,152,219,0.6);
     }
-    60% { 
+    25% { 
         transform: translate(-50%, -50%) scale(0.95); 
         opacity: 1;
         box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+    }
+    85% { 
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     }
     100% { 
         transform: translate(-50%, -50%) scale(1); 

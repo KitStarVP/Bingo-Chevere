@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Cartones - Bingo Chévere</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .status.success { background: #d4edda; border-color: #28a745; }
+        .status.warning { background: #fff3cd; border-color: #ffc107; }
+        .status.error { background: #f8d7da; border-color: #dc3545; }
+        .status.info { background: #d1ecf1; border-color: #17a2b8; }
+        .card-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid;
+        }
+        .card-item.vigente { border-color: #28a745; }
+        .card-item.en_uso { border-color: #17a2b8; }
+        .card-item.vencido { border-color: #dc3545; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .fix-btn { background: #28a745; }
+        .fix-btn:hover { background: #1e7e34; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico de Cartones</h1>
+        <div class="status info">
+            <strong>📋 Propósito de esta herramienta:</strong><br>
+            • Diagnostica problemas con cartones de jugadores<br>
+            • Verifica estados incorrectos (vigente, en_uso, vencido)<br>
+            • Detecta cartones expirados por error<br>
+            • Repara automáticamente estados inconsistentes<br>
+            • Muestra historial detallado de cada cartón
+        </div>
+        <p><strong>Uso:</strong> Ejecuta el diagnóstico para ver el estado actual de tus cartones y usa las herramientas de reparación si es necesario.</p>
+        
+        <div id="diagnostics"></div>
+        
+        <div style="margin-top: 20px;">
+            <button onclick="runDiagnostics()">🔍 Ejecutar Diagnóstico</button>
+            <button onclick="fixExpiredCards()" class="fix-btn">🔧 Reparar Cartones Expirados</button>
+            <button onclick="clearAllData()" style="background: #dc3545;">🗑️ Limpiar Todo</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+      import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: "bingo-chevere.firebaseapp.com",
+        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: "bingo-chevere",
+        storageBucket: "bingo-chevere.firebasestorage.app",
+        messagingSenderId: "1057150163831",
+        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebase = { database, ref, set, get, onValue };
+      console.log('Firebase inicializado para diagnóstico');
+    </script>
+
+    <script>
+        async function runDiagnostics() {
+            const diagnostics = document.getElementById('diagnostics');
+            const results = document.getElementById('results');
+            
+            diagnostics.innerHTML = '<p>🔍 Ejecutando diagnóstico...</p>';
+            results.innerHTML = '';
+            
+            let report = [];
+            
+            // 1. Verificar teléfono del usuario
+            const userPhone = localStorage.getItem('userPhone');
+            if (!userPhone) {
+                report.push({
+                    type: 'error',
+                    title: '❌ Sin teléfono de usuario',
+                    message: 'No se encontró teléfono en localStorage. Debes comprar cartones primero.'
+                });
+            } else {
+                report.push({
+                    type: 'success',
+                    title: '✅ Teléfono encontrado',
+                    message: `Usuario: ${userPhone}`
+                });
+            }
+            
+            // 2. Verificar Firebase
+            if (!window.firebase) {
+                report.push({
+                    type: 'error',
+                    title: '❌ Firebase no disponible',
+                    message: 'No se puede conectar a Firebase'
+                });
+            } else {
+                report.push({
+                    type: 'success',
+                    title: '✅ Firebase conectado',
+                    message: 'Conexión a Firebase exitosa'
+                });
+                
+                // 3. Verificar cartones en Firebase
+                if (userPhone) {
+                    try {
+                        const { database, ref, get } = window.firebase;
+                        const cleanPhone = userPhone.replace(/[^0-9]/g, '');
+                        const snapshot = await get(ref(database, `playerCards/${cleanPhone}`));
+                        
+                        if (snapshot.exists()) {
+                            const cards = snapshot.val();
+                            if (Array.isArray(cards)) {
+                                const vigentes = cards.filter(c => c.status === 'vigente').length;
+                                const enUso = cards.filter(c => c.status === 'en_uso').length;
+                                const vencidos = cards.filter(c => c.status === 'vencido').length;
+                                
+                                report.push({
+                                    type: vigentes > 0 ? 'success' : 'warning',
+                                    title: '📊 Estado de cartones',
+                                    message: `Total: ${cards.length} | Vigentes: ${vigentes} | En uso: ${enUso} | Vencidos: ${vencidos}`
+                                });
+                                
+                                // Mostrar detalles de cartones
+                                results.innerHTML = '<h3>📋 Detalles de Cartones:</h3>';
+                                cards.forEach((card, index) => {
+                                    const cardDiv = document.createElement('div');
+                                    cardDiv.className = `card-item ${card.status}`;
+                                    cardDiv.innerHTML = `
+                                        <strong>Cartón ${index + 1}</strong> - 
+                                        Estado: <strong>${card.status}</strong> - 
+                                        Código: ${card.code || card.id} - 
+                                        Compra: ${new Date(card.purchaseDate).toLocaleString()}
+                                        ${card.expiredDate ? `<br>Expirado: ${new Date(card.expiredDate).toLocaleString()} (${card.expiredReason})` : ''}
+                                    `;
+                                    results.appendChild(cardDiv);
+                                });
+                                
+                                if (vencidos > 0 && vigentes === 0) {
+                                    report.push({
+                                        type: 'error',
+                                        title: '⚠️ Todos los cartones expirados',
+                                        message: 'Todos tus cartones han expirado. Usa el botón "Reparar" para reactivarlos.'
+                                    });
+                                }
+                            } else {
+                                report.push({
+                                    type: 'error',
+                                    title: '❌ Formato de cartones inválido',
+                                    message: 'Los cartones no están en formato de array'
+                                });
+                            }
+                        } else {
+                            report.push({
+                                type: 'warning',
+                                title: '⚠️ Sin cartones en Firebase',
+                                message: 'No se encontraron cartones para este teléfono'
+                            });
+                        }
+                    } catch (error) {
+                        report.push({
+                            type: 'error',
+                            title: '❌ Error leyendo Firebase',
+                            message: error.message
+                        });
+                    }
+                }
+            }
+            
+            // 4. Verificar estado del juego
+            if (window.firebase && userPhone) {
+                try {
+                    const { database, ref, get } = window.firebase;
+                    const gameSnapshot = await get(ref(database, 'gameState'));
+                    
+                    if (gameSnapshot.exists()) {
+                        const gameState = gameSnapshot.val();
+                        report.push({
+                            type: 'info',
+                            title: '🎮 Estado del juego',
+                            message: `Activo: ${gameState.gameActive ? 'Sí' : 'No'} | Ronda: ${gameState.currentRound || 1} | Cerrado: ${gameState.bingoClosed ? 'Sí' : 'No'}`
+                        });
+                        
+                        if (gameState.bingoClosed) {
+                            report.push({
+                                type: 'warning',
+                                title: '🔒 Bingo cerrado',
+                                message: 'El bingo está cerrado completamente. Los cartones pueden haber expirado por esta razón.'
+                            });
+                        }
+                    } else {
+                        report.push({
+                            type: 'info',
+                            title: '⏸️ Sin juego activo',
+                            message: 'No hay juego en curso actualmente'
+                        });
+                    }
+                } catch (error) {
+                    report.push({
+                        type: 'error',
+                        title: '❌ Error verificando juego',
+                        message: error.message
+                    });
+                }
+            }
+            
+            // Mostrar reporte
+            diagnostics.innerHTML = report.map(item => `
+                <div class="status ${item.type}">
+                    <strong>${item.title}</strong><br>
+                    ${item.message}
+                </div>
+            `).join('');
+        }
+        
+        async function fixExpiredCards() {
+            const userPhone = localStorage.getItem('userPhone');
+            if (!userPhone || !window.firebase) {
+                alert('❌ No se puede reparar: falta teléfono o Firebase');
+                return;
+            }
+            
+            if (!confirm('🔧 ¿Reparar cartones expirados?\n\nEsto cambiará todos los cartones vencidos a vigentes.')) {
+                return;
+            }
+            
+            try {
+                const { database, ref, get, set } = window.firebase;
+                const cleanPhone = userPhone.replace(/[^0-9]/g, '');
+                const snapshot = await get(ref(database, `playerCards/${cleanPhone}`));
+                
+                if (snapshot.exists()) {
+                    const cards = snapshot.val();
+                    let fixed = 0;
+                    
+                    cards.forEach(card => {
+                        if (card.status === 'vencido') {
+                            card.status = 'vigente';
+                            card.expiredDate = null;
+                            card.expiredReason = null;
+                            card.repairedDate = new Date().toISOString();
+                            fixed++;
+                        }
+                    });
+                    
+                    await set(ref(database, `playerCards/${cleanPhone}`), cards);
+                    alert(`✅ Reparación completada!\n\n${fixed} cartones reactivados como vigentes.`);
+                    runDiagnostics();
+                } else {
+                    alert('❌ No se encontraron cartones para reparar');
+                }
+            } catch (error) {
+                alert('❌ Error reparando: ' + error.message);
+            }
+        }
+        
+        function clearAllData() {
+            if (!confirm('⚠️ ¿ELIMINAR TODOS LOS DATOS?\n\nEsto eliminará:\n• Teléfono de usuario\n• Todos los cartones\n• Estado del juego\n\n¿Continuar?')) {
+                return;
+            }
+            
+            // Limpiar localStorage
+            localStorage.removeItem('userPhone');
+            localStorage.removeItem('userLoggedIn');
+            localStorage.removeItem('bingoGameState');
+            
+            // Limpiar Firebase si es posible
+            if (window.firebase) {
+                const userPhone = localStorage.getItem('userPhone');
+                if (userPhone) {
+                    const { database, ref, set } = window.firebase;
+                    const cleanPhone = userPhone.replace(/[^0-9]/g, '');
+                    set(ref(database, `playerCards/${cleanPhone}`), null);
+                }
+            }
+            
+            alert('🗑️ Datos eliminados. Recarga la página.');
+            location.reload();
+        }
+        
+        // Ejecutar diagnóstico automáticamente
+        setTimeout(runDiagnostics, 1000);
+    </script>
+</body>
+</html>

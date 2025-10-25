@@ -272,9 +272,9 @@ class GameRoom {
 
     
     processLoadedCards() {
-        // Filtrar solo cartones activos (vigente o en_uso)
+        // Filtrar cartones activos (vigente, en_uso, pendiente_pago)
         this.cards = this.cards.filter(card => 
-            card.status === 'vigente' || card.status === 'en_uso'
+            ['vigente', 'en_uso', 'pendiente_pago'].includes(card.status)
         );
         
         // Procesar cartones activos
@@ -289,11 +289,10 @@ class GameRoom {
         if (this.cards.length === 0) {
             this.showAccessBlocked();
         } else {
-            // Si hay cartones pero no hay juego activo, mostrar estado de espera
-            if (!this.gameActive) {
-                this.showWaitingForGame();
-            } else {
-                // Auto-marcar después de cargar estado inicial
+            console.log('✅ Cartones cargados correctamente');
+            
+            if (this.gameActive) {
+                this.renderCards();
                 setTimeout(() => {
                     this.cards.forEach(card => {
                         if (card.autoMode && this.calledNumbers.length > 0) {
@@ -302,6 +301,8 @@ class GameRoom {
                     });
                     this.renderCards();
                 }, 1000);
+            } else {
+                this.showWaitingForGame();
             }
         }
     }
@@ -325,8 +326,9 @@ class GameRoom {
                 <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 3rem 2rem; border: 1px solid rgba(255,255,255,0.2);">
                     <h2 style="color: white; font-size: 2rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">⏳ Esperando Juego</h2>
                     <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 2rem;">Tienes cartones listos. Esperando que el administrador inicie el próximo juego.</p>
-                    <div style="background: rgba(52,152,219,0.2); padding: 1rem; border-radius: 10px; margin: 1rem 0;">
-                        <p style="color: #3498db; font-weight: 600;">Cartones: ${this.cards.length}</p>
+                    <div style="background: rgba(40,167,69,0.2); padding: 1rem; border-radius: 10px; margin: 1rem 0;">
+                        <p style="color: #28a745; font-weight: 600;">✅ Cartones vigentes: ${this.cards.length}</p>
+                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 0.5rem;">Tus cartones están seguros y listos para jugar</p>
                     </div>
                 </div>
             </div>
@@ -701,6 +703,11 @@ class GameRoom {
 
         console.log('📤 Sending BINGO to Firebase:', bingoData);
 
+        // Marcar cartón como pendiente de pago
+        card.status = 'pendiente_pago';
+        card.bingoTimestamp = Date.now();
+        this.saveCards();
+
         // Enviar BINGO a Firebase para verificación del admin
         this.sendBingoToFirebase(bingoData);
         
@@ -751,7 +758,6 @@ class GameRoom {
         
         const { database, ref, get } = window.firebase;
         
-        // Cargar estado del juego con manejo de errores
         get(ref(database, 'gameState')).then((snapshot) => {
             const gameState = snapshot.val();
             if (gameState) {
@@ -761,13 +767,7 @@ class GameRoom {
                 this.currentPattern = gameState.currentPattern;
                 this.currentGameId = gameState.gameId;
                 
-                console.log('✅ Estado inicial cargado:', gameState);
-                
-                // Solo expirar si hay finalización explícita
-                if (gameState.gameFinalized || gameState.bothRoundsCompleted) {
-                    this.markCardsExpired('Juego ya finalizado');
-                    return;
-                }
+                console.log('✅ Estado inicial cargado - NO expirando cartones en carga inicial');
                 
                 if (this.isPaused) {
                     this.showPauseAlert();
@@ -775,12 +775,11 @@ class GameRoom {
                 
                 this.updateGameInfo();
             } else {
-                console.log('⏸️ No hay juego activo - cartones disponibles para próximo juego');
+                console.log('⏸️ No hay juego activo');
                 this.gameActive = false;
             }
         }).catch(error => {
             console.error('❌ Error cargando estado inicial:', error);
-            // En caso de error, no expirar cartones
             this.gameActive = false;
         });
         
@@ -882,22 +881,26 @@ class GameRoom {
             console.error('❌ Error en listener de gameState:', error);
         });
         
-        // Escuchar números cantados con manejo mejorado
+        // Escuchar números cantados - LISTENER CRÍTICO
         onValue(ref(database, 'calledNumbers'), (snapshot) => {
             try {
                 let firebaseNumbers = snapshot.val();
+                console.log('📡 Datos RAW de Firebase calledNumbers:', firebaseNumbers);
                 
-                // Manejar diferentes formatos de Firebase
+                // Manejar diferentes formatos
                 if (firebaseNumbers && typeof firebaseNumbers === 'object' && !Array.isArray(firebaseNumbers)) {
                     firebaseNumbers = Object.values(firebaseNumbers);
+                    console.log('🔄 Convertido a array:', firebaseNumbers);
                 }
 
                 if (firebaseNumbers && Array.isArray(firebaseNumbers) && firebaseNumbers.length > 0) {
-                    console.log('📡 Números recibidos de Firebase:', firebaseNumbers.length);
+                    console.log('✅ Procesando números de Firebase:', firebaseNumbers);
                     this.handleFirebaseNumbers(firebaseNumbers);
                 } else if (firebaseNumbers === null || (Array.isArray(firebaseNumbers) && firebaseNumbers.length === 0)) {
-                    console.log('🔄 Lista de números reiniciada');
+                    console.log('🔄 Lista de números reiniciada o vacía');
                     this.handleNumbersReset();
+                } else {
+                    console.log('📝 No hay números o formato no reconocido');
                 }
             } catch (error) {
                 console.error('❌ Error procesando números cantados:', error);
@@ -979,23 +982,51 @@ class GameRoom {
     handleFirebaseGameState(firebaseState) {
         console.log('📲 Estado recibido de Firebase:', firebaseState);
         
-        // Verificar finalización del juego PRIMERO
-        if (firebaseState && (firebaseState.gameFinalized || firebaseState.bothRoundsCompleted)) {
-            console.log('🏁 Juego finalizado - expirando cartones');
-            this.markCardsExpired('Juego finalizado por admin');
+        // SOLO expirar cartones EN_USO cuando se cierra bingo
+        if (firebaseState && firebaseState.bingoClosed && firebaseState.expireCards) {
+            console.log('🔒 Bingo cerrado - expirando solo cartones en uso');
+            this.markCardsInUseExpired('Bingo cerrado por administrador');
             this.gameActive = false;
             this.resetGameAlerts();
-            this.showToast('🏁 Juego finalizado. Cartones expirados.');
+            this.resetVisuals();
+            this.showToast('🔒 Bingo cerrado. Cartones del juego actual expirados.');
             return;
         }
         
-        // Si no hay estado del juego, simplemente no hay juego activo (NO cancelado)
-        if (!firebaseState || firebaseState === null) {
-            console.log('⏸️ No hay juego activo - cartones siguen vigentes');
+        // SOLO expirar cartones EN_USO cuando se finaliza partida
+        if (firebaseState && (firebaseState.gameFinalized || firebaseState.bothRoundsCompleted) && firebaseState.expireCards) {
+            console.log('🏁 Partida completa - expirando solo cartones en uso');
+            this.markCardsInUseExpired('Partida completada (2 rondas)');
             this.gameActive = false;
             this.resetGameAlerts();
-            // NO expirar cartones - solo esperar
+            this.showToast('🏁 Partida finalizada. Cartones del juego actual expirados.');
             return;
+        }
+        
+        // Si no hay estado del juego, verificar si es preparación para nuevo juego
+        if (!firebaseState || firebaseState === null) {
+            console.log('⏸️ No hay juego activo - cartones siguen válidos');
+            this.gameActive = false;
+            this.resetGameAlerts();
+            
+            // SIEMPRE mostrar espera si hay cartones, NUNCA expirar por falta de juego
+            if (this.cards.length > 0) {
+                this.showWaitingForGame();
+            }
+            return;
+        }
+        
+        // Verificar si es un nuevo juego (gameId diferente)
+        if (firebaseState.readyForNewGame && firebaseState.gameId !== this.currentGameId) {
+            console.log('🆕 Nuevo juego detectado');
+            this.currentGameId = firebaseState.gameId;
+            this.calledNumbers = [];
+            this.resetVisuals();
+            // Limpiar marcas de cartones para nuevo juego
+            this.cards.forEach(card => {
+                card.marked = [];
+            });
+            this.showToast('🆕 Nuevo juego iniciado!');
         }
         
         // Actualizar estado local
@@ -1053,42 +1084,49 @@ class GameRoom {
     handleFirebaseNumbers(firebaseNumbers) {
         if (!Array.isArray(firebaseNumbers)) return;
 
-        // Normalizar SIEMPRE la lista de Firebase para asegurar que sean números primitivos
+        // Normalizar números de Firebase
         const allFirebaseNumbers = firebaseNumbers.map(item => 
             (item && typeof item === 'object' && item.number !== undefined) ? item.number : item
         ).filter(item => typeof item === 'number' && item >= 1 && item <= 75);
 
-        // Filtrar para encontrar solo los números que no tenemos
+        console.log('📡 Números de Firebase:', allFirebaseNumbers);
+        console.log('📝 Números locales:', this.calledNumbers);
+
+        // Sincronizar completamente con Firebase (evita duplicados)
         const newNumbers = allFirebaseNumbers.filter(num => !this.calledNumbers.includes(num));
-
+        
         if (newNumbers.length > 0) {
-            console.log('📢 Procesando nuevos números:', newNumbers);
+            console.log('🎯 NUEVOS NÚMEROS DETECTADOS:', newNumbers);
 
-            // Procesar cada número nuevo inmediatamente para mejor sincronización
-            newNumbers.forEach((num, index) => {
-                // Agregar a la lista local inmediatamente
+            // Procesar todos los números nuevos inmediatamente
+            newNumbers.forEach(num => {
+                console.log(`🎱 Procesando número: ${num}`);
+                
+                // Agregar a lista local inmediatamente
                 if (!this.calledNumbers.includes(num)) {
                     this.calledNumbers.push(num);
                 }
                 
-                // Procesar con delay mínimo para efectos visuales
-                setTimeout(() => {
-                    console.log(`🎯 Procesando número ${num}`);
-                    this.updateLastNumber(num);
-                    this.markNumberCalled(num);
-                    this.autoMarkAllCards(num);
-                    this.speakNumber(num);
-                }, index * 1500); // 1.5 segundos entre números
+                // Procesar número sin delay
+                this.updateLastNumber(num);
+                this.markNumberCalled(num);
+                this.autoMarkAllCards(num);
+                this.speakNumber(num);
             });
 
-            // Actualizar lista completa para sincronización
+            // Actualizar lista completa para evitar desincronización
             this.calledNumbers = [...allFirebaseNumbers];
             
-            // Guardar cambios
-            setTimeout(() => {
-                this.saveCards();
-                this.renderCards();
-            }, newNumbers.length * 1500 + 500);
+            // Guardar cambios inmediatamente
+            this.saveCards();
+            this.renderCards();
+        } else {
+            // Verificar si hay desincronización
+            if (allFirebaseNumbers.length !== this.calledNumbers.length) {
+                console.log('🔄 Sincronizando con Firebase...');
+                this.calledNumbers = [...allFirebaseNumbers];
+                this.processExistingNumbers();
+            }
         }
     }
     
@@ -1127,9 +1165,10 @@ class GameRoom {
     }
     
     handleGameEnded() {
-        // Solo mostrar estado de espera, no expirar cartones automáticamente
+        // Solo mostrar estado de espera, NUNCA expirar cartones automáticamente
+        console.log('⏹️ Juego terminado - manteniendo cartones válidos');
         this.showWaitingForGame();
-        this.showToast('⏸️ Juego terminado. Esperando próximo juego.');
+        this.showToast('⏸️ Juego terminado. Tus cartones siguen válidos para el próximo juego.');
         this.resetGameAlerts();
         this.hidePatternButton();
         // Resetear flag para próximo juego
@@ -1286,13 +1325,13 @@ class GameRoom {
             
             console.log('✅ Mini-bola mostrada correctamente');
             
-            // Ocultar después de 4 segundos
+            // Ocultar después de 6 segundos
             setTimeout(() => {
                 miniBall.classList.remove('show');
                 setTimeout(() => {
                     miniBall.style.display = 'none';
                 }, 500);
-            }, 4000);
+            }, 6000);
         }, 150);
     }
 
@@ -1440,6 +1479,33 @@ class GameRoom {
         this.hideWinnerAlert();
         this.hidePauseAlert();
         // Firebase maneja las alertas - no hay localStorage que limpiar
+    }
+    
+    resetVisuals() {
+        // Limpiar números recientes
+        const recentNumbers = document.querySelectorAll('.recent-number');
+        recentNumbers.forEach(num => {
+            num.textContent = '--';
+            num.classList.remove('latest');
+        });
+        
+        // Ocultar mini-bola
+        const miniBall = document.getElementById('mini-ball');
+        if (miniBall) {
+            miniBall.style.display = 'none';
+            miniBall.classList.remove('show');
+        }
+        
+        // Limpiar historial de números
+        const calledCells = document.querySelectorAll('.number-cell.called');
+        calledCells.forEach(cell => {
+            cell.classList.remove('called');
+            cell.style.background = '';
+            cell.style.color = '';
+            cell.style.transform = '';
+        });
+        
+        console.log('✨ Visuales reseteados para nuevo juego');
     }
 
     // === HISTORY MODAL ===
@@ -1648,35 +1714,42 @@ class GameRoom {
 
     // === GAME COMPLETION DETECTION ===
     checkGameCompletion(gameState) {
-        // Opción A: Detección automática - ambas rondas con ganadores
-        const hasRound1Winner = gameState.round1Winner || gameState.winners?.round1;
-        const hasRound2Winner = gameState.round2Winner || gameState.winners?.round2;
-        const bothRoundsCompleted = hasRound1Winner && hasRound2Winner;
-        
-        // Opción C: Finalización manual del admin
-        const adminFinalized = gameState.gameFinalized || gameState.bothRoundsCompleted;
-        
-        // Si el juego está completado pero los cartones siguen activos
-        if ((bothRoundsCompleted || adminFinalized) && this.cards.length > 0) {
+        // Expirar cartones si el bingo se cierra completamente
+        if (gameState.bingoClosed) {
             const hasActiveCards = this.cards.some(card => 
                 card.status === 'vigente' || card.status === 'en_uso'
             );
             
             if (hasActiveCards) {
-                console.log('🏁 Juego completado - marcando cartones como vencidos');
-                console.log('Razón:', bothRoundsCompleted ? 'Ambas rondas completadas' : 'Finalizado por admin');
-                this.markCardsExpired();
-                this.showToast('🏁 Juego finalizado. Cartones expirados.');
+                console.log('🔒 Bingo cerrado - expirando cartones');
+                this.markCardsExpired('Bingo cerrado por administrador');
+                this.showToast('🔒 Bingo cerrado. Cartones expirados.');
             }
+            return;
         }
         
-        // Verificar si el juego cambió (nuevo gameId)
+        // Expirar cartones SOLO cuando ambas rondas están completadas
+        const hasRound1Winner = gameState.round1Winner || gameState.winners?.round1;
+        const hasRound2Winner = gameState.round2Winner || gameState.winners?.round2;
+        const bothRoundsCompleted = hasRound1Winner && hasRound2Winner;
+        const adminFinalized = gameState.gameFinalized || gameState.bothRoundsCompleted;
+        
+        if (bothRoundsCompleted || adminFinalized) {
+            console.log('🏁 Partida completa (2 rondas) - expirando cartones');
+            this.markCardsExpired('Partida completada (2 rondas)');
+            this.showToast('🏁 Partida finalizada. Cartones expirados.');
+            return;
+        }
+        
+        // Nuevo juego - resetear estado pero mantener cartones vigentes
         if (gameState.gameId && this.currentGameId && gameState.gameId !== this.currentGameId) {
-            console.log('🔄 Nuevo juego detectado - marcando cartones anteriores como vencidos');
-            this.markCardsExpired();
+            console.log('🆕 Nuevo juego - cartones siguen vigentes');
+            this.calledNumbers = [];
+            this.resetVisuals();
+            this.cards.forEach(card => card.marked = []);
+            this.showToast('🆕 Nueva partida iniciada!');
         }
         
-        // Actualizar gameId actual
         if (gameState.gameId) {
             this.currentGameId = gameState.gameId;
         }
@@ -1751,6 +1824,11 @@ class GameRoom {
     }
 
     markCardsExpired(reason = 'Juego completado') {
+        // Mantener función original para compatibilidad
+        this.markCardsInUseExpired(reason);
+    }
+    
+    markCardsInUseExpired(reason = 'Juego completado') {
         const userPhone = localStorage.getItem('userPhone');
         
         if (!window.firebase || !userPhone) {
@@ -1766,28 +1844,35 @@ class GameRoom {
             let hasChanges = false;
             
             allCards.forEach(card => {
-                if (card.status === 'en_uso' || card.status === 'vigente') {
+                // Solo expirar cartones EN_USO (que estaban jugando)
+                if (card.status === 'en_uso') {
                     card.status = 'vencido';
                     card.expiredDate = new Date().toISOString();
                     card.expiredReason = reason;
                     hasChanges = true;
                 }
+                // Los cartones 'vigente' se mantienen para próximo juego
             });
             
             if (hasChanges) {
-                console.log('🗑️ Expirando cartones:', reason);
+                console.log('🗑️ Expirando solo cartones en uso:', reason);
                 set(ref(database, `playerCards/${cleanPhone}`), allCards);
                 
-                // Actualizar cartones locales inmediatamente
+                // Actualizar cartones locales - solo los en_uso
                 this.cards = this.cards.map(card => {
-                    if (card.status === 'en_uso' || card.status === 'vigente') {
+                    if (card.status === 'en_uso') {
                         return {...card, status: 'vencido', expiredDate: new Date().toISOString(), expiredReason: reason};
                     }
                     return card;
                 });
                 
-                // Mostrar acceso bloqueado inmediatamente
-                this.showAccessBlocked();
+                // Filtrar cartones activos restantes
+                const activeCards = this.cards.filter(c => ['vigente', 'en_uso', 'pendiente_pago'].includes(c.status));
+                if (activeCards.length === 0) {
+                    this.showAccessBlocked();
+                } else {
+                    this.showWaitingForGame();
+                }
             }
         })
         .catch(error => {

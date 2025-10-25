@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Números - Bingo Chévere</title>
+    <link rel="stylesheet" href="../css/sala-de-juego.css">
+    <style>
+        body { padding-top: 150px; }
+        .demo-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .demo-section { margin: 30px 0; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 15px; }
+        .demo-btn { background: #3498db; color: white; border: none; padding: 15px 30px; border-radius: 25px; cursor: pointer; margin: 10px; font-size: 16px; }
+        .demo-btn:hover { background: #2980b9; }
+        .demo-btn.success { background: #27ae60; }
+        .demo-btn.error { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <!-- Header copiado de sala-de-juego.html -->
+    <header class="game-header">
+        <div class="header-content">
+            <div class="game-info">
+                <div class="round-display">
+                    <div class="round-label">RONDA</div>
+                    <div class="round-number">
+                        <span id="current-round">1</span><span class="round-total">/2</span>
+                    </div>
+                </div>
+                <div class="prize-display">
+                    <div class="prize-label">PREMIO</div>
+                    <div class="prize-amount">
+                        <span class="currency">BsF</span>
+                        <span id="current-prize">450</span>
+                    </div>
+                </div>
+            </div>
+            <div class="numbers-display">
+                <div class="mini-ball" id="mini-ball" style="display: none;">
+                    <div class="mini-ball-content">
+                        <span class="mini-ball-letter" id="mini-ball-letter">B</span>
+                        <span class="mini-ball-number" id="mini-ball-number">15</span>
+                    </div>
+                </div>
+            </div>
+            <button class="history-btn" onclick="showHistory()">📊</button>
+        </div>
+    </header>
+
+    <!-- Header de números recientes -->
+    <div class="numbers-header">
+        <div class="recent-numbers" id="recent-numbers">
+            <span class="recent-number">--</span>
+            <span class="recent-number">--</span>
+            <span class="recent-number">--</span>
+        </div>
+    </div>
+
+    <div class="demo-container">
+        <h1>🎯 Demo de Números Cantados</h1>
+        <div style="background: rgba(39,174,96,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #27ae60;">
+            <strong>📋 Propósito de esta herramienta:</strong><br>
+            • Prueba el sistema de cantado de números<br>
+            • Verifica animaciones de la mini-bola en el header<br>
+            • Testa la síntesis de voz en español<br>
+            • Simula secuencias completas de números<br>
+            • Visualiza el historial de números cantados<br><br>
+            <strong>Uso:</strong> Usa los botones para probar diferentes aspectos del sistema de números. La simulación completa imita el comportamiento real del juego.
+        </div>
+        
+        <div class="demo-section">
+            <h3>🔊 Pruebas de Audio</h3>
+            <button class="demo-btn" onclick="testVoice('B', 15)">Probar B15</button>
+            <button class="demo-btn" onclick="testVoice('I', 22)">Probar I22</button>
+            <button class="demo-btn" onclick="testVoice('N', 35)">Probar N35</button>
+            <button class="demo-btn" onclick="testVoice('G', 58)">Probar G58</button>
+            <button class="demo-btn" onclick="testVoice('O', 71)">Probar O71</button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🎱 Pruebas de Mini-Bola</h3>
+            <button class="demo-btn" onclick="showMiniBallDemo('B', 7)">Mini-Bola B7</button>
+            <button class="demo-btn" onclick="showMiniBallDemo('I', 19)">Mini-Bola I19</button>
+            <button class="demo-btn" onclick="showMiniBallDemo('N', 42)">Mini-Bola N42</button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>📊 Pruebas de Números Recientes</h3>
+            <button class="demo-btn" onclick="updateRecentDemo()">Actualizar Recientes</button>
+            <button class="demo-btn" onclick="clearRecents()">Limpiar</button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🔄 Simulación Completa</h3>
+            <button class="demo-btn" onclick="simulateNumber()">Simular Número Cantado</button>
+            <button class="demo-btn" onclick="simulateSequence()">Simular Secuencia</button>
+            <button class="demo-btn" onclick="stopSimulation()">Detener</button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>🚀 Navegación</h3>
+            <a href="sala-de-juego.html" class="demo-btn">Ir a Sala Real</a>
+            <a href="verificar-sala.html" class="demo-btn">Verificar Sistema</a>
+        </div>
+    </div>
+
+    <!-- Modal historial -->
+    <div class="history-modal" id="history-modal" onclick="closeHistory()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Números Cantados</h3>
+                <button class="close-btn" onclick="closeHistory()">&times;</button>
+            </div>
+            <div class="numbers-grid" id="numbers-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        let calledNumbers = [];
+        let simulationInterval = null;
+        
+        // Funciones de audio
+        function testVoice(letter, number) {
+            if ('speechSynthesis' in window) {
+                const text = `${letter} ${number} repito ${letter} ${number}`;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.9;
+                speechSynthesis.speak(utterance);
+                
+                // Feedback visual
+                event.target.className = 'demo-btn success';
+                setTimeout(() => {
+                    event.target.className = 'demo-btn';
+                }, 1000);
+            } else {
+                event.target.className = 'demo-btn error';
+                alert('SpeechSynthesis no disponible');
+            }
+        }
+        
+        // Función de mini-bola
+        function showMiniBallDemo(letter, number) {
+            const miniBall = document.getElementById('mini-ball');
+            const ballLetter = document.getElementById('mini-ball-letter');
+            const ballNumber = document.getElementById('mini-ball-number');
+            
+            if (!miniBall || !ballLetter || !ballNumber) return;
+            
+            // Ocultar bola anterior
+            miniBall.classList.remove('show');
+            miniBall.style.display = 'none';
+            
+            setTimeout(() => {
+                ballLetter.textContent = letter;
+                ballNumber.textContent = number;
+                
+                miniBall.style.display = 'flex';
+                miniBall.style.opacity = '0';
+                miniBall.style.transform = 'translate(-50%, -50%) scale(0.5)';
+                
+                // Forzar reflow
+                miniBall.offsetHeight;
+                
+                miniBall.style.animation = 'ballPop 0.6s ease-out';
+                miniBall.classList.add('show');
+                
+                // Ocultar después de 3 segundos
+                setTimeout(() => {
+                    miniBall.classList.remove('show');
+                    setTimeout(() => {
+                        miniBall.style.display = 'none';
+                    }, 500);
+                }, 3000);
+            }, 150);
+        }
+        
+        // Función de números recientes
+        function updateRecentDemo() {
+            const recentNumbers = document.querySelectorAll('.recent-number');
+            const testNumbers = ['B5', 'I22', 'N35'];
+            
+            recentNumbers.forEach((num, index) => {
+                num.textContent = testNumbers[index] || '--';
+                num.classList.remove('latest');
+            });
+            
+            // Marcar el último como destacado
+            if (recentNumbers.length > 0) {
+                recentNumbers[recentNumbers.length - 1].classList.add('latest');
+            }
+        }
+        
+        function clearRecents() {
+            const recentNumbers = document.querySelectorAll('.recent-number');
+            recentNumbers.forEach(num => {
+                num.textContent = '--';
+                num.classList.remove('latest');
+            });
+        }
+        
+        // Simulación completa
+        function simulateNumber() {
+            const letters = ['B', 'I', 'N', 'G', 'O'];
+            const ranges = [[1,15], [16,30], [31,45], [46,60], [61,75]];
+            
+            const letterIndex = Math.floor(Math.random() * 5);
+            const letter = letters[letterIndex];
+            const range = ranges[letterIndex];
+            const number = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
+            
+            // Evitar repetir números
+            if (calledNumbers.includes(number)) {
+                simulateNumber();
+                return;
+            }
+            
+            calledNumbers.push(number);
+            
+            // Ejecutar todas las funciones
+            showMiniBallDemo(letter, number);
+            testVoice(letter, number);
+            
+            setTimeout(() => {
+                updateRecentNumbers(letter, number);
+                markNumberCalled(number);
+            }, 500);
+        }
+        
+        function simulateSequence() {
+            if (simulationInterval) clearInterval(simulationInterval);
+            
+            simulationInterval = setInterval(() => {
+                simulateNumber();
+            }, 4000);
+        }
+        
+        function stopSimulation() {
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+            }
+        }
+        
+        function updateRecentNumbers(letter, number) {
+            const recentNumbers = document.querySelectorAll('.recent-number');
+            if (!recentNumbers.length) return;
+            
+            // Obtener los últimos 3 números
+            const lastThree = calledNumbers.slice(-3);
+            
+            // Limpiar
+            recentNumbers.forEach(num => {
+                num.textContent = '--';
+                num.classList.remove('latest');
+            });
+            
+            // Mostrar últimos números
+            lastThree.forEach((num, index) => {
+                if (recentNumbers[index]) {
+                    const numLetter = getBingoLetter(num);
+                    recentNumbers[index].textContent = `${numLetter}${num}`;
+                    
+                    if (index === lastThree.length - 1) {
+                        recentNumbers[index].classList.add('latest');
+                    }
+                }
+            });
+        }
+        
+        function getBingoLetter(number) {
+            if (number <= 15) return 'B';
+            if (number <= 30) return 'I';
+            if (number <= 45) return 'N';
+            if (number <= 60) return 'G';
+            return 'O';
+        }
+        
+        function markNumberCalled(number) {
+            const cell = document.getElementById(`num-${number}`);
+            if (cell && !cell.classList.contains('called')) {
+                cell.classList.add('called');
+                cell.style.transform = 'scale(1.1)';
+                cell.style.background = '#3498db';
+                cell.style.color = 'white';
+                
+                setTimeout(() => {
+                    cell.style.transform = 'scale(1)';
+                }, 300);
+            }
+        }
+        
+        // Historial
+        function showHistory() {
+            generateNumbersGrid();
+            document.getElementById('history-modal').classList.add('show');
+        }
+        
+        function closeHistory() {
+            document.getElementById('history-modal').classList.remove('show');
+        }
+        
+        function generateNumbersGrid() {
+            const grid = document.getElementById('numbers-grid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+            
+            const sections = [
+                { start: 1, end: 15, letter: 'B' },
+                { start: 16, end: 30, letter: 'I' },
+                { start: 31, end: 45, letter: 'N' },
+                { start: 46, end: 60, letter: 'G' },
+                { start: 61, end: 75, letter: 'O' }
+            ];
+
+            sections.forEach(section => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'number-section';
+                
+                // Header
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'section-header';
+                headerDiv.textContent = section.letter;
+                headerDiv.style.cssText = `
+                    background: #3498db;
+                    color: white;
+                    text-align: center;
+                    font-weight: 900;
+                    padding: 0.3rem;
+                    grid-column: 1 / -1;
+                    border-radius: 4px;
+                    margin-bottom: 2px;
+                `;
+                sectionDiv.appendChild(headerDiv);
+                
+                for (let i = section.start; i <= section.end; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'number-cell';
+                    cell.textContent = i;
+                    cell.id = `num-${i}`;
+                    
+                    if (calledNumbers.includes(i)) {
+                        cell.classList.add('called');
+                        cell.style.background = '#3498db';
+                        cell.style.color = 'white';
+                    }
+                    
+                    sectionDiv.appendChild(cell);
+                }
+                
+                grid.appendChild(sectionDiv);
+            });
+        }
+        
+        // Inicializar
+        window.addEventListener('load', () => {
+            generateNumbersGrid();
+        });
+    </script>
+</body>
+</html>

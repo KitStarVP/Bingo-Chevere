@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solución Final - Comunicación Admin-Sala</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .btn.success { background: #28a745; }
+        .btn.danger { background: #dc3545; }
+        .log { background: #000; color: #0f0; padding: 15px; border-radius: 5px; font-family: monospace; height: 300px; overflow-y: auto; margin: 10px 0; }
+        .status { padding: 10px; border-radius: 5px; margin: 10px 0; font-weight: bold; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .demo-area { border: 2px dashed #ccc; padding: 20px; margin: 10px 0; text-align: center; }
+        .mini-ball { width: 60px; height: 60px; background: linear-gradient(145deg, #ffffff, #e6e6e6); border-radius: 50%; border: 3px solid #3498db; display: none; align-items: center; justify-content: center; margin: 10px auto; animation: ballPop 0.6s ease-out; }
+        .recent-numbers { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
+        .recent-number { background: #3498db; color: white; padding: 5px 10px; border-radius: 15px; min-width: 30px; text-align: center; }
+        .recent-number.latest { animation: pulse 2s infinite; }
+        @keyframes ballPop { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SOLUCIÓN FINAL - Comunicación Admin-Sala</h1>
+        <div style="background: rgba(155,89,182,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #9b59b6;">
+            <strong>📋 Propósito de esta herramienta:</strong><br>
+            • Solución definitiva para problemas de comunicación<br>
+            • Reparación automática de listeners y sincronización<br>
+            • Limpieza y reseteo completo de Firebase<br>
+            • Diagnóstico avanzado con reparación automática<br>
+            • Simulación completa admin-sala para verificar funcionamiento<br>
+            • Logs detallados de todo el proceso de reparación<br><br>
+            <strong>Uso:</strong> Herramienta de último recurso. Usa "REPARAR COMUNICACIÓN" para solucionar problemas críticos de sincronización.
+        </div>
+        
+        <div class="section">
+            <h3>📊 Estado del Sistema</h3>
+            <div id="system-status" class="status warning">Verificando...</div>
+            <button class="btn" onclick="checkSystemStatus()">🔍 Verificar Sistema</button>
+            <button class="btn success" onclick="fixCommunication()">🔧 REPARAR COMUNICACIÓN</button>
+            <button class="btn danger" onclick="resetFirebase()">🗑️ Reset Firebase</button>
+        </div>
+
+        <div class="section">
+            <h3>🎮 Simulador Admin (Envía números)</h3>
+            <button class="btn" onclick="startTestGame()">▶️ Iniciar Juego Test</button>
+            <button class="btn success" onclick="sendTestNumber()">📢 Enviar Número</button>
+            <button class="btn danger" onclick="stopTestGame()">⏹️ Parar Test</button>
+            <p>Último enviado: <span id="last-sent">--</span></p>
+        </div>
+
+        <div class="section">
+            <h3>📱 Simulador Sala (Recibe números)</h3>
+            <div class="demo-area">
+                <div class="mini-ball" id="mini-ball">
+                    <div id="ball-content">B15</div>
+                </div>
+                <div class="recent-numbers">
+                    <span class="recent-number" id="recent-1">--</span>
+                    <span class="recent-number" id="recent-2">--</span>
+                    <span class="recent-number" id="recent-3">--</span>
+                </div>
+                <p>Estado: <span id="sala-status">Esperando...</span></p>
+                <p>Números recibidos: <span id="numbers-received">0</span></p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📝 Log de Comunicación</h3>
+            <div id="log-output" class="log"></div>
+            <button class="btn" onclick="clearLog()">Limpiar Log</button>
+        </div>
+
+        <div class="section">
+            <h3>🔧 Diagnóstico y Reparación</h3>
+            <button class="btn" onclick="runDiagnostic()">🔍 Diagnóstico Completo</button>
+            <button class="btn success" onclick="repairListeners()">🔧 Reparar Listeners</button>
+            <button class="btn" onclick="testDirectCommunication()">📡 Test Directo</button>
+            <div id="diagnostic-result"></div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+      import { getDatabase, ref, onValue, get, set, off } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: "bingo-chevere.firebaseapp.com",
+        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: "bingo-chevere",
+        storageBucket: "bingo-chevere.firebasestorage.app",
+        messagingSenderId: "1057150163831",
+        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebase = { database, ref, onValue, get, set, off };
+      window.firebaseReady = true;
+      
+      // Definir log globalmente antes de usarlo
+      window.log = function(message) {
+          const timestamp = new Date().toLocaleTimeString();
+          const logDiv = document.getElementById('log-output');
+          if (logDiv) {
+              const div = document.createElement('div');
+              div.textContent = `[${timestamp}] ${message}`;
+              logDiv.appendChild(div);
+              logDiv.scrollTop = logDiv.scrollHeight;
+          }
+          console.log(message);
+      };
+      
+      window.log('🔥 Firebase inicializado para solución final');
+    </script>
+
+    <script>
+        let calledNumbers = [];
+        let gameActive = false;
+        let listeners = [];
+        let testInterval = null;
+
+        // Usar la función log global definida en Firebase
+        function log(message) {
+            if (window.log) {
+                window.log(message);
+            } else {
+                console.log(message);
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log-output').innerHTML = '';
+        }
+
+        function setStatus(message, type = 'warning') {
+            const statusDiv = document.getElementById('system-status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        // Esperar Firebase
+        function waitForFirebase() {
+            return new Promise((resolve) => {
+                const check = () => {
+                    if (window.firebaseReady) resolve();
+                    else setTimeout(check, 100);
+                };
+                check();
+            });
+        }
+
+        // VERIFICAR ESTADO DEL SISTEMA
+        async function checkSystemStatus() {
+            await waitForFirebase();
+            
+            try {
+                const { database, ref, get } = window.firebase;
+                
+                // Verificar gameState
+                const gameStateSnapshot = await get(ref(database, 'gameState'));
+                const gameState = gameStateSnapshot.val();
+                
+                // Verificar calledNumbers
+                const numbersSnapshot = await get(ref(database, 'calledNumbers'));
+                const numbers = numbersSnapshot.val();
+                
+                log(`📊 GameState: ${gameState ? 'Existe' : 'No existe'}`);
+                log(`📊 CalledNumbers: ${numbers ? (Array.isArray(numbers) ? numbers.length : Object.keys(numbers).length) + ' números' : 'No existe'}`);
+                
+                if (!gameState && !numbers) {
+                    setStatus('❌ Firebase vacío - necesita datos', 'error');
+                } else if (gameState && numbers) {
+                    setStatus('✅ Firebase tiene datos - verificando comunicación', 'success');
+                } else {
+                    setStatus('⚠️ Firebase parcialmente configurado', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Error verificando sistema: ${error.message}`);
+                setStatus('❌ Error de conexión', 'error');
+            }
+        }
+
+        // REPARAR COMUNICACIÓN
+        async function fixCommunication() {
+            await waitForFirebase();
+            
+            log('🔧 INICIANDO REPARACIÓN DE COMUNICACIÓN...');
+            
+            try {
+                // 1. Limpiar listeners existentes
+                clearAllListeners();
+                
+                // 2. Resetear Firebase
+                await resetFirebaseData();
+                
+                // 3. Configurar listeners correctos
+                await setupCorrectListeners();
+                
+                // 4. Crear datos de prueba
+                await createTestData();
+                
+                log('✅ REPARACIÓN COMPLETADA');
+                setStatus('✅ Comunicación reparada - probando...', 'success');
+                
+                // 5. Probar comunicación
+                setTimeout(() => {
+                    testDirectCommunication();
+                }, 2000);
+                
+            } catch (error) {
+                log(`❌ Error en reparación: ${error.message}`);
+                setStatus('❌ Error en reparación', 'error');
+            }
+        }
+
+        // LIMPIAR LISTENERS
+        function clearAllListeners() {
+            const { database, ref, off } = window.firebase;
+            
+            // Limpiar listeners existentes
+            listeners.forEach(listener => {
+                off(listener.ref, 'value', listener.callback);
+            });
+            listeners = [];
+            
+            log('🧹 Listeners limpiados');
+        }
+
+        // RESETEAR FIREBASE
+        async function resetFirebaseData() {
+            const { database, ref, set } = window.firebase;
+            
+            await set(ref(database, 'gameState'), null);
+            await set(ref(database, 'calledNumbers'), null);
+            
+            log('🗑️ Firebase reseteado');
+        }
+
+        // CONFIGURAR LISTENERS CORRECTOS
+        async function setupCorrectListeners() {
+            const { database, ref, onValue } = window.firebase;
+            
+            // Listener para gameState
+            const gameStateRef = ref(database, 'gameState');
+            const gameStateCallback = (snapshot) => {
+                const gameState = snapshot.val();
+                log(`📡 GameState recibido: ${JSON.stringify(gameState)}`);
+                
+                if (gameState) {
+                    gameActive = gameState.gameActive || false;
+                    document.getElementById('sala-status').textContent = gameActive ? 'Juego Activo' : 'Juego Inactivo';
+                } else {
+                    gameActive = false;
+                    document.getElementById('sala-status').textContent = 'Sin Estado';
+                }
+            };
+            
+            onValue(gameStateRef, gameStateCallback);
+            listeners.push({ ref: gameStateRef, callback: gameStateCallback });
+            
+            // Listener para números cantados - ESTE ES EL CRÍTICO
+            const numbersRef = ref(database, 'calledNumbers');
+            const numbersCallback = (snapshot) => {
+                let numbers = snapshot.val();
+                log(`📡 Numbers recibidos RAW: ${JSON.stringify(numbers)}`);
+                
+                if (numbers) {
+                    // Normalizar números
+                    if (!Array.isArray(numbers)) {
+                        numbers = Object.values(numbers);
+                        log(`🔄 Convertido a array: ${JSON.stringify(numbers)}`);
+                    }
+                    
+                    const normalizedNumbers = numbers.map(item => 
+                        typeof item === 'object' ? item.number : item
+                    ).filter(num => typeof num === 'number');
+                    
+                    log(`✅ Números normalizados: ${JSON.stringify(normalizedNumbers)}`);
+                    
+                    // Detectar nuevos números
+                    const newNumbers = normalizedNumbers.filter(num => !calledNumbers.includes(num));
+                    
+                    if (newNumbers.length > 0) {
+                        log(`🎯 NUEVOS NÚMEROS DETECTADOS: ${newNumbers.join(', ')}`);
+                        
+                        newNumbers.forEach(num => {
+                            processNewNumber(num);
+                        });
+                        
+                        calledNumbers = [...normalizedNumbers];
+                        document.getElementById('numbers-received').textContent = calledNumbers.length;
+                    }
+                } else {
+                    log('📝 No hay números o números reseteados');
+                    calledNumbers = [];
+                    resetVisuals();
+                    document.getElementById('numbers-received').textContent = '0';
+                }
+            };
+            
+            onValue(numbersRef, numbersCallback);
+            listeners.push({ ref: numbersRef, callback: numbersCallback });
+            
+            log('✅ Listeners configurados correctamente');
+        }
+
+        // CREAR DATOS DE PRUEBA
+        async function createTestData() {
+            const { database, ref, set } = window.firebase;
+            
+            const testGameState = {
+                gameActive: true,
+                currentRound: 1,
+                gameId: 'test-' + Date.now(),
+                timestamp: Date.now()
+            };
+            
+            await set(ref(database, 'gameState'), testGameState);
+            await set(ref(database, 'calledNumbers'), []);
+            
+            log('🧪 Datos de prueba creados');
+        }
+
+        // PROCESAR NUEVO NÚMERO
+        function processNewNumber(number) {
+            log(`🎯 Procesando número: ${number}`);
+            
+            // Mostrar mini-bola
+            showMiniBall(number);
+            
+            // Actualizar números recientes
+            updateRecentNumbers();
+            
+            // Hablar número
+            speakNumber(number);
+        }
+
+        // MOSTRAR MINI-BOLA
+        function showMiniBall(number) {
+            const miniBall = document.getElementById('mini-ball');
+            const ballContent = document.getElementById('ball-content');
+            
+            const letter = getBingoLetter(number);
+            ballContent.textContent = letter + number;
+            
+            miniBall.style.display = 'flex';
+            
+            setTimeout(() => {
+                miniBall.style.display = 'none';
+            }, 3000);
+            
+            log(`🎱 Mini-bola mostrada: ${letter}${number}`);
+        }
+
+        // ACTUALIZAR NÚMEROS RECIENTES
+        function updateRecentNumbers() {
+            const lastThree = calledNumbers.slice(-3);
+            
+            for (let i = 1; i <= 3; i++) {
+                const element = document.getElementById(`recent-${i}`);
+                if (lastThree[i-1]) {
+                    const num = lastThree[i-1];
+                    const letter = getBingoLetter(num);
+                    element.textContent = letter + num;
+                    element.classList.remove('latest');
+                } else {
+                    element.textContent = '--';
+                    element.classList.remove('latest');
+                }
+            }
+            
+            // Marcar el último como destacado
+            if (lastThree.length > 0) {
+                document.getElementById(`recent-${lastThree.length}`).classList.add('latest');
+            }
+            
+            log(`📊 Números recientes actualizados: ${lastThree.join(', ')}`);
+        }
+
+        // RESETEAR VISUALES
+        function resetVisuals() {
+            document.getElementById('mini-ball').style.display = 'none';
+            
+            for (let i = 1; i <= 3; i++) {
+                const element = document.getElementById(`recent-${i}`);
+                element.textContent = '--';
+                element.classList.remove('latest');
+            }
+            
+            log('🔄 Visuales reseteados');
+        }
+
+        // OBTENER LETRA BINGO
+        function getBingoLetter(number) {
+            if (number <= 15) return 'B';
+            if (number <= 30) return 'I';
+            if (number <= 45) return 'N';
+            if (number <= 60) return 'G';
+            return 'O';
+        }
+
+        // HABLAR NÚMERO
+        function speakNumber(number) {
+            if ('speechSynthesis' in window) {
+                const letter = getBingoLetter(number);
+                const text = `${letter} ${number} repito ${letter} ${number}`;
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                utterance.rate = 0.9;
+                
+                speechSynthesis.speak(utterance);
+                log(`🔊 Hablando: ${text}`);
+            }
+        }
+
+        // === FUNCIONES DE ADMIN SIMULADO ===
+
+        async function startTestGame() {
+            await waitForFirebase();
+            
+            const { database, ref, set } = window.firebase;
+            
+            const gameState = {
+                gameActive: true,
+                currentRound: 1,
+                gameId: 'test-' + Date.now(),
+                timestamp: Date.now()
+            };
+            
+            await set(ref(database, 'gameState'), gameState);
+            await set(ref(database, 'calledNumbers'), []);
+            
+            log('▶️ Admin: Juego test iniciado');
+        }
+
+        async function sendTestNumber() {
+            await waitForFirebase();
+            
+            const { database, ref, get, set } = window.firebase;
+            
+            // Generar número aleatorio
+            const newNumber = Math.floor(Math.random() * 75) + 1;
+            
+            // Obtener números actuales
+            const snapshot = await get(ref(database, 'calledNumbers'));
+            let currentNumbers = snapshot.val() || [];
+            
+            if (!Array.isArray(currentNumbers)) {
+                currentNumbers = Object.values(currentNumbers);
+            }
+            
+            // Agregar nuevo número
+            currentNumbers.push(newNumber);
+            
+            await set(ref(database, 'calledNumbers'), currentNumbers);
+            
+            document.getElementById('last-sent').textContent = getBingoLetter(newNumber) + newNumber;
+            log(`📢 Admin: Número enviado ${newNumber}`);
+        }
+
+        async function stopTestGame() {
+            await waitForFirebase();
+            
+            const { database, ref, set } = window.firebase;
+            
+            await set(ref(database, 'gameState'), null);
+            await set(ref(database, 'calledNumbers'), null);
+            
+            log('⏹️ Admin: Juego test parado');
+        }
+
+        // RESET FIREBASE
+        async function resetFirebase() {
+            if (!confirm('¿Resetear completamente Firebase?')) return;
+            
+            await waitForFirebase();
+            
+            const { database, ref, set } = window.firebase;
+            
+            await set(ref(database, 'gameState'), null);
+            await set(ref(database, 'calledNumbers'), null);
+            await set(ref(database, 'pendingBingos'), null);
+            await set(ref(database, 'bingoVerifications'), null);
+            
+            log('🗑️ Firebase completamente reseteado');
+            setStatus('🗑️ Firebase limpio', 'warning');
+        }
+
+        // DIAGNÓSTICO COMPLETO
+        async function runDiagnostic() {
+            await waitForFirebase();
+            
+            log('🔍 INICIANDO DIAGNÓSTICO COMPLETO...');
+            
+            const { database, ref, get } = window.firebase;
+            
+            try {
+                // 1. Verificar estructura básica
+                const gameStateSnapshot = await get(ref(database, 'gameState'));
+                const numbersSnapshot = await get(ref(database, 'calledNumbers'));
+                
+                log(`📊 GameState existe: ${gameStateSnapshot.exists()}`);
+                log(`📊 CalledNumbers existe: ${numbersSnapshot.exists()}`);
+                
+                // 2. Verificar listeners
+                log(`👂 Listeners activos: ${listeners.length}`);
+                
+                // 3. Test de escritura/lectura simple
+                const testData = Date.now();
+                const { set } = window.firebase;
+                await set(ref(database, 'testConnection'), testData);
+                const readTest = await get(ref(database, 'testConnection'));
+                log(`✍️ Test escritura/lectura: ${readTest.exists() ? 'OK' : 'FALLO'}`);
+                
+                // 4. Limpiar test
+                await set(ref(database, 'testConnection'), null);
+                
+                log('✅ DIAGNÓSTICO COMPLETADO');
+                
+                const result = document.getElementById('diagnostic-result');
+                result.innerHTML = `
+                    <div class="status success">
+                        <strong>Diagnóstico Completado</strong><br>
+                        GameState: ${gameStateSnapshot.exists() ? 'OK' : 'NO'}<br>
+                        CalledNumbers: ${numbersSnapshot.exists() ? 'OK' : 'NO'}<br>
+                        Listeners: ${listeners.length}<br>
+                        Conexión: OK
+                    </div>
+                `;
+                
+            } catch (error) {
+                log(`❌ Error en diagnóstico: ${error.message}`);
+                
+                const result = document.getElementById('diagnostic-result');
+                result.innerHTML = `
+                    <div class="status error">
+                        <strong>Error en Diagnóstico</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // REPARAR LISTENERS
+        async function repairListeners() {
+            log('🔧 Reparando listeners...');
+            
+            clearAllListeners();
+            await setupCorrectListeners();
+            
+            log('✅ Listeners reparados');
+            setStatus('✅ Listeners reparados', 'success');
+        }
+
+        // TEST DIRECTO
+        async function testDirectCommunication() {
+            log('📡 Iniciando test de comunicación directa...');
+            
+            await startTestGame();
+            
+            // Enviar 3 números con delay
+            for (let i = 0; i < 3; i++) {
+                setTimeout(async () => {
+                    await sendTestNumber();
+                }, i * 2000);
+            }
+            
+            log('📡 Test directo iniciado - enviando 3 números...');
+        }
+
+        // Hacer funciones globales
+        window.checkSystemStatus = checkSystemStatus;
+        window.fixCommunication = fixCommunication;
+        window.resetFirebase = resetFirebase;
+        window.startTestGame = startTestGame;
+        window.sendTestNumber = sendTestNumber;
+        window.stopTestGame = stopTestGame;
+        window.clearLog = clearLog;
+        window.runDiagnostic = runDiagnostic;
+        window.repairListeners = repairListeners;
+        window.testDirectCommunication = testDirectCommunication;
+
+        // Inicializar al cargar
+        window.addEventListener('load', () => {
+            setTimeout(async () => {
+                await waitForFirebase();
+                log('🚀 Solución Final cargada');
+                log('💡 Haz clic en "REPARAR COMUNICACIÓN" para solucionar');
+                
+                // Verificar estado inicial
+                checkSystemStatus();
+                
+                // Configurar listeners iniciales
+                setupCorrectListeners();
+                
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

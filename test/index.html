@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Pruebas - Bingo Chévere</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .test-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #3498db;
+        }
+
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .test-card.diagnostic {
+            border-left-color: #e74c3c;
+        }
+
+        .test-card.admin {
+            border-left-color: #f39c12;
+        }
+
+        .test-card.demo {
+            border-left-color: #27ae60;
+        }
+
+        .test-card.solution {
+            border-left-color: #9b59b6;
+        }
+
+        .test-title {
+            color: #2c3e50;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .test-icon {
+            font-size: 1.5rem;
+        }
+
+        .test-description {
+            color: #5a6c7d;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .test-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .test-features li {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .test-features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .test-link {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            width: 100%;
+        }
+
+        .test-link:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .test-card.diagnostic .test-link {
+            background: #e74c3c;
+        }
+
+        .test-card.diagnostic .test-link:hover {
+            background: #c0392b;
+        }
+
+        .test-card.admin .test-link {
+            background: #f39c12;
+        }
+
+        .test-card.admin .test-link:hover {
+            background: #e67e22;
+        }
+
+        .test-card.demo .test-link {
+            background: #27ae60;
+        }
+
+        .test-card.demo .test-link:hover {
+            background: #229954;
+        }
+
+        .test-card.solution .test-link {
+            background: #9b59b6;
+        }
+
+        .test-card.solution .test-link:hover {
+            background: #8e44ad;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(255,255,255,0.9);
+            color: #2c3e50;
+            padding: 0.8rem 1.2rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        @media (max-width: 768px) {
+            .tests-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .back-btn {
+                position: static;
+                margin-bottom: 2rem;
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-btn">← Volver al Inicio</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Centro de Pruebas</h1>
+            <p>Herramientas de testing y diagnóstico para Bingo Chévere</p>
+        </div>
+
+        <div class="tests-grid">
+            <!-- Diagnósticos -->
+            <div class="test-card diagnostic">
+                <div class="test-title">
+                    <span class="test-icon">🔍</span>
+                    Diagnóstico de Cartones
+                </div>
+                <div class="test-description">
+                    Herramienta para diagnosticar y reparar problemas con cartones de jugadores. Permite verificar estados, fechas de expiración y corregir inconsistencias.
+                </div>
+                <ul class="test-features">
+                    <li>Verificación de estados de cartones</li>
+                    <li>Detección de cartones expirados incorrectamente</li>
+                    <li>Reparación automática de estados</li>
+                    <li>Historial de cambios</li>
+                </ul>
+                <a href="diagnostico-cartones.html" class="test-link">Abrir Diagnóstico</a>
+            </div>
+
+            <div class="test-card diagnostic">
+                <div class="test-title">
+                    <span class="test-icon">🔧</span>
+                    Diagnóstico Completo
+                </div>
+                <div class="test-description">
+                    Análisis exhaustivo del sistema completo incluyendo Firebase, estados de juego, cartones y configuraciones. Ideal para troubleshooting avanzado.
+                </div>
+                <ul class="test-features">
+                    <li>Análisis completo de Firebase</li>
+                    <li>Verificación de estados de juego</li>
+                    <li>Diagnóstico de conectividad</li>
+                    <li>Reporte detallado de errores</li>
+                </ul>
+                <a href="diagnostico-completo.html" class="test-link">Ejecutar Diagnóstico</a>
+            </div>
+
+            <!-- Pruebas de Administración -->
+            <div class="test-card admin">
+                <div class="test-title">
+                    <span class="test-icon">👨‍💼</span>
+                    Test Admin-Sala
+                </div>
+                <div class="test-description">
+                    Prueba la sincronización entre el panel de administración y la sala de juego. Verifica que los cambios del admin se reflejen correctamente en tiempo real.
+                </div>
+                <ul class="test-features">
+                    <li>Sincronización admin-jugador</li>
+                    <li>Pruebas de tiempo real</li>
+                    <li>Verificación de estados</li>
+                    <li>Test de comunicación Firebase</li>
+                </ul>
+                <a href="test-admin-sala.html" class="test-link">Probar Sincronización</a>
+            </div>
+
+            <div class="test-card admin">
+                <div class="test-title">
+                    <span class="test-icon">🎮</span>
+                    Test de Sala
+                </div>
+                <div class="test-description">
+                    Prueba específica de la funcionalidad de la sala de juego. Simula diferentes escenarios de juego y verifica el comportamiento de los cartones.
+                </div>
+                <ul class="test-features">
+                    <li>Simulación de juegos</li>
+                    <li>Test de cartones automáticos/manuales</li>
+                    <li>Verificación de BINGO</li>
+                    <li>Pruebas de audio y animaciones</li>
+                </ul>
+                <a href="test-sala.html" class="test-link">Probar Sala</a>
+            </div>
+
+            <div class="test-card admin">
+                <div class="test-title">
+                    <span class="test-icon">✅</span>
+                    Verificar Sala
+                </div>
+                <div class="test-description">
+                    Verificación rápida del estado actual de la sala de juego. Muestra información en tiempo real sobre juegos activos, cartones y configuraciones.
+                </div>
+                <ul class="test-features">
+                    <li>Estado actual del juego</li>
+                    <li>Información de cartones activos</li>
+                    <li>Verificación de configuraciones</li>
+                    <li>Monitor de Firebase en vivo</li>
+                </ul>
+                <a href="verificar-sala.html" class="test-link">Verificar Estado</a>
+            </div>
+
+            <!-- Demos y Ejemplos -->
+            <div class="test-card demo">
+                <div class="test-title">
+                    <span class="test-icon">🎯</span>
+                    Demo de Números
+                </div>
+                <div class="test-description">
+                    Demostración del sistema de cantado de números. Permite probar las animaciones, efectos de sonido y visualización de números cantados.
+                </div>
+                <ul class="test-features">
+                    <li>Simulación de cantado de números</li>
+                    <li>Test de animaciones de bola</li>
+                    <li>Prueba de síntesis de voz</li>
+                    <li>Visualización de historial</li>
+                </ul>
+                <a href="demo-numeros.html" class="test-link">Ver Demo</a>
+            </div>
+
+            <!-- Soluciones -->
+            <div class="test-card solution">
+                <div class="test-title">
+                    <span class="test-icon">🛠️</span>
+                    Solución Final
+                </div>
+                <div class="test-description">
+                    Herramienta de reparación y solución de problemas críticos. Incluye scripts de limpieza, reseteo de estados y corrección de datos corruptos.
+                </div>
+                <ul class="test-features">
+                    <li>Reparación de datos corruptos</li>
+                    <li>Reseteo de estados de juego</li>
+                    <li>Limpieza de Firebase</li>
+                    <li>Restauración de configuraciones</li>
+                </ul>
+                <a href="solucion-final.html" class="test-link">Ejecutar Solución</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
