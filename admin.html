@@ -2058,6 +2058,9 @@
                         
                         // Inicializar monitoreo de Firebase
                         firebaseMonitor.init();
+                        
+                        // Inicializar sistema de heartbeat para cantado
+                        initializeCallingHeartbeat();
                     }
                     
                     updatePaymentStats();
@@ -2253,9 +2256,10 @@
         async function verifyWinner() {
             if (!window.firebase) return;
             
-            const { database, ref, get, set } = window.firebase;
-            const snapshot = await get(ref(database, 'pendingBingoVerification'));
-            const bingoData = snapshot.val();
+            try {
+                const { database, ref, get, set } = window.firebase;
+                const snapshot = await get(ref(database, 'pendingBingoVerification'));
+                const bingoData = snapshot.val();
             
             if (!bingoData) {
                 console.log('No hay BINGO pendiente para verificar');
@@ -2367,13 +2371,18 @@
             showPrizeTab(currentPrizeTab);
             renderSchedule();
             updateStats();
+            } catch (error) {
+                console.error('Error verifying winner:', error);
+                showPopup('Error', 'Error verificando ganador: ' + error.message);
+            }
         }
         
         async function rejectWinner() {
             if (!window.firebase) return;
             
-            const { database, ref, get, set } = window.firebase;
-            console.log('Rechazando BINGO');
+            try {
+                const { database, ref, get, set } = window.firebase;
+                console.log('Rechazando BINGO');
             
             // Crear resultado de verificación negativo
             const verificationResult = {
@@ -2397,6 +2406,10 @@
             await set(ref(database, 'gameState'), gameState);
             
             showPopup('BINGO Rechazado', 'El BINGO fue rechazado. El juego continúa.');
+            } catch (error) {
+                console.error('Error rejecting winner:', error);
+                showPopup('Error', 'Error rechazando BINGO: ' + error.message);
+            }
         }
         
         async function calculatePrizeAmount() {
@@ -2450,27 +2463,65 @@
                 return;
             }
             
-            container.innerHTML = prizes.map(prize => `
-                <div class="prize-item ${prize.status}">
-                    <div class="prize-header">
-                        <div>
-                            <strong>Cartón: ${prize.cartonId}</strong>
-                            <div class="prize-info">${prize.userName || 'Usuario'} • ${prize.phone}</div>
-                            <div class="prize-info">${prize.type} • Ronda ${prize.round || 1}</div>
-                        </div>
-                        <div class="prize-amount">BsF ${prize.amount}</div>
-                    </div>
-                    <div class="prize-info">
-                        ${prize.date} ${prize.time}
-                    </div>
-                    <div class="prize-actions">
-                        ${prize.status === 'pending' ? 
-                            `<button class="pay-btn" onclick="markAsPaid(${prize.id})">Marcar Pagado</button>` :
-                            `<span class="paid-badge">✓ Pagado</span>`
-                        }
-                    </div>
-                </div>
-            `).join('');
+            const prizeElements = prizes.map(prize => {
+                const prizeDiv = document.createElement('div');
+                prizeDiv.className = `prize-item ${prize.status}`;
+                
+                const prizeHeader = document.createElement('div');
+                prizeHeader.className = 'prize-header';
+                
+                const prizeInfo = document.createElement('div');
+                const cartonTitle = document.createElement('strong');
+                cartonTitle.textContent = `Cartón: ${prize.cartonId}`;
+                
+                const userInfo = document.createElement('div');
+                userInfo.className = 'prize-info';
+                userInfo.textContent = `${prize.userName || 'Usuario'} • ${prize.phone}`;
+                
+                const typeInfo = document.createElement('div');
+                typeInfo.className = 'prize-info';
+                typeInfo.textContent = `${prize.type} • Ronda ${prize.round || 1}`;
+                
+                prizeInfo.appendChild(cartonTitle);
+                prizeInfo.appendChild(userInfo);
+                prizeInfo.appendChild(typeInfo);
+                
+                const prizeAmount = document.createElement('div');
+                prizeAmount.className = 'prize-amount';
+                prizeAmount.textContent = `BsF ${prize.amount}`;
+                
+                prizeHeader.appendChild(prizeInfo);
+                prizeHeader.appendChild(prizeAmount);
+                
+                const dateInfo = document.createElement('div');
+                dateInfo.className = 'prize-info';
+                dateInfo.textContent = `${prize.date} ${prize.time}`;
+                
+                const prizeActions = document.createElement('div');
+                prizeActions.className = 'prize-actions';
+                
+                if (prize.status === 'pending') {
+                    const payBtn = document.createElement('button');
+                    payBtn.className = 'pay-btn';
+                    payBtn.textContent = 'Marcar Pagado';
+                    payBtn.onclick = () => markAsPaid(prize.id);
+                    prizeActions.appendChild(payBtn);
+                } else {
+                    const paidBadge = document.createElement('span');
+                    paidBadge.className = 'paid-badge';
+                    paidBadge.textContent = '✓ Pagado';
+                    prizeActions.appendChild(paidBadge);
+                }
+                
+                prizeDiv.appendChild(prizeHeader);
+                prizeDiv.appendChild(dateInfo);
+                prizeDiv.appendChild(prizeActions);
+                
+                return prizeDiv;
+            });
+            
+            container.innerHTML = '';
+            prizeElements.forEach(element => container.appendChild(element));
         }
         
         function markAsPaid(prizeId) {
@@ -2522,17 +2573,34 @@
                 return;
             }
             
-            container.innerHTML = filteredWinners.slice(0, 10).map(winner => `
-                <div class="winner-item">
-                    <div class="winner-header">
-                        <span>Cartón: ${winner.cartonId}</span>
-                        <span>BsF ${winner.amount}</span>
-                    </div>
-                    <div class="winner-details">
-                        ${winner.phone} • ${winner.type} • ${winner.date} ${winner.time}
-                    </div>
-                </div>
-            `).join('');
+            const winnerElements = filteredWinners.slice(0, 10).map(winner => {
+                const winnerDiv = document.createElement('div');
+                winnerDiv.className = 'winner-item';
+                
+                const winnerHeader = document.createElement('div');
+                winnerHeader.className = 'winner-header';
+                
+                const cartonSpan = document.createElement('span');
+                cartonSpan.textContent = `Cartón: ${winner.cartonId}`;
+                
+                const amountSpan = document.createElement('span');
+                amountSpan.textContent = `BsF ${winner.amount}`;
+                
+                winnerHeader.appendChild(cartonSpan);
+                winnerHeader.appendChild(amountSpan);
+                
+                const winnerDetails = document.createElement('div');
+                winnerDetails.className = 'winner-details';
+                winnerDetails.textContent = `${winner.phone} • ${winner.type} • ${winner.date} ${winner.time}`;
+                
+                winnerDiv.appendChild(winnerHeader);
+                winnerDiv.appendChild(winnerDetails);
+                
+                return winnerDiv;
+            });
+            
+            container.innerHTML = '';
+            winnerElements.forEach(element => container.appendChild(element));
         }
         
         // Cargar compras desde Firebase únicamente
@@ -3550,37 +3618,62 @@
                 const item = document.createElement('div');
                 item.className = 'payment-item';
                 
-                let actions = '';
+                const paymentInfo = document.createElement('div');
+                const refStrong = document.createElement('strong');
+                refStrong.textContent = `Ref: ${payment.ref}`;
+                const phoneStrong = document.createElement('strong');
+                phoneStrong.textContent = payment.phone;
+                
+                paymentInfo.appendChild(refStrong);
+                paymentInfo.appendChild(document.createTextNode(' - '));
+                paymentInfo.appendChild(phoneStrong);
+                paymentInfo.appendChild(document.createElement('br'));
+                
+                const smallInfo = document.createElement('small');
+                smallInfo.textContent = `${payment.cartones} cartones - BsF ${payment.amount} - ${payment.date}`;
+                paymentInfo.appendChild(smallInfo);
+                
+                item.appendChild(paymentInfo);
+                
                 if (payment.status === 'pending') {
-                    actions = `
-                        <div class="payment-actions">
-                            <button class="payment-btn approve-btn" onclick="approvePayment(${payment.id})">✓</button>
-                            <button class="payment-btn reject-btn" onclick="rejectPayment(${payment.id})">✗</button>
-                        </div>
-                    `;
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'payment-actions';
+                    
+                    const approveBtn = document.createElement('button');
+                    approveBtn.className = 'payment-btn approve-btn';
+                    approveBtn.textContent = '✓';
+                    approveBtn.onclick = () => approvePayment(payment.id);
+                    
+                    const rejectBtn = document.createElement('button');
+                    rejectBtn.className = 'payment-btn reject-btn';
+                    rejectBtn.textContent = '✗';
+                    rejectBtn.onclick = () => rejectPayment(payment.id);
+                    
+                    actionsDiv.appendChild(approveBtn);
+                    actionsDiv.appendChild(rejectBtn);
+                    item.appendChild(actionsDiv);
                 } else if (payment.status === 'verified') {
-                    actions = `
-                        <div class="payment-actions">
-                            <button class="payment-btn reject-btn" onclick="rejectVerifiedPayment(${payment.id})">✗ Rechazar</button>
-                        </div>
-                    `;
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'payment-actions';
+                    
+                    const rejectBtn = document.createElement('button');
+                    rejectBtn.className = 'payment-btn reject-btn';
+                    rejectBtn.textContent = '✗ Rechazar';
+                    rejectBtn.onclick = () => rejectVerifiedPayment(payment.id);
+                    
+                    actionsDiv.appendChild(rejectBtn);
+                    item.appendChild(actionsDiv);
                 }
                 
-                item.innerHTML = `
-                    <div>
-                        <strong>Ref: ${payment.ref}</strong> - <strong>${payment.phone}</strong><br>
-                        <small>${payment.cartones} cartones - BsF ${payment.amount} - ${payment.date}</small>
-                    </div>
-                    ${actions}
-                `;
                 container.appendChild(item);
             });
         }
 
         // Aprobar pago
         function approvePayment(paymentId) {
-            const payment = allPayments.find(p => p.id === paymentId);
-            if (!payment) return;
+            try {
+                const payment = allPayments.find(p => p.id === paymentId);
+                if (!payment) return;
             
             if (!window.firebase) {
                 window.alert('❌ Firebase no disponible - no se puede aprobar el pago');
@@ -3602,12 +3695,17 @@
             loadPendingPurchases();
             filterPayments();
             updateStats();
+            } catch (error) {
+                console.error('Error approving payment:', error);
+                showPopup('Error', 'Error aprobando pago: ' + error.message);
+            }
         }
 
         // Rechazar pago
         function rejectPayment(paymentId) {
-            const payment = allPayments.find(p => p.id === paymentId);
-            if (!payment) return;
+            try {
+                const payment = allPayments.find(p => p.id === paymentId);
+                if (!payment) return;
             
             if (!window.firebase) {
                 window.alert('❌ Firebase no disponible - no se puede rechazar el pago');
@@ -3622,6 +3720,10 @@
             showPopup('Pago Rechazado', `Pago del teléfono ${payment.phone} ha sido rechazado.`);
             loadPendingPurchases();
             filterPayments();
+            } catch (error) {
+                console.error('Error rejecting payment:', error);
+                showPopup('Error', 'Error rechazando pago: ' + error.message);
+            }
         }
 
         // Rechazar pago verificado
@@ -3641,14 +3743,30 @@
 
         // Actualizar estadísticas
         function updateStats() {
-            document.getElementById('current-round').textContent = `${currentRound} de 2`;
-            document.getElementById('tickets-sold').textContent = ticketsSoldToday;
+            try {
+                const roundElement = document.getElementById('current-round');
+                if (roundElement) {
+                    roundElement.textContent = `${currentRound} de 2`;
+                }
+                
+                const ticketsElement = document.getElementById('tickets-sold');
+                if (ticketsElement) {
+                    ticketsElement.textContent = ticketsSoldToday;
+                }
             
             const totalRecaudado = ticketsSoldToday * 60;
             const totalParaPremios = totalRecaudado * 0.75; // Descontar 25% del dueño
             const roundPrize = currentRound === 1 ? totalParaPremios * 0.25 : totalParaPremios * 0.75;
-            document.getElementById('round-prize').textContent = `BsF ${roundPrize.toFixed(2)}`;
-            document.getElementById('daily-total').textContent = `BsF ${dailyPrizeTotal.toFixed(2)}`;
+            
+            const roundPrizeElement = document.getElementById('round-prize');
+            if (roundPrizeElement) {
+                roundPrizeElement.textContent = `BsF ${roundPrize.toFixed(2)}`;
+            }
+            
+            const dailyTotalElement = document.getElementById('daily-total');
+            if (dailyTotalElement) {
+                dailyTotalElement.textContent = `BsF ${dailyPrizeTotal.toFixed(2)}`;
+            }
             
             // Actualizar premio en Firebase para que se refleje en el header de sala de juego
             if (window.firebase && gameActive) {
@@ -3666,6 +3784,9 @@
             // Actualizar estado del juego si está activo
             if (gameActive) {
                 saveGameState();
+            }
+            } catch (error) {
+                console.error('Error updating stats:', error);
             }
         }
 
@@ -3702,15 +3823,26 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'day-column';
                 
-                dayDiv.innerHTML = `
-                    <div class="day-header">
-                        <h4>${dayName}</h4>
-                        <button class="add-bingo-btn" onclick="addBingoToDay('${dayKey}')">➕</button>
-                    </div>
-                    <div class="day-bingos">
-                        ${dayBingos.map(bingo => createBingoCard(bingo, dayKey)).join('')}
-                    </div>
-                `;
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                
+                const dayTitle = document.createElement('h4');
+                dayTitle.textContent = dayName;
+                
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-bingo-btn';
+                addBtn.textContent = '➕';
+                addBtn.onclick = () => addBingoToDay(dayKey);
+                
+                dayHeader.appendChild(dayTitle);
+                dayHeader.appendChild(addBtn);
+                
+                const dayBingosDiv = document.createElement('div');
+                dayBingosDiv.className = 'day-bingos';
+                dayBingosDiv.innerHTML = dayBingos.map(bingo => createBingoCard(bingo, dayKey)).join('');
+                
+                dayDiv.appendChild(dayHeader);
+                dayDiv.appendChild(dayBingosDiv);
                 
                 container.appendChild(dayDiv);
             });
@@ -3725,17 +3857,44 @@
                 rescheduled: '🔄'
             };
             
-            return `
-                <div class="bingo-card ${bingo.status}" data-bingo-id="${bingo.id}">
-                    <div class="bingo-time">${bingo.time}</div>
-                    <div class="bingo-status">${statusIcons[bingo.status]}</div>
-                    <div class="bingo-config">BsF ${bingo.price} | x${bingo.multiplier}</div>
-                    <div class="bingo-actions">
-                        <button onclick="editBingo('${bingo.id}', '${dayKey}')" class="edit-btn">✏️</button>
-                        <button onclick="deleteBingo('${bingo.id}', '${dayKey}')" class="delete-btn">🗑️</button>
-                    </div>
-                </div>
-            `;
+            const bingoDiv = document.createElement('div');
+            bingoDiv.className = `bingo-card ${bingo.status}`;
+            bingoDiv.dataset.bingoId = bingo.id;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'bingo-time';
+            timeDiv.textContent = bingo.time;
+            
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'bingo-status';
+            statusDiv.textContent = statusIcons[bingo.status];
+            
+            const configDiv = document.createElement('div');
+            configDiv.className = 'bingo-config';
+            configDiv.textContent = `BsF ${bingo.price} | x${bingo.multiplier}`;
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'bingo-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'edit-btn';
+            editBtn.textContent = '✏️';
+            editBtn.onclick = () => editBingo(bingo.id, dayKey);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.onclick = () => deleteBingo(bingo.id, dayKey);
+            
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+            
+            bingoDiv.appendChild(timeDiv);
+            bingoDiv.appendChild(statusDiv);
+            bingoDiv.appendChild(configDiv);
+            bingoDiv.appendChild(actionsDiv);
+            
+            return bingoDiv.outerHTML;
         }
 
         // GESTIÓN DE BINGOS
@@ -3826,18 +3985,45 @@
         // BINGOS ESPECIALES
         function renderSpecialBingos() {
             const container = document.getElementById('special-list');
-            container.innerHTML = specialBingos.map(bingo => `
-                <div class="special-bingo ${bingo.status}">
-                    <div class="special-info">
-                        <strong>${bingo.name}</strong>
-                        <div class="special-details">${bingo.date} ${bingo.time} - BsF ${bingo.price}</div>
-                    </div>
-                    <div class="special-actions">
-                        <button onclick="editSpecialBingo('${bingo.id}')">✏️</button>
-                        <button onclick="deleteSpecialBingo('${bingo.id}')">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
+            const specialElements = specialBingos.map(bingo => {
+                const specialDiv = document.createElement('div');
+                specialDiv.className = `special-bingo ${bingo.status}`;
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'special-info';
+                
+                const nameStrong = document.createElement('strong');
+                nameStrong.textContent = bingo.name;
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'special-details';
+                detailsDiv.textContent = `${bingo.date} ${bingo.time} - BsF ${bingo.price}`;
+                
+                infoDiv.appendChild(nameStrong);
+                infoDiv.appendChild(detailsDiv);
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'special-actions';
+                
+                const editBtn = document.createElement('button');
+                editBtn.textContent = '✏️';
+                editBtn.onclick = () => editSpecialBingo(bingo.id);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.onclick = () => deleteSpecialBingo(bingo.id);
+                
+                actionsDiv.appendChild(editBtn);
+                actionsDiv.appendChild(deleteBtn);
+                
+                specialDiv.appendChild(infoDiv);
+                specialDiv.appendChild(actionsDiv);
+                
+                return specialDiv;
+            });
+            
+            container.innerHTML = '';
+            specialElements.forEach(element => container.appendChild(element));
         }
         
         function addSpecialBingo() {
@@ -3909,12 +4095,25 @@
                 return;
             }
             
-            container.innerHTML = notificationHistory.slice(0, 5).map(notif => `
-                <div class="notification-item">
-                    <div class="notification-time">${notif.time}</div>
-                    <div>${notif.message}</div>
-                </div>
-            `).join('');
+            const notificationElements = notificationHistory.slice(0, 5).map(notif => {
+                const notifDiv = document.createElement('div');
+                notifDiv.className = 'notification-item';
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'notification-time';
+                timeDiv.textContent = notif.time;
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.textContent = notif.message;
+                
+                notifDiv.appendChild(timeDiv);
+                notifDiv.appendChild(messageDiv);
+                
+                return notifDiv;
+            });
+            
+            container.innerHTML = '';
+            notificationElements.forEach(element => container.appendChild(element));
         }
         
         async function clearNotificationHistory() {
@@ -4162,8 +4361,12 @@
             set(ref(database, 'gameState'), initialState);
             set(ref(database, 'calledNumbers'), calledNumbers);
             
-            // Cantar números cada 4 segundos (más rápido)
-            callingInterval = setInterval(async () => {
+            // Sistema de cantado robusto que funciona independiente de la pestaña
+            let lastCallTime = Date.now();
+            const CALL_INTERVAL = 6000; // 6 segundos entre números
+            
+            // Función recursiva que se auto-programa
+            const scheduleNextCall = async () => {
                 try {
                     if (!gameActive) {
                         console.log('❌ Juego no activo, deteniendo');
@@ -4175,6 +4378,8 @@
                     const pendingSnapshot = await get(ref(database, 'pendingBingoVerification'));
                     if (pendingSnapshot.exists()) {
                         console.log('⏸️ BINGO pendiente, pausando cantado');
+                        // Reprogramar en 2 segundos para verificar de nuevo
+                        setTimeout(scheduleNextCall, 2000);
                         return;
                     }
                     
@@ -4196,6 +4401,7 @@
                     // Verificar que no esté duplicado
                     if (calledNumbers.includes(randomNumber)) {
                         console.log('⚠️ Número duplicado detectado, saltando');
+                        setTimeout(scheduleNextCall, 1000);
                         return;
                     }
                     
@@ -4226,11 +4432,45 @@
                     
                     console.log('✅ Número', randomNumber, 'enviado a Firebase');
                     
+                    // Programar siguiente llamada
+                    lastCallTime = Date.now();
+                    setTimeout(scheduleNextCall, CALL_INTERVAL);
+                    
                 } catch (error) {
                     console.error('❌ Error en cantado automático:', error);
+                    // Reintentar en 3 segundos si hay error
+                    setTimeout(scheduleNextCall, 3000);
                 }
-                
-            }, 6000); // 6 segundos entre números
+            };
+            
+            // Iniciar el sistema de cantado
+            scheduleNextCall();
+            
+            // Mantener referencia para poder detenerlo
+            window.currentCallingScheduler = scheduleNextCall;
+            
+            // Sistema anti-pausa del navegador
+            const keepAlive = () => {
+                if (gameActive) {
+                    // Forzar actividad para evitar que el navegador pause los timers
+                    document.title = document.title;
+                    
+                    // Verificar que el cantado siga funcionando
+                    const now = Date.now();
+                    if (now - lastCallTime > CALL_INTERVAL + 2000) { // 2 segundos de tolerancia
+                        console.log('⚠️ Sistema anti-pausa: Detectado posible pausa, reactivando...');
+                        if (window.currentCallingScheduler) {
+                            scheduleNextCall();
+                        }
+                    }
+                }
+            };
+            
+            // Ejecutar keep-alive cada segundo
+            const keepAliveInterval = setInterval(keepAlive, 1000);
+            
+            // Limpiar keep-alive cuando se detenga el juego
+            window.currentKeepAlive = keepAliveInterval;
         }
         
         function generateRandomPatternPositions() {
@@ -4256,12 +4496,15 @@
         function stopAutomaticCalling() {
             console.log('🛑 Deteniendo cantado automático');
             
-            // Detener intervalo de cantado
+            // Detener intervalo de cantado (legacy)
             if (callingInterval) {
                 clearInterval(callingInterval);
                 callingInterval = null;
                 console.log('✅ Intervalo de cantado detenido');
             }
+            
+            // Marcar juego como inactivo para detener el scheduler
+            gameActive = false;
             
             // Detener síntesis de voz
             if ('speechSynthesis' in window) {
@@ -4273,6 +4516,17 @@
             if (window.callingTimeout) {
                 clearTimeout(window.callingTimeout);
                 window.callingTimeout = null;
+            }
+            
+            // Limpiar scheduler actual
+            if (window.currentCallingScheduler) {
+                window.currentCallingScheduler = null;
+            }
+            
+            // Limpiar keep-alive
+            if (window.currentKeepAlive) {
+                clearInterval(window.currentKeepAlive);
+                window.currentKeepAlive = null;
             }
         }
 
@@ -4318,6 +4572,59 @@
             };
         }
 
+        // Sistema de heartbeat para asegurar cantado continuo
+        function initializeCallingHeartbeat() {
+            if (!window.firebase) return;
+            
+            const { database, ref, set, get } = window.firebase;
+            
+            // Verificar cada 3 segundos si el cantado debe continuar
+            setInterval(async () => {
+                try {
+                    if (!gameActive) return;
+                    
+                    const gameStateSnapshot = await get(ref(database, 'gameState'));
+                    const gameState = gameStateSnapshot.val();
+                    
+                    if (!gameState || !gameState.gameActive) return;
+                    
+                    // Verificar si han pasado más de 10 segundos sin nuevo número
+                    const lastUpdate = gameState.timestamp || 0;
+                    const timeSinceLastUpdate = Date.now() - lastUpdate;
+                    
+                    if (timeSinceLastUpdate > 10000) { // 10 segundos sin actualización
+                        console.log('⚠️ Heartbeat: Cantado parece detenido, verificando...');
+                        
+                        // Verificar si hay BINGO pendiente
+                        const pendingSnapshot = await get(ref(database, 'pendingBingoVerification'));
+                        if (pendingSnapshot.exists()) {
+                            console.log('⏸️ Heartbeat: BINGO pendiente, cantado pausado correctamente');
+                            return;
+                        }
+                        
+                        // Si no hay BINGO pendiente y el juego debe estar activo, reiniciar cantado
+                        if (gameActive && calledNumbers.length < 75) {
+                            console.log('🔄 Heartbeat: Reiniciando cantado automático');
+                            
+                            // Actualizar timestamp para evitar loops
+                            await set(ref(database, 'gameState'), {
+                                ...gameState,
+                                timestamp: Date.now(),
+                                heartbeatRestart: true
+                            });
+                            
+                            // Reiniciar cantado si no está funcionando
+                            if (!window.currentCallingScheduler) {
+                                startAutomaticCalling();
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error en heartbeat:', error);
+                }
+            }, 3000); // Verificar cada 3 segundos
+        }
+        
         // Actualizar stats cada 10 segundos
         setInterval(updateStats, 10000);
         
@@ -4475,94 +4782,95 @@
             const userLevel = getUserLevel(profile);
             const levelClass = userLevel.toLowerCase().replace(' ', '-');
             
-            container.innerHTML = `
-                <div class="user-header">
-                    <h4 style="margin: 0; color: var(--accent-color); display: inline-block;">
-                        👤 ${profile.name || 'Usuario'}
-                        <span class="user-level ${levelClass}">${userLevel}</span>
-                    </h4>
-                    <p style="margin: 0.2rem 0; color: #666; font-size: 0.9rem;">
-                        📞 ${profile.phone} | 📅 Registro: ${new Date(profile.createdDate).toLocaleDateString('es-ES')}
-                        ${profile.blocked ? ' | 🚫 BLOQUEADO' : ''}
-                    </p>
-                </div>
+            // Crear elementos DOM de forma segura
+            const userHeader = document.createElement('div');
+            userHeader.className = 'user-header';
+            
+            const userTitle = document.createElement('h4');
+            userTitle.style.cssText = 'margin: 0; color: var(--accent-color); display: inline-block;';
+            userTitle.textContent = `👤 ${profile.name || 'Usuario'}`;
+            
+            const userLevelSpan = document.createElement('span');
+            userLevelSpan.className = `user-level ${levelClass}`;
+            userLevelSpan.textContent = userLevel;
+            userTitle.appendChild(userLevelSpan);
+            
+            const userInfo = document.createElement('p');
+            userInfo.style.cssText = 'margin: 0.2rem 0; color: #666; font-size: 0.9rem;';
+            userInfo.textContent = `📞 ${profile.phone} | 📅 Registro: ${new Date(profile.createdDate).toLocaleDateString('es-ES')}${profile.blocked ? ' | 🚫 BLOQUEADO' : ''}`;
+            
+            userHeader.appendChild(userTitle);
+            userHeader.appendChild(userInfo);
+            
+            // Crear botones de acciones
+            const userActions = document.createElement('div');
+            userActions.className = 'user-actions';
+            
+            const actions = [
+                { text: '✏️ Editar', className: 'edit', onclick: () => editUser(profile.phone) },
+                { text: '🔐 Reset PIN', className: 'reset-pin', onclick: () => resetUserPIN(profile.phone) },
+                { text: profile.blocked ? '✅ Desbloquear' : '🚫 Bloquear', className: profile.blocked ? 'unblock' : 'block', onclick: profile.blocked ? () => unblockUser(profile.phone) : () => blockUser(profile.phone) },
+                { text: '🎁 Regalar', className: 'gift', onclick: () => giftCards(profile.phone) },
+                { text: '🗑️ Eliminar', className: 'delete', onclick: () => deleteUser(profile.phone) },
+                { text: '📤 Exportar', className: 'edit', onclick: () => exportUserData(profile.phone) }
+            ];
+            
+            actions.forEach(action => {
+                const btn = document.createElement('button');
+                btn.className = `user-action-btn ${action.className}`;
+                btn.textContent = action.text;
+                btn.onclick = action.onclick;
+                userActions.appendChild(btn);
+            });
+            
+            container.innerHTML = '';
+            container.appendChild(userHeader);
+            container.appendChild(userActions);
+            
+            // Agregar estadísticas de forma segura
+            const statsGrid = document.createElement('div');
+            statsGrid.className = 'user-cards-grid';
+            
+            const stats = [
+                { number: profile.totalCards || 0, label: 'Cartones Comprados' },
+                { number: profile.vigentCards || 0, label: 'Vigentes' },
+                { number: profile.enUsoCards || 0, label: 'En Uso' },
+                { number: profile.vencidoCards || 0, label: 'Vencidos' }
+            ];
+            
+            stats.forEach(stat => {
+                const statDiv = document.createElement('div');
+                statDiv.className = 'user-stat';
                 
-                <div class="user-actions">
-                    <button class="user-action-btn edit" onclick="editUser('${profile.phone}')">✏️ Editar</button>
-                    <button class="user-action-btn reset-pin" onclick="resetUserPIN('${profile.phone}')">🔐 Reset PIN</button>
-                    <button class="user-action-btn ${profile.blocked ? 'unblock' : 'block'}" onclick="${profile.blocked ? 'unblockUser' : 'blockUser'}('${profile.phone}')">
-                        ${profile.blocked ? '✅ Desbloquear' : '🚫 Bloquear'}
-                    </button>
-                    <button class="user-action-btn gift" onclick="giftCards('${profile.phone}')">🎁 Regalar</button>
-                    <button class="user-action-btn delete" onclick="deleteUser('${profile.phone}')">🗑️ Eliminar</button>
-                    <button class="user-action-btn edit" onclick="exportUserData('${profile.phone}')">📤 Exportar</button>
-                </div>
+                const numberSpan = document.createElement('span');
+                numberSpan.className = 'user-stat-number';
+                numberSpan.textContent = stat.number;
                 
-                <div class="user-cards-grid">
-                    <div class="user-stat">
-                        <span class="user-stat-number">${profile.totalCards || 0}</span>
-                        <span class="user-stat-label">Cartones Comprados</span>
-                    </div>
-                    <div class="user-stat">
-                        <span class="user-stat-number">${profile.vigentCards || 0}</span>
-                        <span class="user-stat-label">Vigentes</span>
-                    </div>
-                    <div class="user-stat">
-                        <span class="user-stat-number">${profile.enUsoCards || 0}</span>
-                        <span class="user-stat-label">En Uso</span>
-                    </div>
-                    <div class="user-stat">
-                        <span class="user-stat-number">${profile.vencidoCards || 0}</span>
-                        <span class="user-stat-label">Vencidos</span>
-                    </div>
-                </div>
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'user-stat-label';
+                labelSpan.textContent = stat.label;
                 
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 1rem 0;">
-                    <div class="user-stat">
-                        <span class="user-stat-number">BsF ${(profile.totalSpent || 0).toLocaleString()}</span>
-                        <span class="user-stat-label">Total Gastado</span>
-                    </div>
-                    <div class="user-stat">
-                        <span class="user-stat-number">${profile.bingosWon || 0}</span>
-                        <span class="user-stat-label">Bingos Ganados</span>
-                    </div>
-                    <div class="user-stat">
-                        <span class="user-stat-number">BsF ${(profile.totalPrizes || 0).toLocaleString()}</span>
-                        <span class="user-stat-label">Premios Ganados</span>
-                    </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <h5 style="margin: 0 0 0.5rem 0; color: var(--accent-color);">💰 Últimas Compras:</h5>
-                        <div class="user-history">
-                            ${(profile.purchases || []).slice(0, 5).map(purchase => `
-                                <div class="history-item">
-                                    <div class="history-date">${purchase.date}</div>
-                                    <div>${purchase.cartones} cartones - BsF ${purchase.amount}</div>
-                                    <div style="color: ${getStatusColor(purchase.status)}">${purchase.status.toUpperCase()}</div>
-                                </div>
-                            `).join('') || '<p style="color: #666; font-size: 0.8rem;">Sin compras</p>'}
-                        </div>
-                    </div>
-                    <div>
-                        <h5 style="margin: 0 0 0.5rem 0; color: var(--accent-color);">🏆 Últimos Premios:</h5>
-                        <div class="user-history">
-                            ${(profile.winners || []).slice(0, 5).map(winner => `
-                                <div class="history-item">
-                                    <div class="history-date">${winner.date}</div>
-                                    <div>${winner.type} - BsF ${winner.amount}</div>
-                                </div>
-                            `).join('') || '<p style="color: #666; font-size: 0.8rem;">Sin premios</p>'}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="user-activity">
-                    <h5 style="margin: 0 0 0.5rem 0; color: var(--accent-color);">📊 Actividad Reciente:</h5>
-                    ${generateUserActivity(profile)}
-                </div>
-            `;
+                statDiv.appendChild(numberSpan);
+                statDiv.appendChild(labelSpan);
+                statsGrid.appendChild(statDiv);
+            });
+            
+            container.appendChild(statsGrid);
+            
+            // Agregar actividad de forma segura
+            const activityDiv = document.createElement('div');
+            activityDiv.className = 'user-activity';
+            
+            const activityTitle = document.createElement('h5');
+            activityTitle.style.cssText = 'margin: 0 0 0.5rem 0; color: var(--accent-color);';
+            activityTitle.textContent = '📊 Actividad Reciente:';
+            
+            const activityContent = document.createElement('div');
+            activityContent.innerHTML = generateUserActivity(profile);
+            
+            activityDiv.appendChild(activityTitle);
+            activityDiv.appendChild(activityContent);
+            container.appendChild(activityDiv);
         }
         
         function getUserLevel(profile) {
@@ -4608,11 +4916,23 @@
             // Ordenar por fecha
             activities.sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            return activities.slice(0, 5).map(activity => `
-                <div class="activity-item">
-                    <span class="activity-date">${activity.date}</span> - ${activity.action}
-                </div>
-            `).join('') || '<p style="color: #666; font-size: 0.8rem;">Sin actividad reciente</p>';
+            if (activities.length === 0) {
+                return '<p style="color: #666; font-size: 0.8rem;">Sin actividad reciente</p>';
+            }
+            
+            return activities.slice(0, 5).map(activity => {
+                const activityDiv = document.createElement('div');
+                activityDiv.className = 'activity-item';
+                
+                const dateSpan = document.createElement('span');
+                dateSpan.className = 'activity-date';
+                dateSpan.textContent = activity.date;
+                
+                activityDiv.appendChild(dateSpan);
+                activityDiv.appendChild(document.createTextNode(' - ' + activity.action));
+                
+                return activityDiv.outerHTML;
+            }).join('');
         }
         
         // Permitir buscar con Enter

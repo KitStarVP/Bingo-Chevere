@@ -62,14 +62,24 @@ class GameRoom {
             
             // Intentos periódicos de activación
             const tryActivation = () => {
-                if (!this.audioActivated && this.audioAttempts < 5) {
-                    this.audioAttempts++;
-                    this.activateAudio();
-                    setTimeout(tryActivation, 3000);
+                try {
+                    if (!this.audioActivated && this.audioAttempts < 5) {
+                        this.audioAttempts++;
+                        this.activateAudio();
+                        setTimeout(tryActivation, 3000);
+                    }
+                } catch (error) {
+                    console.error('❌ Error en tryActivation:', error);
                 }
             };
             
-            setTimeout(tryActivation, 1000);
+            setTimeout(() => {
+                try {
+                    tryActivation();
+                } catch (error) {
+                    console.error('❌ Error en setTimeout tryActivation:', error);
+                }
+            }, 1000);
             
             console.log('🔊 Sistema de audio configurado');
         } else {
@@ -242,7 +252,18 @@ class GameRoom {
             return;
         }
         
-        this.loadCardsFromFirebase(userPhone);
+        try {
+            this.loadCardsFromFirebase(userPhone);
+        } catch (error) {
+            console.error('❌ Error cargando cartones:', error);
+            this.showAccessBlocked();
+        }
+    }rdsFromFirebase(userPhone);
+        } catch (error) {
+            console.error('❌ Error cargando cartones:', error);
+            this.showAccessBlocked();
+        }
+    }erPhone);
     }
     
     loadCardsFromFirebase(phone) {
@@ -250,17 +271,22 @@ class GameRoom {
         const cleanPhone = phone.replace(/[^0-9]/g, '');
         
         onValue(ref(database, `playerCards/${cleanPhone}`), (snapshot) => {
-            const firebaseCards = snapshot.val();
-            if (firebaseCards && Array.isArray(firebaseCards)) {
-                this.cards = firebaseCards.filter(card => 
-                    card.status === 'vigente' || card.status === 'en_uso'
-                );
-                
-                this.processLoadedCards();
-                console.log('✅ Cartones cargados desde Firebase:', this.cards.length);
-            } else {
-                console.log('⚠️ No hay cartones en Firebase para:', cleanPhone);
-                this.cards = [];
+            try {
+                const firebaseCards = snapshot.val();
+                if (firebaseCards && Array.isArray(firebaseCards)) {
+                    this.cards = firebaseCards.filter(card => 
+                        card && (card.status === 'vigente' || card.status === 'en_uso')
+                    );
+                    
+                    this.processLoadedCards();
+                    console.log('✅ Cartones cargados desde Firebase:', this.cards.length);
+                } else {
+                    console.log('⚠️ No hay cartones en Firebase para:', cleanPhone);
+                    this.cards = [];
+                    this.showAccessBlocked();
+                }
+            } catch (error) {
+                console.error('❌ Error procesando cartones:', error);
                 this.showAccessBlocked();
             }
         }, (error) => {
@@ -279,9 +305,13 @@ class GameRoom {
         
         // Procesar cartones activos
         this.cards.forEach(card => {
-            if (!card.marked) card.marked = [];
-            if (card.autoMode === undefined) card.autoMode = true;
-            if (!card.id) card.id = Date.now() + Math.random();
+            try {
+                if (!card.marked) card.marked = [];
+                if (card.autoMode === undefined) card.autoMode = true;
+                if (!card.id) card.id = Date.now() + Math.random();
+            } catch (error) {
+                console.error('Error processing card:', error);
+            }
         });
 
         console.log('Cartones activos:', this.cards.length);
@@ -295,8 +325,12 @@ class GameRoom {
                 this.renderCards();
                 setTimeout(() => {
                     this.cards.forEach(card => {
-                        if (card.autoMode && this.calledNumbers.length > 0) {
-                            this.autoMarkCard(card);
+                        try {
+                            if (card && card.autoMode && this.calledNumbers.length > 0) {
+                                this.autoMarkCard(card);
+                            }
+                        } catch (error) {
+                            console.error('Error auto-marking card:', error);
                         }
                     });
                     this.renderCards();
@@ -321,18 +355,42 @@ class GameRoom {
     showWaitingForGame() {
         const container = document.getElementById('cards-container');
         
-        container.innerHTML = `
-            <div class="waiting-content" style="text-align: center; padding: 4rem 2rem;">
-                <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 3rem 2rem; border: 1px solid rgba(255,255,255,0.2);">
-                    <h2 style="color: white; font-size: 2rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">⏳ Esperando Juego</h2>
-                    <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 2rem;">Tienes cartones listos. Esperando que el administrador inicie el próximo juego.</p>
-                    <div style="background: rgba(40,167,69,0.2); padding: 1rem; border-radius: 10px; margin: 1rem 0;">
-                        <p style="color: #28a745; font-weight: 600;">✅ Cartones vigentes: ${this.cards.length}</p>
-                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 0.5rem;">Tus cartones están seguros y listos para jugar</p>
-                    </div>
-                </div>
-            </div>
-        `;
+        const cardCount = parseInt(this.cards.length) || 0;
+        const waitingHTML = document.createElement('div');
+        waitingHTML.className = 'waiting-content';
+        waitingHTML.style.cssText = 'text-align: center; padding: 4rem 2rem;';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.style.cssText = 'background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 3rem 2rem; border: 1px solid rgba(255,255,255,0.2);';
+        
+        const title = document.createElement('h2');
+        title.textContent = '⏳ Esperando Juego';
+        title.style.cssText = 'color: white; font-size: 2rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);';
+        
+        const description = document.createElement('p');
+        description.textContent = 'Tienes cartones listos. Esperando que el administrador inicie el próximo juego.';
+        description.style.cssText = 'color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 2rem;';
+        
+        const statusDiv = document.createElement('div');
+        statusDiv.style.cssText = 'background: rgba(40,167,69,0.2); padding: 1rem; border-radius: 10px; margin: 1rem 0;';
+        
+        const statusText = document.createElement('p');
+        statusText.textContent = `✅ Cartones vigentes: ${cardCount}`;
+        statusText.style.cssText = 'color: #28a745; font-weight: 600;';
+        
+        const infoText = document.createElement('p');
+        infoText.textContent = 'Tus cartones están seguros y listos para jugar';
+        infoText.style.cssText = 'color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 0.5rem;';
+        
+        statusDiv.appendChild(statusText);
+        statusDiv.appendChild(infoText);
+        contentDiv.appendChild(title);
+        contentDiv.appendChild(description);
+        contentDiv.appendChild(statusDiv);
+        waitingHTML.appendChild(contentDiv);
+        
+        container.innerHTML = '';
+        container.appendChild(waitingHTML);
     }
     
     showAccessBlocked() {
@@ -361,10 +419,14 @@ class GameRoom {
         this.showGameElements();
 
         this.cards.forEach(card => {
-            // Verificar completitud antes de renderizar
-            this.updateCardCompletionStatus(card);
-            const cardElement = this.createCardElement(card);
-            container.appendChild(cardElement);
+            try {
+                // Verificar completitud antes de renderizar
+                this.updateCardCompletionStatus(card);
+                const cardElement = this.createCardElement(card);
+                container.appendChild(cardElement);
+            } catch (error) {
+                console.error('Error rendering card:', error);
+            }
         });
     }
 
@@ -409,33 +471,56 @@ class GameRoom {
         const modeStatus = card.autoMode ? '🤖 AUTO' : '✋ MANUAL';
         const cardStatus = card.missedOpportunity ? ' missed-card' : '';
         
-        cardDiv.innerHTML = `
-            <div class="card-header${cardStatus}">ID-${cardCode} (${modeStatus})</div>
-            <div class="bingo-letters">
-                <span>B</span>
-                <span>I</span>
-                <span>N</span>
-                <span>G</span>
-                <span>O</span>
-            </div>
-            <div class="card-grid">
-                ${this.generateCardGrid(card)}
-            </div>
-            <div class="card-controls">
-                <div class="mode-selector">
-                    <button class="mode-option ${card.autoMode ? 'active' : ''}" data-card-id="${card.id}" data-mode="auto">
-                        🤖 Auto
-                    </button>
-                    <button class="mode-option ${!card.autoMode ? 'active' : ''}" data-card-id="${card.id}" data-mode="manual">
-                        ✋ Manual
-                    </button>
-                </div>
-                <button class="bingo-btn ${bingoClass}" data-card-id="${card.id}" data-action="bingo"
-                        ${!canCallBingo ? 'disabled' : ''}>
-                    ${bingoText}
-                </button>
-            </div>
-        `;
+        const cardHeader = document.createElement('div');
+        cardHeader.className = `card-header${cardStatus}`;
+        cardHeader.textContent = `ID-${cardCode} (${modeStatus})`;
+        
+        const bingoLetters = document.createElement('div');
+        bingoLetters.className = 'bingo-letters';
+        ['B', 'I', 'N', 'G', 'O'].forEach(letter => {
+            const span = document.createElement('span');
+            span.textContent = letter;
+            bingoLetters.appendChild(span);
+        });
+        
+        const cardGrid = document.createElement('div');
+        cardGrid.className = 'card-grid';
+        cardGrid.innerHTML = this.generateCardGrid(card);
+        
+        const cardControls = document.createElement('div');
+        cardControls.className = 'card-controls';
+        
+        const modeSelector = document.createElement('div');
+        modeSelector.className = 'mode-selector';
+        
+        const autoBtn = document.createElement('button');
+        autoBtn.className = `mode-option ${card.autoMode ? 'active' : ''}`;
+        autoBtn.dataset.cardId = card.id;
+        autoBtn.dataset.mode = 'auto';
+        autoBtn.textContent = '🤖 Auto';
+        
+        const manualBtn = document.createElement('button');
+        manualBtn.className = `mode-option ${!card.autoMode ? 'active' : ''}`;
+        manualBtn.dataset.cardId = card.id;
+        manualBtn.dataset.mode = 'manual';
+        manualBtn.textContent = '✋ Manual';
+        
+        const bingoBtn = document.createElement('button');
+        bingoBtn.className = `bingo-btn ${bingoClass}`;
+        bingoBtn.dataset.cardId = card.id;
+        bingoBtn.dataset.action = 'bingo';
+        bingoBtn.disabled = !canCallBingo;
+        bingoBtn.textContent = bingoText;
+        
+        modeSelector.appendChild(autoBtn);
+        modeSelector.appendChild(manualBtn);
+        cardControls.appendChild(modeSelector);
+        cardControls.appendChild(bingoBtn);
+        
+        cardDiv.appendChild(cardHeader);
+        cardDiv.appendChild(bingoLetters);
+        cardDiv.appendChild(cardGrid);
+        cardDiv.appendChild(cardControls);
 
         // Agregar event listeners después de crear el HTML
         this.addCardEventListeners(cardDiv, card);
@@ -463,7 +548,7 @@ class GameRoom {
         return Array.from({ length: 25 }, (_, i) => {
             const row = Math.floor(i / 5);
             const col = i % 5;
-            const number = card.numbers[row][col];
+            const number = card.numbers[row] && card.numbers[row][col];
             const isFree = number === 0;
             const isMarked = card.marked.includes(`${row}-${col}`) || isFree;
             
@@ -478,10 +563,14 @@ class GameRoom {
             if (isFree) cellClass += ' free';
             if (wasCalled && !isFree) cellClass += ' called';
             
-            return `<div class="${cellClass}" 
-                         data-card-id="${card.id}" data-row="${row}" data-col="${col}" data-number="${number}">
-                        ${isFree ? 'FREE' : number}
-                    </div>`;
+            const cellDiv = document.createElement('div');
+            cellDiv.className = cellClass;
+            cellDiv.dataset.cardId = card.id;
+            cellDiv.dataset.row = row;
+            cellDiv.dataset.col = col;
+            cellDiv.dataset.number = number;
+            cellDiv.textContent = isFree ? 'FREE' : number;
+            return cellDiv.outerHTML;
         }).join('');
     }
 
@@ -492,12 +581,16 @@ class GameRoom {
         
         modeButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const cardId = parseInt(e.target.dataset.cardId);
-                const isAuto = e.target.dataset.mode === 'auto';
-                console.log('Mode button clicked:', cardId, isAuto, 'Current mode:', card.autoMode);
-                this.setMode(cardId, isAuto);
+                try {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const cardId = parseInt(e.target.dataset.cardId);
+                    const isAuto = e.target.dataset.mode === 'auto';
+                    console.log('Mode button clicked:', cardId, isAuto, 'Current mode:', card.autoMode);
+                    this.setMode(cardId, isAuto);
+                } catch (error) {
+                    console.error('Error in mode button click:', error);
+                }
             });
         });
 
@@ -505,11 +598,15 @@ class GameRoom {
         const bingoBtn = cardDiv.querySelector('.bingo-btn');
         if (bingoBtn) {
             bingoBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const cardId = parseInt(e.target.dataset.cardId);
-                console.log('Bingo button clicked:', cardId);
-                this.callBingo(cardId);
+                try {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const cardId = parseInt(e.target.dataset.cardId);
+                    console.log('Bingo button clicked:', cardId);
+                    this.callBingo(cardId);
+                } catch (error) {
+                    console.error('Error in bingo button click:', error);
+                }
             });
         }
 
@@ -519,13 +616,17 @@ class GameRoom {
         
         cells.forEach(cell => {
             cell.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const cardId = parseInt(e.target.dataset.cardId);
-                const row = parseInt(e.target.dataset.row);
-                const col = parseInt(e.target.dataset.col);
-                console.log('Cell clicked:', cardId, row, col, 'Card autoMode:', card.autoMode);
-                this.toggleCell(cardId, row, col);
+                try {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const cardId = parseInt(e.target.dataset.cardId);
+                    const row = parseInt(e.target.dataset.row);
+                    const col = parseInt(e.target.dataset.col);
+                    console.log('Cell clicked:', cardId, row, col, 'Card autoMode:', card.autoMode);
+                    this.toggleCell(cardId, row, col);
+                } catch (error) {
+                    console.error('Error in cell click:', error);
+                }
             });
         });
     }
@@ -543,8 +644,8 @@ class GameRoom {
             return;
         }
 
-        const number = card.numbers[row][col];
-        if (number === 0) return; // No marcar FREE
+        const number = card.numbers[row] && card.numbers[row][col];
+        if (!number || number === 0) return; // No marcar FREE o celdas inválidas
 
         const cellKey = `${row}-${col}`;
         const isMarked = card.marked.includes(cellKey);
@@ -605,16 +706,22 @@ class GameRoom {
         );
         
         calledNumbers.forEach(number => {
-            for (let row = 0; row < 5; row++) {
-                for (let col = 0; col < 5; col++) {
-                    if (card.numbers[row][col] === number) {
-                        const cellKey = `${row}-${col}`;
-                        if (!card.marked.includes(cellKey)) {
-                            card.marked.push(cellKey);
-                            markedCount++;
+            try {
+                if (card && card.numbers) {
+                    for (let row = 0; row < 5; row++) {
+                        for (let col = 0; col < 5; col++) {
+                            if (card.numbers[row] && card.numbers[row][col] === number) {
+                                const cellKey = `${row}-${col}`;
+                                if (!card.marked.includes(cellKey)) {
+                                    card.marked.push(cellKey);
+                                    markedCount++;
+                                }
+                            }
                         }
                     }
                 }
+            } catch (error) {
+                console.error('Error processing called number:', error);
             }
         });
         
@@ -625,14 +732,19 @@ class GameRoom {
 
     // === BINGO LOGIC ===
     checkBingo(card) {
-        for (let row = 0; row < 5; row++) {
-            for (let col = 0; col < 5; col++) {
-                const cellKey = `${row}-${col}`;
-                const isFree = card.numbers[row][col] === 0;
-                if (!isFree && !card.marked.includes(cellKey)) {
-                    return false;
+        try {
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 5; col++) {
+                    const cellKey = `${row}-${col}`;
+                    const isFree = card.numbers[row] && card.numbers[row][col] === 0;
+                    if (!isFree && !card.marked.includes(cellKey)) {
+                        return false;
+                    }
                 }
             }
+        } catch (error) {
+            console.error('Error checking bingo:', error);
+            return false;
         }
         return true;
     }
@@ -644,13 +756,18 @@ class GameRoom {
         }
         
         // Verificar si todas las posiciones del patrón están marcadas
-        for (const [row, col] of this.currentPattern.positions) {
-            const cellKey = `${row}-${col}`;
-            const isFree = card.numbers[row][col] === 0;
-            
-            if (!isFree && !card.marked.includes(cellKey)) {
-                return false;
+        try {
+            for (const [row, col] of this.currentPattern.positions) {
+                const cellKey = `${row}-${col}`;
+                const isFree = card.numbers[row] && card.numbers[row][col] === 0;
+                
+                if (!isFree && !card.marked.includes(cellKey)) {
+                    return false;
+                }
             }
+        } catch (error) {
+            console.error('Error checking pattern:', error);
+            return false;
         }
         
         return true;
@@ -663,44 +780,49 @@ class GameRoom {
         }
         
         // Ronda 2: verificar líneas tradicionales
-        // Filas
-        for (let row = 0; row < 5; row++) {
-            let complete = true;
-            for (let col = 0; col < 5; col++) {
-                const cellKey = `${row}-${col}`;
-                const isFree = card.numbers[row][col] === 0;
-                if (!isFree && !card.marked.includes(cellKey)) {
-                    complete = false;
-                    break;
-                }
-            }
-            if (complete) return true;
-        }
-
-        // Columnas
-        for (let col = 0; col < 5; col++) {
-            let complete = true;
+        try {
+            // Filas
             for (let row = 0; row < 5; row++) {
-                const cellKey = `${row}-${col}`;
-                const isFree = card.numbers[row][col] === 0;
-                if (!isFree && !card.marked.includes(cellKey)) {
-                    complete = false;
-                    break;
+                let complete = true;
+                for (let col = 0; col < 5; col++) {
+                    const cellKey = `${row}-${col}`;
+                    const isFree = card.numbers[row] && card.numbers[row][col] === 0;
+                    if (!isFree && !card.marked.includes(cellKey)) {
+                        complete = false;
+                        break;
+                    }
                 }
+                if (complete) return true;
             }
-            if (complete) return true;
-        }
 
-        // Diagonales
-        let diag1 = true, diag2 = true;
-        for (let i = 0; i < 5; i++) {
-            const cell1 = `${i}-${i}`;
-            const cell2 = `${i}-${4-i}`;
-            const isFree1 = card.numbers[i][i] === 0;
-            const isFree2 = card.numbers[i][4-i] === 0;
-            
-            if (!isFree1 && !card.marked.includes(cell1)) diag1 = false;
-            if (!isFree2 && !card.marked.includes(cell2)) diag2 = false;
+            // Columnas
+            for (let col = 0; col < 5; col++) {
+                let complete = true;
+                for (let row = 0; row < 5; row++) {
+                    const cellKey = `${row}-${col}`;
+                    const isFree = card.numbers[row] && card.numbers[row][col] === 0;
+                    if (!isFree && !card.marked.includes(cellKey)) {
+                        complete = false;
+                        break;
+                    }
+                }
+                if (complete) return true;
+            }
+
+            // Diagonales
+            let diag1 = true, diag2 = true;
+            for (let i = 0; i < 5; i++) {
+                const cell1 = `${i}-${i}`;
+                const cell2 = `${i}-${4-i}`;
+                const isFree1 = card.numbers[i] && card.numbers[i][i] === 0;
+                const isFree2 = card.numbers[i] && card.numbers[i][4-i] === 0;
+                
+                if (!isFree1 && !card.marked.includes(cell1)) diag1 = false;
+                if (!isFree2 && !card.marked.includes(cell2)) diag2 = false;
+            }
+        } catch (error) {
+            console.error('Error checking line:', error);
+            return false;
         }
 
         return diag1 || diag2;
@@ -806,23 +928,28 @@ class GameRoom {
         const { database, ref, get } = window.firebase;
         
         get(ref(database, 'gameState')).then((snapshot) => {
-            const gameState = snapshot.val();
-            if (gameState) {
-                this.gameActive = gameState.gameActive || false;
-                this.currentRound = gameState.currentRound || 1;
-                this.isPaused = gameState.isPaused || false;
-                this.currentPattern = gameState.currentPattern;
-                this.currentGameId = gameState.gameId;
-                
-                console.log('✅ Estado inicial cargado - NO expirando cartones en carga inicial');
-                
-                if (this.isPaused) {
-                    this.showPauseAlert();
+            try {
+                const gameState = snapshot.val();
+                if (gameState) {
+                    this.gameActive = gameState.gameActive || false;
+                    this.currentRound = gameState.currentRound || 1;
+                    this.isPaused = gameState.isPaused || false;
+                    this.currentPattern = gameState.currentPattern;
+                    this.currentGameId = gameState.gameId;
+                    
+                    console.log('✅ Estado inicial cargado - NO expirando cartones en carga inicial');
+                    
+                    if (this.isPaused) {
+                        this.showPauseAlert();
+                    }
+                    
+                    this.updateGameInfo();
+                } else {
+                    console.log('⏸️ No hay juego activo');
+                    this.gameActive = false;
                 }
-                
-                this.updateGameInfo();
-            } else {
-                console.log('⏸️ No hay juego activo');
+            } catch (error) {
+                console.error('❌ Error procesando estado inicial:', error);
                 this.gameActive = false;
             }
         }).catch(error => {
@@ -832,25 +959,30 @@ class GameRoom {
         
         // Cargar números cantados con mejor manejo
         get(ref(database, 'calledNumbers')).then((snapshot) => {
-            let numbers = snapshot.val();
-            
-            // Manejar diferentes formatos
-            if (numbers && typeof numbers === 'object' && !Array.isArray(numbers)) {
-                numbers = Object.values(numbers);
-            }
-
-            if (numbers && Array.isArray(numbers) && numbers.length > 0) {
-                const normalizedNumbers = numbers.map(item => 
-                    (item && typeof item === 'object' && item.number !== undefined) ? item.number : item
-                ).filter(item => typeof item === 'number' && item >= 1 && item <= 75);
-
-                this.calledNumbers = [...normalizedNumbers];
-                console.log('✅ Números cantados cargados:', this.calledNumbers.length);
+            try {
+                let numbers = snapshot.val();
                 
-                // Procesar números existentes
-                this.processExistingNumbers();
-            } else {
-                console.log('📝 No hay números cantados aún');
+                // Manejar diferentes formatos
+                if (numbers && typeof numbers === 'object' && !Array.isArray(numbers)) {
+                    numbers = Object.values(numbers);
+                }
+
+                if (numbers && Array.isArray(numbers) && numbers.length > 0) {
+                    const normalizedNumbers = numbers.map(item => 
+                        (item && typeof item === 'object' && item.number !== undefined) ? item.number : item
+                    ).filter(item => typeof item === 'number' && item >= 1 && item <= 75);
+
+                    this.calledNumbers = [...normalizedNumbers];
+                    console.log('✅ Números cantados cargados:', this.calledNumbers.length);
+                    
+                    // Procesar números existentes
+                    this.processExistingNumbers();
+                } else {
+                    console.log('📝 No hay números cantados aún');
+                    this.calledNumbers = [];
+                }
+            } catch (error) {
+                console.error('❌ Error procesando números cantados:', error);
                 this.calledNumbers = [];
             }
         }).catch(error => {
@@ -883,8 +1015,12 @@ class GameRoom {
         // Auto-marcar cartones con números ya cantados
         setTimeout(() => {
             this.cards.forEach(card => {
-                if (card.autoMode) {
-                    this.autoMarkCard(card);
+                try {
+                    if (card && card.autoMode) {
+                        this.autoMarkCard(card);
+                    }
+                } catch (error) {
+                    console.error('Error auto-marking card:', error);
                 }
             });
             this.renderCards();
@@ -923,9 +1059,11 @@ class GameRoom {
                 }
             } catch (error) {
                 console.error('❌ Error procesando estado del juego:', error);
+                this.gameActive = false;
             }
         }, (error) => {
             console.error('❌ Error en listener de gameState:', error);
+            this.gameActive = false;
         });
         
         // Escuchar números cantados - LISTENER CRÍTICO
@@ -951,9 +1089,11 @@ class GameRoom {
                 }
             } catch (error) {
                 console.error('❌ Error procesando números cantados:', error);
+                this.calledNumbers = [];
             }
         }, (error) => {
             console.error('❌ Error en listener de calledNumbers:', error);
+            this.calledNumbers = [];
         });
         
         // Escuchar resultado de verificación de BINGO
@@ -967,6 +1107,8 @@ class GameRoom {
             } catch (error) {
                 console.error('❌ Error procesando resultado de verificación:', error);
             }
+        }, (error) => {
+            console.error('❌ Error en listener de verification result:', error);
         });
         
         console.log('✅ Firebase listeners iniciados con manejo de errores');
@@ -1000,11 +1142,12 @@ class GameRoom {
             cell.style.transform = '';
         });
         
-        // Ocultar mini-bola
+        // Ocultar mini-bola SOLO cuando se reinicia completamente
         const miniBall = document.getElementById('mini-ball');
         if (miniBall) {
             miniBall.style.display = 'none';
             miniBall.classList.remove('show');
+            console.log('🔄 Mini-bola ocultada por reset completo');
         }
         
         // Re-renderizar cartones
@@ -1294,15 +1437,23 @@ class GameRoom {
             const { database, ref, get } = window.firebase;
             
             get(ref(database, 'gameState')).then((snapshot) => {
-                const gameState = snapshot.val();
-                if (gameState && gameState.prizes) {
-                    const roundPrize = this.currentRound === 1 ? 
-                        gameState.prizes.round1 || 0 : 
-                        gameState.prizes.round2 || 0;
-                    
-                    document.getElementById('current-prize').textContent = Math.round(roundPrize);
-                } else {
-                    // Fallback: calcular desde compras verificadas
+                try {
+                    const gameState = snapshot.val();
+                    if (gameState && gameState.prizes) {
+                        const roundPrize = this.currentRound === 1 ? 
+                            gameState.prizes.round1 || 0 : 
+                            gameState.prizes.round2 || 0;
+                        
+                        const prizeElement = document.getElementById('current-prize');
+                        if (prizeElement) {
+                            prizeElement.textContent = Math.round(roundPrize);
+                        }
+                    } else {
+                        // Fallback: calcular desde compras verificadas
+                        this.calculatePrizeFromSales();
+                    }
+                } catch (error) {
+                    console.error('Error processing game state for prizes:', error);
                     this.calculatePrizeFromSales();
                 }
             }).catch(() => {
@@ -1314,15 +1465,29 @@ class GameRoom {
             this.calculatePrizeFromSales();
         }
         
-        document.getElementById('current-round').textContent = this.currentRound;
+        const roundElement = document.getElementById('current-round');
+        if (roundElement) {
+            roundElement.textContent = this.currentRound;
+        }
     }
     
     calculatePrizeFromSales() {
-        const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
-        const totalSales = verifiedPurchases.reduce((sum, p) => sum + p.cartones, 0) * 60;
-        const roundPrize = this.currentRound === 1 ? totalSales * 0.25 : totalSales * 0.50;
-        
-        document.getElementById('current-prize').textContent = Math.round(roundPrize);
+        try {
+            const verifiedPurchases = JSON.parse(localStorage.getItem('verifiedPurchases') || '[]');
+            const totalSales = verifiedPurchases.reduce((sum, p) => sum + (p.cartones || 0), 0) * 60;
+            const roundPrize = this.currentRound === 1 ? totalSales * 0.25 : totalSales * 0.50;
+            
+            const prizeElement = document.getElementById('current-prize');
+            if (prizeElement) {
+                prizeElement.textContent = Math.round(roundPrize);
+            }
+        } catch (error) {
+            console.error('Error calculating prize from sales:', error);
+            const prizeElement = document.getElementById('current-prize');
+            if (prizeElement) {
+                prizeElement.textContent = '0';
+            }
+        }
     }
 
     updateLastNumber(number) {
@@ -1341,12 +1506,16 @@ class GameRoom {
         }, 400);
         
         // Actualizar título de la página
-        document.title = `🎯 ${letter}${number} - Bingo Chévere`;
-        
-        // Restaurar título después de 5 segundos
-        setTimeout(() => {
-            document.title = 'Sala de Juego - Bingo Chévere';
-        }, 5000);
+        try {
+            document.title = `🎯 ${letter}${number} - Bingo Chévere`;
+            
+            // Restaurar título después de 5 segundos
+            setTimeout(() => {
+                document.title = 'Sala de Juego - Bingo Chévere';
+            }, 5000);
+        } catch (error) {
+            console.error('Error updating page title:', error);
+        }
     }
 
     showMiniBall(letter, number) {
@@ -1361,16 +1530,25 @@ class GameRoom {
         
         console.log('🎱 Mostrando mini-bola:', letter + number);
         
-        // Ocultar bola anterior si existe
-        miniBall.classList.remove('show');
-        miniBall.style.display = 'none';
-        
+        // NO ocultar la bola anterior - solo actualizar contenido
         // Limpiar cualquier timeout anterior
         if (window.miniBallTimeout) {
             clearTimeout(window.miniBallTimeout);
         }
         
-        setTimeout(() => {
+        // Si ya está visible, solo actualizar contenido con animación suave
+        if (miniBall.classList.contains('show')) {
+            // Animación de cambio de número
+            miniBall.style.transform = 'translate(-50%, -50%) scale(1.1)';
+            
+            setTimeout(() => {
+                ballLetter.textContent = letter;
+                ballNumber.textContent = number;
+                miniBall.style.transform = 'translate(-50%, -50%) scale(1)';
+                console.log('✅ Mini-bola actualizada:', letter + number);
+            }, 150);
+        } else {
+            // Primera vez - mostrar con animación completa
             ballLetter.textContent = letter;
             ballNumber.textContent = number;
             
@@ -1384,11 +1562,10 @@ class GameRoom {
             miniBall.style.animation = 'ballPop 0.6s ease-out';
             miniBall.classList.add('show');
             
-            console.log('✅ Mini-bola mostrada correctamente');
-            
-            // La bola se mantiene visible hasta el siguiente número
-            // Se ocultará automáticamente cuando se muestre la siguiente
-        }, 150);
+            console.log('✅ Mini-bola mostrada por primera vez:', letter + number);
+        }
+        
+        // La bola permanece visible hasta que se oculte manualmente o se reinicie el juego
     }
 
     updateRecentNumbers(letter, number) {
@@ -1404,21 +1581,29 @@ class GameRoom {
         
         // Limpiar todos los números primero
         recentNumbers.forEach(num => {
-            num.textContent = '--';
-            num.classList.remove('latest');
+            try {
+                num.textContent = '--';
+                num.classList.remove('latest');
+            } catch (error) {
+                console.error('Error clearing recent number:', error);
+            }
         });
         
         // Mostrar los últimos 3 números en orden correcto
         lastThreeNumbers.forEach((num, index) => {
-            if (recentNumbers[index] && typeof num === 'number') {
-                const numLetter = this.getBingoLetter(num);
-                recentNumbers[index].textContent = `${numLetter}${num}`;
-                recentNumbers[index].style.opacity = '1';
-                
-                // Marcar el último como más destacado
-                if (index === lastThreeNumbers.length - 1) {
-                    recentNumbers[index].classList.add('latest');
+            try {
+                if (recentNumbers[index] && typeof num === 'number') {
+                    const numLetter = this.getBingoLetter(num);
+                    recentNumbers[index].textContent = `${numLetter}${num}`;
+                    recentNumbers[index].style.opacity = '1';
+                    
+                    // Marcar el último como más destacado
+                    if (index === lastThreeNumbers.length - 1) {
+                        recentNumbers[index].classList.add('latest');
+                    }
                 }
+            } catch (error) {
+                console.error('Error updating recent number:', error);
             }
         });
         
@@ -1439,13 +1624,19 @@ class GameRoom {
     }
 
     showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.style.display = 'block';
-        
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 3000);
+        try {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.textContent = message;
+                toast.style.display = 'block';
+                
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 3000);
+            }
+        } catch (error) {
+            console.error('Error showing toast:', error);
+        }
     }
 
     showBingoAlert(data) {
@@ -1545,11 +1736,12 @@ class GameRoom {
             num.classList.remove('latest');
         });
         
-        // Ocultar mini-bola
+        // Ocultar mini-bola SOLO en reset completo (nuevo juego)
         const miniBall = document.getElementById('mini-ball');
         if (miniBall) {
             miniBall.style.display = 'none';
             miniBall.classList.remove('show');
+            console.log('✨ Mini-bola ocultada por reset visual completo');
         }
         
         // Limpiar historial de números
@@ -1817,32 +2009,36 @@ class GameRoom {
         let markedCards = 0;
         
         this.cards.forEach(card => {
-            if (card.autoMode) {
-                for (let row = 0; row < 5; row++) {
-                    for (let col = 0; col < 5; col++) {
-                        if (card.numbers[row][col] === number) {
-                            const cellKey = `${row}-${col}`;
-                            if (!card.marked.includes(cellKey)) {
-                                card.marked.push(cellKey);
-                                hasChanges = true;
-                                markedCards++;
+            try {
+                if (card && card.autoMode && card.numbers) {
+                    for (let row = 0; row < 5; row++) {
+                        for (let col = 0; col < 5; col++) {
+                            if (card.numbers[row] && card.numbers[row][col] === number) {
+                                const cellKey = `${row}-${col}`;
+                                if (!card.marked.includes(cellKey)) {
+                                    card.marked.push(cellKey);
+                                    hasChanges = true;
+                                    markedCards++;
+                                }
                             }
                         }
                     }
-                }
-                
-                // AUTO-DETECCIÓN: Verificar si completó patrón/cartón después de marcar
-                if (card.autoMode && !card.missedOpportunity) {
-                    const hasBingo = this.checkBingo(card);
-                    const hasPattern = this.checkPattern(card);
                     
-                    if (hasBingo || (hasPattern && this.currentRound === 1)) {
-                        console.log(`🎯 AUTO-BINGO DETECTADO en cartón ${card.id}`);
-                        setTimeout(() => {
-                            this.autoCallBingo(card.id);
-                        }, 1000); // Delay para que el usuario vea la marca
+                    // AUTO-DETECCIÓN: Verificar si completó patrón/cartón después de marcar
+                    if (card.autoMode && !card.missedOpportunity) {
+                        const hasBingo = this.checkBingo(card);
+                        const hasPattern = this.checkPattern(card);
+                        
+                        if (hasBingo || (hasPattern && this.currentRound === 1)) {
+                            console.log(`🎯 AUTO-BINGO DETECTADO en cartón ${card.id}`);
+                            setTimeout(() => {
+                                this.autoCallBingo(card.id);
+                            }, 1000); // Delay para que el usuario vea la marca
+                        }
                     }
                 }
+            } catch (error) {
+                console.error('Error auto-marking card:', error);
             }
         });
 
@@ -1869,23 +2065,27 @@ class GameRoom {
         
         // Obtener todos los cartones y marcar los vigentes como en uso
         get(ref(database, `playerCards/${cleanPhone}`)).then((snapshot) => {
-            let allCards = snapshot.val() || [];
-            let hasChanges = false;
-            
-            allCards.forEach(card => {
-                if (card.status === 'vigente') {
-                    card.status = 'en_uso';
-                    hasChanges = true;
+            try {
+                let allCards = snapshot.val() || [];
+                let hasChanges = false;
+                
+                allCards.forEach(card => {
+                    if (card && card.status === 'vigente') {
+                        card.status = 'en_uso';
+                        hasChanges = true;
+                    }
+                });
+                
+                if (hasChanges) {
+                    console.log('🎮 Marcando cartones como en uso');
+                    return set(ref(database, `playerCards/${cleanPhone}`), allCards);
                 }
-            });
-            
-            if (hasChanges) {
-                console.log('🎮 Marcando cartones como en uso');
-                return set(ref(database, `playerCards/${cleanPhone}`), allCards);
+            } catch (error) {
+                console.error('❌ Error procesando cartones para marcar en uso:', error);
             }
         })
         .then(() => {
-            if (this.cards.some(c => c.status === 'vigente')) {
+            if (this.cards.some(c => c && c.status === 'vigente')) {
                 console.log('✅ Cartones marcados como en uso en Firebase');
                 // Los cartones se recargarán automáticamente por el listener de Firebase
             }
@@ -1912,39 +2112,43 @@ class GameRoom {
         const cleanPhone = userPhone.replace(/[^0-9]/g, '');
         
         get(ref(database, `playerCards/${cleanPhone}`)).then((snapshot) => {
-            let allCards = snapshot.val() || [];
-            let hasChanges = false;
-            
-            allCards.forEach(card => {
-                // Solo expirar cartones EN_USO (que estaban jugando)
-                if (card.status === 'en_uso') {
-                    card.status = 'vencido';
-                    card.expiredDate = new Date().toISOString();
-                    card.expiredReason = reason;
-                    hasChanges = true;
-                }
-                // Los cartones 'vigente' se mantienen para próximo juego
-            });
-            
-            if (hasChanges) {
-                console.log('🗑️ Expirando solo cartones en uso:', reason);
-                set(ref(database, `playerCards/${cleanPhone}`), allCards);
+            try {
+                let allCards = snapshot.val() || [];
+                let hasChanges = false;
                 
-                // Actualizar cartones locales - solo los en_uso
-                this.cards = this.cards.map(card => {
-                    if (card.status === 'en_uso') {
-                        return {...card, status: 'vencido', expiredDate: new Date().toISOString(), expiredReason: reason};
+                allCards.forEach(card => {
+                    // Solo expirar cartones EN_USO (que estaban jugando)
+                    if (card && card.status === 'en_uso') {
+                        card.status = 'vencido';
+                        card.expiredDate = new Date().toISOString();
+                        card.expiredReason = reason;
+                        hasChanges = true;
                     }
-                    return card;
+                    // Los cartones 'vigente' se mantienen para próximo juego
                 });
                 
-                // Filtrar cartones activos restantes
-                const activeCards = this.cards.filter(c => ['vigente', 'en_uso', 'pendiente_pago'].includes(c.status));
-                if (activeCards.length === 0) {
-                    this.showAccessBlocked();
-                } else {
-                    this.showWaitingForGame();
+                if (hasChanges) {
+                    console.log('🗑️ Expirando solo cartones en uso:', reason);
+                    set(ref(database, `playerCards/${cleanPhone}`), allCards);
+                    
+                    // Actualizar cartones locales - solo los en_uso
+                    this.cards = this.cards.map(card => {
+                        if (card && card.status === 'en_uso') {
+                            return {...card, status: 'vencido', expiredDate: new Date().toISOString(), expiredReason: reason};
+                        }
+                        return card;
+                    });
+                    
+                    // Filtrar cartones activos restantes
+                    const activeCards = this.cards.filter(c => c && ['vigente', 'en_uso', 'pendiente_pago'].includes(c.status));
+                    if (activeCards.length === 0) {
+                        this.showAccessBlocked();
+                    } else {
+                        this.showWaitingForGame();
+                    }
                 }
+            } catch (error) {
+                console.error('❌ Error procesando expiración de cartones:', error);
             }
         })
         .catch(error => {
@@ -1974,18 +2178,25 @@ class GameRoom {
         
         // Obtener todos los cartones del jugador y actualizar solo los activos
         get(ref(database, `playerCards/${cleanPhone}`)).then((snapshot) => {
-            let allCards = snapshot.val() || [];
-            
-            // Actualizar cartones activos en la lista completa
-            this.cards.forEach(activeCard => {
-                const index = allCards.findIndex(c => c.id === activeCard.id);
-                if (index !== -1) {
-                    allCards[index] = activeCard;
-                }
-            });
-            
-            // Guardar en Firebase
-            return set(ref(database, `playerCards/${cleanPhone}`), allCards);
+            try {
+                let allCards = snapshot.val() || [];
+                
+                // Actualizar cartones activos en la lista completa
+                this.cards.forEach(activeCard => {
+                    if (activeCard && activeCard.id) {
+                        const index = allCards.findIndex(c => c && c.id === activeCard.id);
+                        if (index !== -1) {
+                            allCards[index] = activeCard;
+                        }
+                    }
+                });
+                
+                // Guardar en Firebase
+                return set(ref(database, `playerCards/${cleanPhone}`), allCards);
+            } catch (error) {
+                console.error('❌ Error procesando guardado de cartones:', error);
+                throw error;
+            }
         })
         .then(() => {
             console.log('✅ Cartones guardados en Firebase');
@@ -2012,29 +2223,40 @@ class GameRoom {
     // Verificar oportunidades perdidas
     checkMissedOpportunities() {
         this.cards.forEach(card => {
-            if (card.autoMode || card.missedOpportunity) return; // Solo para modo manual
-            
-            const hasBingo = this.checkBingo(card);
-            const hasPattern = this.checkPattern(card);
-            const isComplete = hasBingo || (this.currentRound === 1 && hasPattern);
-            
-            if (isComplete && card.numbersWhenCompleted) {
-                const numbersPassed = this.calledNumbers.length - card.numbersWhenCompleted;
+            try {
+                if (!card || card.autoMode || card.missedOpportunity) return; // Solo para modo manual
                 
-                if (numbersPassed >= 2) {
-                    console.log(`❌ Cartón ${card.id} perdió la oportunidad (${numbersPassed} números después)`);
-                    card.missedOpportunity = true;
+                const hasBingo = this.checkBingo(card);
+                const hasPattern = this.checkPattern(card);
+                const isComplete = hasBingo || (this.currentRound === 1 && hasPattern);
+                
+                if (isComplete && card.numbersWhenCompleted) {
+                    const numbersPassed = this.calledNumbers.length - card.numbersWhenCompleted;
                     
-                    this.showToast(`❌ Cartón ${card.code || card.id}: Perdiste la oportunidad de ganar`);
-                    this.saveCards();
+                    if (numbersPassed >= 2) {
+                        console.log(`❌ Cartón ${card.id} perdió la oportunidad (${numbersPassed} números después)`);
+                        card.missedOpportunity = true;
+                        
+                        this.showToast(`❌ Cartón ${card.code || card.id}: Perdiste la oportunidad de ganar`);
+                        this.saveCards();
+                    }
                 }
+            } catch (error) {
+                console.error('Error checking missed opportunities:', error);
             }
         });
     }
 }
 
-// Inicializar
-let gameRoom;
+// Inicialización del juego
+let gameRoom = null;
+
+// Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
-    gameRoom = new GameRoom();
+    try {
+        gameRoom = new GameRoom();
+        console.log('✅ GameRoom inicializado correctamente');
+    } catch (error) {
+        console.error('❌ Error inicializando GameRoom:', error);
+    }
 });
