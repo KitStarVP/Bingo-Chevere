@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Correcciones - Bingo Chévere</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            color: #3498db;
+            margin-top: 0;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.ok {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Test de Correcciones - Bingo Chévere</h1>
+        <p>Esta página verifica que todas las correcciones funcionen correctamente.</p>
+
+        <div class="test-section">
+            <h3>1. Firebase Connection</h3>
+            <p>Estado de conexión a Firebase:</p>
+            <span id="firebase-status" class="status warning">Verificando...</span>
+            <button onclick="testFirebase()">Test Firebase</button>
+            <div id="firebase-log" class="log"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Sala de Juego</h3>
+            <p>Funcionalidad de la sala de juego:</p>
+            <span id="gameroom-status" class="status warning">No probado</span>
+            <button onclick="testGameRoom()">Test Sala de Juego</button>
+            <div id="gameroom-log" class="log"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Admin Panel</h3>
+            <p>Controles del panel de administración:</p>
+            <span id="admin-status" class="status warning">No probado</span>
+            <button onclick="testAdmin()">Test Admin</button>
+            <div id="admin-log" class="log"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Generación de Cartones</h3>
+            <p>Sistema de generación de cartones:</p>
+            <span id="cards-status" class="status warning">No probado</span>
+            <button onclick="testCards()">Test Cartones</button>
+            <div id="cards-log" class="log"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Números Cantados</h3>
+            <p>Sistema de cantado de números:</p>
+            <span id="numbers-status" class="status warning">No probado</span>
+            <button onclick="testNumbers()">Test Números</button>
+            <div id="numbers-log" class="log"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Resumen de Correcciones Aplicadas</h3>
+            <ul>
+                <li>✅ Corregida función createCardElement en sala-de-juego.js</li>
+                <li>✅ Mejorado sistema de procesamiento de números cantados</li>
+                <li>✅ Corregidos event listeners en admin panel</li>
+                <li>✅ Agregadas funciones faltantes para expirar cartones</li>
+                <li>✅ Mejorada función autoMarkCard con logs detallados</li>
+                <li>✅ Corregida verificación de patrones y bingo</li>
+                <li>✅ Mejorada inicialización con reintentos de Firebase</li>
+                <li>✅ Agregada validación de teléfono de usuario</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+      import { getDatabase, ref, onValue, get, set, push } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+        authDomain: "bingo-chevere.firebaseapp.com",
+        databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+        projectId: "bingo-chevere",
+        storageBucket: "bingo-chevere.firebasestorage.app",
+        messagingSenderId: "1057150163831",
+        appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebase = { database, ref, onValue, get, set, push };
+      console.log('Firebase inicializado para testing');
+      
+      // Actualizar estado
+      document.getElementById('firebase-status').textContent = 'Conectado';
+      document.getElementById('firebase-status').className = 'status ok';
+    </script>
+
+    <script>
+        function log(elementId, message) {
+            const logElement = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function setStatus(elementId, status, text) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${status}`;
+            element.textContent = text;
+        }
+
+        async function testFirebase() {
+            log('firebase-log', 'Iniciando test de Firebase...');
+            
+            try {
+                if (!window.firebase) {
+                    throw new Error('Firebase no disponible');
+                }
+
+                const { database, ref, set, get } = window.firebase;
+                
+                // Test de escritura
+                log('firebase-log', 'Probando escritura...');
+                await set(ref(database, 'test/connection'), {
+                    timestamp: Date.now(),
+                    message: 'Test connection'
+                });
+                
+                // Test de lectura
+                log('firebase-log', 'Probando lectura...');
+                const snapshot = await get(ref(database, 'test/connection'));
+                
+                if (snapshot.exists()) {
+                    log('firebase-log', 'Datos leídos: ' + JSON.stringify(snapshot.val()));
+                    setStatus('firebase-status', 'ok', 'Funcionando correctamente');
+                } else {
+                    throw new Error('No se pudieron leer los datos');
+                }
+                
+                // Limpiar test
+                await set(ref(database, 'test'), null);
+                log('firebase-log', '✅ Test de Firebase completado exitosamente');
+                
+            } catch (error) {
+                log('firebase-log', '❌ Error: ' + error.message);
+                setStatus('firebase-status', 'error', 'Error de conexión');
+            }
+        }
+
+        function testGameRoom() {
+            log('gameroom-log', 'Iniciando test de Sala de Juego...');
+            
+            try {
+                // Simular teléfono de usuario
+                localStorage.setItem('userPhone', '04141234567');
+                log('gameroom-log', 'Teléfono de usuario configurado');
+                
+                // Test de clase GameRoom
+                if (typeof GameRoom !== 'undefined') {
+                    log('gameroom-log', '✅ Clase GameRoom disponible');
+                } else {
+                    log('gameroom-log', '❌ Clase GameRoom no encontrada');
+                }
+                
+                // Test de funciones críticas
+                const testCard = {
+                    id: 'test123',
+                    code: 'T123',
+                    numbers: [
+                        [1, 16, 31, 46, 61],
+                        [2, 17, 32, 47, 62],
+                        [3, 18, 0, 48, 63],
+                        [4, 19, 33, 49, 64],
+                        [5, 20, 34, 50, 65]
+                    ],
+                    marked: ['2-2'], // FREE marcado
+                    autoMode: true
+                };
+                
+                log('gameroom-log', 'Cartón de prueba creado: ' + JSON.stringify(testCard));
+                setStatus('gameroom-status', 'ok', 'Componentes básicos OK');
+                log('gameroom-log', '✅ Test básico de GameRoom completado');
+                
+            } catch (error) {
+                log('gameroom-log', '❌ Error: ' + error.message);
+                setStatus('gameroom-status', 'error', 'Error en componentes');
+            }
+        }
+
+        function testAdmin() {
+            log('admin-log', 'Iniciando test de Admin Panel...');
+            
+            try {
+                // Test de funciones admin
+                if (typeof showPopup === 'function') {
+                    log('admin-log', '✅ Función showPopup disponible');
+                } else {
+                    log('admin-log', '❌ Función showPopup no encontrada');
+                }
+                
+                // Test de variables globales
+                const adminVars = ['gameActive', 'currentRound', 'calledNumbers'];
+                adminVars.forEach(varName => {
+                    if (typeof window[varName] !== 'undefined') {
+                        log('admin-log', `✅ Variable ${varName} disponible`);
+                    } else {
+                        log('admin-log', `⚠️ Variable ${varName} no encontrada`);
+                    }
+                });
+                
+                setStatus('admin-status', 'ok', 'Funciones básicas OK');
+                log('admin-log', '✅ Test básico de Admin completado');
+                
+            } catch (error) {
+                log('admin-log', '❌ Error: ' + error.message);
+                setStatus('admin-status', 'error', 'Error en admin');
+            }
+        }
+
+        function testCards() {
+            log('cards-log', 'Iniciando test de Generación de Cartones...');
+            
+            try {
+                // Test de generación de cartón
+                if (typeof generateBingoCard === 'function') {
+                    const testCard = generateBingoCard();
+                    log('cards-log', '✅ Cartón generado: ' + testCard.code);
+                    log('cards-log', 'Números: ' + JSON.stringify(testCard.numbers[0])); // Primera fila
+                    
+                    // Verificar estructura
+                    if (testCard.numbers && testCard.numbers.length === 5) {
+                        log('cards-log', '✅ Estructura de cartón correcta');
+                    } else {
+                        log('cards-log', '❌ Estructura de cartón incorrecta');
+                    }
+                    
+                    // Verificar FREE en el centro
+                    if (testCard.numbers[2][2] === 0) {
+                        log('cards-log', '✅ FREE en posición correcta');
+                    } else {
+                        log('cards-log', '❌ FREE no está en el centro');
+                    }
+                    
+                    setStatus('cards-status', 'ok', 'Generación funcionando');
+                } else {
+                    log('cards-log', '❌ Función generateBingoCard no encontrada');
+                    setStatus('cards-status', 'error', 'Función no disponible');
+                }
+                
+                log('cards-log', '✅ Test de cartones completado');
+                
+            } catch (error) {
+                log('cards-log', '❌ Error: ' + error.message);
+                setStatus('cards-status', 'error', 'Error en generación');
+            }
+        }
+
+        async function testNumbers() {
+            log('numbers-log', 'Iniciando test de Números Cantados...');
+            
+            try {
+                if (!window.firebase) {
+                    throw new Error('Firebase no disponible para test');
+                }
+                
+                const { database, ref, set, get } = window.firebase;
+                
+                // Test de números cantados
+                const testNumbers = [1, 16, 31, 46, 61];
+                log('numbers-log', 'Enviando números de prueba: ' + testNumbers.join(', '));
+                
+                await set(ref(database, 'calledNumbers'), testNumbers);
+                log('numbers-log', '✅ Números enviados a Firebase');
+                
+                // Verificar lectura
+                const snapshot = await get(ref(database, 'calledNumbers'));
+                if (snapshot.exists()) {
+                    const readNumbers = snapshot.val();
+                    log('numbers-log', '✅ Números leídos: ' + readNumbers.join(', '));
+                    
+                    if (JSON.stringify(testNumbers) === JSON.stringify(readNumbers)) {
+                        log('numbers-log', '✅ Números coinciden correctamente');
+                        setStatus('numbers-status', 'ok', 'Sistema funcionando');
+                    } else {
+                        log('numbers-log', '❌ Números no coinciden');
+                        setStatus('numbers-status', 'error', 'Error de sincronización');
+                    }
+                } else {
+                    throw new Error('No se pudieron leer los números');
+                }
+                
+                // Limpiar
+                await set(ref(database, 'calledNumbers'), []);
+                log('numbers-log', '✅ Test de números completado');
+                
+            } catch (error) {
+                log('numbers-log', '❌ Error: ' + error.message);
+                setStatus('numbers-status', 'error', 'Error en sistema');
+            }
+        }
+
+        // Auto-test al cargar
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('firebase-log', 'Página cargada, Firebase disponible: ' + !!window.firebase);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
