@@ -123,16 +123,11 @@
                             <button id="resume-game" class="control-btn resume" style="display: none;">▶️ Reanudar</button>
                             <button id="reschedule-game" class="control-btn secondary">📅 Reprogramar</button>
                             <button id="next-round" class="control-btn secondary">➡️ Siguiente Ronda</button>
-                            <button id="finish-game" class="control-btn end">🏁 Finalizar Juego</button>
-                            <button id="close-bingo" class="control-btn warning">🔒 Cerrar Bingo Completo</button>
+                            <button id="finalize-bingo" class="control-btn end">🏁 FINALIZAR BINGO</button>
                         </div>
                     </div>
                     
-                    <div class="control-section emergency-section">
-                        <h4>🚨 Emergencia:</h4>
-                        <button id="emergency-stop" class="control-btn cancel">🛑 Parada de Emergencia</button>
-                        <small>Solo usar en caso de problemas graves</small>
-                    </div>
+
                 </div>
             </div>
             
@@ -276,6 +271,10 @@
                     <div class="prize-stat">
                         <span class="stat-number" id="total-pending">BsF 0</span>
                         <span class="stat-label">Total Pendiente</span>
+                    </div>
+                    <div class="prize-stat">
+                        <span class="stat-number" id="total-paid">BsF 0</span>
+                        <span class="stat-label">Total Pago</span>
                     </div>
                 </div>
                 
@@ -1143,7 +1142,7 @@
         /* ESTILOS PARA GESTIÓN DE PREMIOS */
         .prize-stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 0.5rem;
             margin-bottom: 1rem;
         }
@@ -1896,6 +1895,205 @@
             margin: 0 0 0.5rem 0;
             font-size: 0.9rem;
         }
+        
+        /* Estilos para popups personalizados del admin */
+        .admin-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .admin-popup-overlay.show {
+            opacity: 1;
+        }
+        
+        .admin-popup {
+            background: white;
+            border-radius: 12px;
+            min-width: 300px;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        
+        .admin-popup-overlay.show .admin-popup {
+            transform: scale(1);
+        }
+        
+        .admin-popup-header {
+            padding: 1rem 1.5rem;
+            border-radius: 12px 12px 0 0;
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .admin-popup-header.success {
+            background: #28a745;
+        }
+        
+        .admin-popup-header.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .admin-popup-header.error {
+            background: #dc3545;
+        }
+        
+        .admin-popup-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        
+        .admin-popup-content {
+            padding: 1.5rem;
+        }
+        
+        .admin-popup-content p {
+            margin: 0;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .admin-popup-actions {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+        
+        .admin-popup-btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .admin-popup-btn.primary {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .admin-popup-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .admin-popup-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* Estilos para formulario de reprogramación */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        /* Estilos para selector de reprogramación */
+        .reschedule-popup {
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        .reschedule-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .reschedule-section h4 {
+            margin: 0 0 0.75rem 0;
+            color: var(--accent-color);
+            font-size: 1rem;
+        }
+        
+        .date-options, .time-options, .price-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .date-option, .time-option, .price-option {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        
+        .date-option:hover, .time-option:hover, .price-option:hover {
+            background: #e9ecef;
+            border-color: var(--accent-color);
+        }
+        
+        .date-option input[type="radio"], 
+        .time-option input[type="radio"], 
+        .price-option input[type="radio"] {
+            margin-right: 0.75rem;
+            transform: scale(1.2);
+        }
+        
+        .date-option input[type="date"] {
+            margin-left: 0.5rem;
+            padding: 0.25rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .date-option:has(input[type="radio"]:checked),
+        .time-option:has(input[type="radio"]:checked),
+        .price-option:has(input[type="radio"]:checked) {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        
+        .time-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        @media (max-width: 600px) {
+            .time-options {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 
     <!-- Firebase Configuration -->
@@ -2003,49 +2201,61 @@
             especial: { price: 150, multiplier: 3, maxCards: 5, duration: 75 }
         };
         
-        // Patrones únicos y complicados
-        const bingoPatterns = [
-            {
-                name: "Cruz Diagonal",
-                description: "Ambas diagonales completas",
-                positions: [[0,0],[1,1],[2,2],[3,3],[4,4],[0,4],[1,3],[2,2],[3,1],[4,0]]
-            },
-            {
-                name: "Marcos Dobles",
-                description: "Bordes exteriores e interiores",
-                positions: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[1,4],[2,0],[2,4],[3,0],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4],[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3]]
-            },
-            {
-                name: "Estrella de 8 Puntas",
-                description: "Patrón de estrella compleja",
-                positions: [[0,2],[1,1],[1,3],[2,0],[2,2],[2,4],[3,1],[3,3],[4,2],[1,0],[1,4],[0,1],[0,3],[3,0],[3,4],[4,1],[4,3]]
-            },
-            {
-                name: "Espiral Completa",
-                description: "Espiral desde esquina",
-                positions: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,3],[4,2],[4,1],[4,0],[3,0],[2,0],[1,0],[1,1],[1,2],[1,3],[2,3],[3,3],[3,2],[3,1],[2,1],[2,2]]
-            },
-            {
-                name: "Diamante Expandido",
-                description: "Diamante con extensiones",
-                positions: [[0,2],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[2,4],[3,1],[3,2],[3,3],[4,2],[0,1],[0,3],[1,0],[1,4],[3,0],[3,4],[4,1],[4,3]]
-            },
-            {
-                name: "Zigzag Completo",
-                description: "Patrón zigzag por todo el cartón",
-                positions: [[0,0],[0,2],[0,4],[1,1],[1,3],[2,0],[2,2],[2,4],[3,1],[3,3],[4,0],[4,2],[4,4]]
-            },
-            {
-                name: "Cuadrados Anidados",
-                description: "Tres cuadrados concéntricos",
-                positions: [[0,0],[0,1],[0,2],[0,3],[0,4],[1,0],[1,4],[2,0],[2,4],[3,0],[3,4],[4,0],[4,1],[4,2],[4,3],[4,4],[1,1],[1,2],[1,3],[2,1],[2,3],[3,1],[3,2],[3,3]]
-            },
-            {
-                name: "Flecha Doble",
-                description: "Dos flechas apuntando al centro",
-                positions: [[0,0],[0,4],[1,1],[1,3],[2,2],[3,1],[3,3],[4,0],[4,4],[1,0],[1,4],[2,1],[2,3],[3,0],[3,4]]
+        // Sistema de patrones aleatorios únicos (sin FREE, nunca repetir)
+        let usedPatterns = JSON.parse(localStorage.getItem('usedPatterns') || '[]');
+        
+        function generateRandomPattern() {
+            let attempts = 0;
+            let newPattern;
+            
+            do {
+                const positions = [];
+                const numPositions = 8 + Math.floor(Math.random() * 5); // 8-12 posiciones
+                const availablePositions = [];
+                
+                // Crear todas las posiciones disponibles (sin FREE)
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        if (!(row === 2 && col === 2)) { // Excluir FREE
+                            availablePositions.push([row, col]);
+                        }
+                    }
+                }
+                
+                // Seleccionar posiciones aleatorias
+                for (let i = 0; i < numPositions && availablePositions.length > 0; i++) {
+                    const randomIndex = Math.floor(Math.random() * availablePositions.length);
+                    positions.push(availablePositions.splice(randomIndex, 1)[0]);
+                }
+                
+                newPattern = {
+                    name: `Patrón Único ${Date.now()}`,
+                    description: `Patrón aleatorio de ${numPositions} posiciones`,
+                    positions: positions.sort((a, b) => a[0] - b[0] || a[1] - b[1])
+                };
+                
+                attempts++;
+            } while (isPatternUsed(newPattern) && attempts < 100);
+            
+            if (attempts >= 100) {
+                // Si no se puede generar único, limpiar historial
+                usedPatterns = [];
+                localStorage.setItem('usedPatterns', JSON.stringify([]));
             }
-        ];
+            
+            // Guardar patrón usado
+            usedPatterns.push(JSON.stringify(newPattern.positions));
+            localStorage.setItem('usedPatterns', JSON.stringify(usedPatterns));
+            
+            return newPattern;
+        }
+        
+        function isPatternUsed(pattern) {
+            const patternString = JSON.stringify(pattern.positions);
+            return usedPatterns.includes(patternString);
+        }
+        
+        const bingoPatterns = [generateRandomPattern()];
 
         // Inicializar panel
         document.addEventListener('DOMContentLoaded', () => {
@@ -2299,10 +2509,10 @@
                         </div>
                         
                         <div class="verification-actions" style="display: flex; gap: 0.5rem; justify-content: center;">
-                            <button onclick="verifyIndividualWinner(${i})" class="admin-btn primary" style="flex: 1;">
+                            <button onclick="verifyIndividualWinner(${i})" class="admin-btn primary" style="flex: 1; padding: 0.5rem; font-size: 0.8rem;">
                                 ✓ Verificar Este
                             </button>
-                            <button onclick="rejectIndividualWinner(${i})" class="admin-btn danger" style="flex: 1;">
+                            <button onclick="rejectIndividualWinner(${i})" class="admin-btn danger" style="flex: 1; padding: 0.5rem; font-size: 0.8rem;">
                                 ✗ Rechazar Este
                             </button>
                         </div>
@@ -2450,36 +2660,66 @@
         // Variables globales para múltiples ganadores
         let currentBingoList = [];
         
+        // Hacer funciones globales para los botones
+        window.verifyIndividualWinner = verifyIndividualWinner;
+        window.rejectIndividualWinner = rejectIndividualWinner;
+        window.verifyAllWinners = verifyAllWinners;
+        window.rejectAllWinners = rejectAllWinners;
+        
         async function verifyIndividualWinner(index) {
+            if (!currentBingoList[index]) {
+                console.error('Ganador no encontrado en índice:', index);
+                return;
+            }
+            
             const bingoData = currentBingoList[index];
-            await processWinnerVerification(bingoData);
+            console.log('Verificando ganador individual:', bingoData);
             
-            // Remover de la lista
-            currentBingoList.splice(index, 1);
-            
-            if (currentBingoList.length === 0) {
-                // No quedan más ganadores
-                clearPendingVerification();
-            } else {
-                // Actualizar vista con ganadores restantes
-                showBingoPending(currentBingoList);
+            try {
+                await processWinnerVerification(bingoData);
+                
+                // Remover de la lista
+                currentBingoList.splice(index, 1);
+                
+                if (currentBingoList.length === 0) {
+                    // No quedan más ganadores
+                    await clearPendingVerification();
+                    showAdminPopup('Ganador Verificado', 'Ganador verificado correctamente', 'success');
+                } else {
+                    // Actualizar vista con ganadores restantes
+                    await showBingoPending(currentBingoList);
+                }
+            } catch (error) {
+                console.error('Error verificando ganador individual:', error);
+                showAdminPopup('Error', 'Error verificando ganador: ' + error.message, 'error');
             }
         }
         
         async function rejectIndividualWinner(index) {
+            if (!currentBingoList[index]) {
+                console.error('Ganador no encontrado en índice:', index);
+                return;
+            }
+            
             const bingoData = currentBingoList[index];
             console.log('Rechazando ganador individual:', bingoData);
             
-            // Remover de la lista
-            currentBingoList.splice(index, 1);
-            
-            if (currentBingoList.length === 0) {
-                // No quedan más ganadores, reanudar juego
-                await resumeGameAfterRejection();
-                clearPendingVerification();
-            } else {
-                // Actualizar vista con ganadores restantes
-                showBingoPending(currentBingoList);
+            try {
+                // Remover de la lista
+                currentBingoList.splice(index, 1);
+                
+                if (currentBingoList.length === 0) {
+                    // No quedan más ganadores, reanudar juego
+                    await resumeGameAfterRejection();
+                    await clearPendingVerification();
+                    showAdminPopup('Ganador Rechazado', 'Ganador rechazado. El juego continúa.', 'warning');
+                } else {
+                    // Actualizar vista con ganadores restantes
+                    await showBingoPending(currentBingoList);
+                }
+            } catch (error) {
+                console.error('Error rechazando ganador individual:', error);
+                showAdminPopup('Error', 'Error rechazando ganador: ' + error.message, 'error');
             }
         }
         
@@ -2694,7 +2934,7 @@
                         message: 'Ronda 2 iniciando desde cero'
                     });
                     
-                    showPopup('Patrón Verificado', `¡Patrón verificado! Premio: BsF ${winner.amount}. Iniciando Ronda 2 desde CERO...`);
+                    showAdminPopup('Patrón Verificado', `¡Patrón verificado! Premio: BsF ${winner.amount}. Iniciando Ronda 2 desde CERO...`, 'success');
                 } else {
                     // Partida completa - expirar TODOS los cartones
                     gameActive = false;
@@ -2716,7 +2956,7 @@
                     expireAllActiveCards();
                     activateNextGameCards();
                     
-                    showPopup('BINGO Verificado', `¡${winner.type} verificado! Premio: BsF ${winner.amount}. Partida completa - todos los cartones expirados.`);
+                    showAdminPopup('BINGO Verificado', `¡${winner.type} verificado! Premio: BsF ${winner.amount}. Partida completa - todos los cartones expirados.`, 'success');
                 }
                 
                 await set(ref(database, 'gameState'), gameState);
@@ -2728,7 +2968,7 @@
                 updateStats();
             } catch (error) {
                 console.error('Error verifying winner:', error);
-                showPopup('Error', 'Error verificando ganador: ' + error.message);
+                showAdminPopup('Error', 'Error verificando ganador: ' + error.message, 'error');
             }
         }
         
@@ -2760,10 +3000,10 @@
                 delete gameState.pauseTimestamp;
                 await set(ref(database, 'gameState'), gameState);
                 
-                showPopup('BINGO Rechazado', 'El BINGO fue rechazado. El juego continúa.');
+                showAdminPopup('BINGO Rechazado', 'El BINGO fue rechazado. El juego continúa.', 'warning');
             } catch (error) {
                 console.error('Error rejecting winner:', error);
-                showPopup('Error', 'Error rechazando BINGO: ' + error.message);
+                showAdminPopup('Error', 'Error rechazando BINGO: ' + error.message, 'error');
             }
         }
         
@@ -2796,10 +3036,12 @@
             const pendingPrizes = bingoPrizes.filter(p => p.status === 'pending');
             const paidPrizes = bingoPrizes.filter(p => p.status === 'paid');
             const totalPending = pendingPrizes.reduce((sum, p) => sum + p.amount, 0);
+            const totalPaid = paidPrizes.reduce((sum, p) => sum + p.amount, 0);
             
             document.getElementById('pending-prizes').textContent = pendingPrizes.length;
             document.getElementById('paid-prizes').textContent = paidPrizes.length;
             document.getElementById('total-pending').textContent = `BsF ${totalPending.toFixed(2)}`;
+            document.getElementById('total-paid').textContent = `BsF ${totalPaid.toFixed(2)}`;
         }
         
         function showPrizeTab(tab) {
@@ -2908,12 +3150,12 @@
                 
                 localStorage.setItem('bingoPrizes', JSON.stringify(bingoPrizes));
                 
-                showPopup('Premio Pagado', `Premio de BsF ${prize.amount} marcado como pagado`);
+                showAdminPopup('Premio Pagado', `Premio de BsF ${prize.amount} marcado como pagado`, 'success');
                 updatePrizeStats();
                 showPrizeTab(currentPrizeTab);
             } catch (error) {
                 console.error('Error marking prize as paid:', error);
-                showPopup('Error', 'Error marcando premio como pagado: ' + error.message);
+                showAdminPopup('Error', 'Error marcando premio como pagado: ' + error.message, 'error');
             }
         }
         
@@ -3188,13 +3430,83 @@
             });
         }
         
-        // Función para mostrar popup
-        function showPopup(title, message) {
-            if (window.showCustomPopup) {
-                window.showCustomPopup(title, message);
-            } else {
-                alert(title + '\n\n' + message);
+        // Sistema de popups personalizados para admin
+        function showAdminPopup(title, message, type = 'info') {
+            const popup = document.createElement('div');
+            popup.className = 'admin-popup-overlay';
+            popup.innerHTML = `
+                <div class="admin-popup">
+                    <div class="admin-popup-header ${type}">
+                        <h3>${title}</h3>
+                    </div>
+                    <div class="admin-popup-content">
+                        <p>${message}</p>
+                    </div>
+                    <div class="admin-popup-actions">
+                        <button class="admin-popup-btn" onclick="closeAdminPopup(this)">Entendido</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(popup);
+            setTimeout(() => popup.classList.add('show'), 10);
+        }
+        
+        function showAdminConfirm(title, message, onConfirm, onCancel = null) {
+            const popup = document.createElement('div');
+            popup.className = 'admin-popup-overlay';
+            popup.innerHTML = `
+                <div class="admin-popup">
+                    <div class="admin-popup-header warning">
+                        <h3>${title}</h3>
+                    </div>
+                    <div class="admin-popup-content">
+                        <p>${message}</p>
+                    </div>
+                    <div class="admin-popup-actions">
+                        <button class="admin-popup-btn secondary" onclick="cancelAdminConfirm(this)">Cancelar</button>
+                        <button class="admin-popup-btn primary" onclick="confirmAdminAction(this)">Confirmar</button>
+                    </div>
+                </div>
+            `;
+            popup.dataset.onConfirm = 'temp_confirm_action';
+            window.temp_confirm_action = onConfirm;
+            if (onCancel) {
+                popup.dataset.onCancel = 'temp_cancel_action';
+                window.temp_cancel_action = onCancel;
             }
+            document.body.appendChild(popup);
+            setTimeout(() => popup.classList.add('show'), 10);
+        }
+        
+        function closeAdminPopup(btn) {
+            const popup = btn.closest('.admin-popup-overlay');
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+        
+        function confirmAdminAction(btn) {
+            const popup = btn.closest('.admin-popup-overlay');
+            const confirmFn = popup.dataset.onConfirm;
+            if (confirmFn && window[confirmFn]) {
+                window[confirmFn]();
+                delete window[confirmFn];
+            }
+            closeAdminPopup(btn);
+        }
+        
+        function cancelAdminConfirm(btn) {
+            const popup = btn.closest('.admin-popup-overlay');
+            const cancelFn = popup.dataset.onCancel;
+            if (cancelFn && window[cancelFn]) {
+                window[cancelFn]();
+                delete window[cancelFn];
+            }
+            closeAdminPopup(btn);
+        }
+        
+        // Función para mostrar popup (mantener compatibilidad)
+        function showPopup(title, message) {
+            showAdminPopup(title, message);
         }
         
         // SISTEMA DE MONITOREO DE FIREBASE
@@ -3276,7 +3588,7 @@
         document.getElementById('start-scheduled')?.addEventListener('click', () => {
             const selector = document.getElementById('bingo-selector');
             if (!selector.value) {
-                showPopup('Error', 'Selecciona un bingo programado');
+                showAdminPopup('Error', 'Selecciona un bingo programado', 'error');
                 return;
             }
             startGameSafely('scheduled', selector.value);
@@ -3285,7 +3597,7 @@
         // FUNCIONES SEGURAS PARA CONTROLES DE JUEGO
         function startGameSafely(type, bingoId = null) {
             if (gameActive) {
-                showPopup('Error', 'Ya hay un juego activo');
+                showAdminPopup('Error', 'Ya hay un juego activo', 'error');
                 return;
             }
             
@@ -3295,7 +3607,9 @@
             gameActive = true;
             currentRound = 1;
             calledNumbers = [];
-            currentPattern = null;
+            
+            // Generar patrón aleatorio único para este juego
+            currentPattern = generateRandomPattern();
             
             // Generar nuevo ID de juego
             const newGameId = Date.now();
@@ -3307,12 +3621,12 @@
                 // Limpiar números cantados del juego anterior
                 set(ref(database, 'calledNumbers'), []);
                 
-                // Crear nuevo estado de juego
+                // Crear nuevo estado de juego con patrón único
                 const newGameState = {
                     gameActive: true,
                     currentRound: 1,
                     calledNumbers: [],
-                    currentPattern: null,
+                    currentPattern: currentPattern,
                     gameId: newGameId,
                     gameType: type,
                     startedAt: Date.now(),
@@ -3322,21 +3636,22 @@
                 };
                 
                 set(ref(database, 'gameState'), newGameState);
-                console.log('✅ Nuevo estado de juego creado en Firebase');
+                console.log('✅ Nuevo estado de juego creado con patrón único:', currentPattern.name);
             }
             
             // Actualizar UI
             updateGameControlsUI();
             
-            // El cantado automático ahora es independiente
-            
-            const message = type === 'instant' ? '⚡ Bingo instantáneo iniciado' : '📅 Bingo programado iniciado';
-            showPopup('Nuevo Juego', message);
+            const message = type === 'instant' ? 'Bingo instantáneo iniciado' : 'Bingo programado iniciado';
+            showAdminPopup('Nuevo Juego', message + ` - ${currentPattern.name}`, 'success');
             updateStats();
         }
         
         function pauseGameSafely() {
-            if (!gameActive) return;
+            if (!gameActive) {
+                showAdminPopup('Error', 'No hay juego activo para pausar', 'error');
+                return;
+            }
             
             gameActive = false;
             stopAutomaticCalling();
@@ -3357,7 +3672,7 @@
             }
             
             updateGameControlsUI();
-            showPopup('Juego Pausado', 'El juego ha sido pausado');
+            showAdminPopup('Juego Pausado', 'El juego ha sido pausado por el administrador', 'warning');
         }
         
         function updateGameControlsUI() {
@@ -3373,13 +3688,27 @@
                     statusBadge.textContent = '▶️ Activo';
                     statusBadge.className = 'status-badge active';
                 } else {
-                    statusBadge.textContent = '⏸️ Inactivo';
-                    statusBadge.className = 'status-badge';
+                    // Verificar si está pausado o finalizado
+                    if (window.firebase) {
+                        const { database, ref, get } = window.firebase;
+                        get(ref(database, 'gameState')).then(snapshot => {
+                            const gameState = snapshot.val();
+                            if (gameState && gameState.isPaused) {
+                                statusBadge.textContent = '⏸️ Pausado';
+                                statusBadge.className = 'status-badge paused';
+                            } else {
+                                statusBadge.textContent = '⏹️ Inactivo';
+                                statusBadge.className = 'status-badge';
+                            }
+                        });
+                    } else {
+                        statusBadge.textContent = '⏹️ Inactivo';
+                        statusBadge.className = 'status-badge';
+                    }
                 }
             }
             
-            // Controles activos siempre visibles
-            
+            // Mostrar/ocultar botones de pausa/reanudación
             if (pauseBtn && resumeBtn) {
                 if (gameActive) {
                     pauseBtn.style.display = 'inline-block';
@@ -3418,6 +3747,11 @@
         }
         
         function resumeGameSafely() {
+            if (gameActive) {
+                showAdminPopup('Error', 'El juego ya está activo', 'error');
+                return;
+            }
+            
             gameActive = true;
             
             if (window.firebase) {
@@ -3429,35 +3763,63 @@
                         gameActive: true,
                         isPaused: false,
                         pauseReason: null,
-                        pauseTimestamp: null
+                        pauseTimestamp: null,
+                        adminStarted: true
                     });
                 });
             }
             
-            startAutomaticCalling();
+            // El cantado automático se reinicia automáticamente
             updateGameControlsUI();
-            showPopup('Juego Reanudado', 'El juego ha sido reanudado');
+            showAdminPopup('Juego Reanudado', 'El juego ha sido reanudado', 'success');
         }
         
         function nextRoundSafely() {
             if (currentRound >= 2) {
-                showPopup('Error', 'Ya estás en la última ronda');
+                showAdminPopup('Límite Alcanzado', 'Ya estás en la última ronda (2). No se puede avanzar más.', 'warning');
                 return;
             }
+            
+            showAdminConfirm('Siguiente Ronda', '¿Avanzar a la Ronda 2?<br><br>• Se limpiarán los números cantados<br>• Los cartones se desmarcarán<br>• Iniciará desde cero', () => {
+                executeNextRound();
+            });
+        }
+        
+        function executeNextRound() {
             
             currentRound = 2;
             calledNumbers = [];
             currentPattern = null;
             
-            saveGameStateToFirebaseSafely();
-            
+            // Resetear para Ronda 2
             if (window.firebase) {
                 const { database, ref, set } = window.firebase;
+                
+                const gameState = {
+                    gameActive: true,
+                    currentRound: 2,
+                    calledNumbers: [],
+                    roundTwoReset: true,
+                    resetTimestamp: Date.now(),
+                    adminControlled: true
+                };
+                
+                set(ref(database, 'gameState'), gameState);
                 set(ref(database, 'calledNumbers'), []);
+                
+                // Resetear cartones
+                resetAllCardsForRound2();
+                
+                // Enviar señal de reinicio
+                set(ref(database, 'roundTwoReset'), {
+                    reset: true,
+                    timestamp: Date.now(),
+                    message: 'Ronda 2 iniciando desde cero'
+                });
             }
             
             updateGameControlsUI();
-            showPopup('Ronda 2', 'Avanzando a la ronda 2');
+            showAdminPopup('Ronda 2 Iniciada', 'Ronda 2 iniciada desde CERO. Cartones reseteados.', 'success');
             updateStats();
         }
         
@@ -3519,8 +3881,208 @@
         }
         
         function rescheduleCurrentGame() {
-            if (!window.confirm('📅 REPROGRAMAR PARTIDA\n\n¿Reprogramar la partida actual?\n\n• Se pausará el juego\n• Los cartones seguirán vigentes\n• Se podrá reanudar después\n\n¿Continuar?')) return;
+            showRescheduleForm();
+        }
+        
+        function showRescheduleForm() {
+            const popup = document.createElement('div');
+            popup.className = 'admin-popup-overlay';
+            popup.innerHTML = `
+                <div class="admin-popup">
+                    <div class="admin-popup-header">
+                        <h3>📅 Reprogramar Bingo</h3>
+                    </div>
+                    <div class="admin-popup-content">
+                        <div class="form-group">
+                            <label>Fecha (YYYY-MM-DD):</label>
+                            <input type="text" id="reschedule-date" placeholder="2024-01-15">
+                        </div>
+                        <div class="form-group">
+                            <label>Hora (HH:MM):</label>
+                            <input type="text" id="reschedule-time" placeholder="18:00">
+                        </div>
+                        <div class="form-group">
+                            <label>Precio por cartón:</label>
+                            <input type="text" id="reschedule-price" placeholder="60" value="60">
+                        </div>
+                    </div>
+                    <div class="admin-popup-actions">
+                        <button class="admin-popup-btn secondary" onclick="closeRescheduleForm(this)">Cancelar</button>
+                        <button class="admin-popup-btn primary" onclick="executeRescheduleForm(this)">Reprogramar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(popup);
+            setTimeout(() => popup.classList.add('show'), 10);
+        }
+        
+        function closeRescheduleForm(btn) {
+            const popup = btn.closest('.admin-popup-overlay');
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+        
+        function executeRescheduleForm(btn) {
+            const popup = btn.closest('.admin-popup-overlay');
             
+            const newDate = popup.querySelector('#reschedule-date').value.trim();
+            const newTime = popup.querySelector('#reschedule-time').value.trim();
+            const newPrice = popup.querySelector('#reschedule-price').value.trim();
+            
+            if (!newDate) {
+                showAdminPopup('Error', 'Ingresa la fecha', 'error');
+                return;
+            }
+            
+            if (!newTime || !newTime.match(/^\d{2}:\d{2}$/)) {
+                showAdminPopup('Error', 'Formato de hora inválido. Usa HH:MM', 'error');
+                return;
+            }
+            
+            if (!newPrice) {
+                showAdminPopup('Error', 'Ingresa el precio', 'error');
+                return;
+            }
+            
+            closeRescheduleForm(btn);
+            processReschedule(newDate, newTime, newPrice);
+        }
+        
+        function oldShowRescheduleSelector() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            const dayAfter = new Date(today);
+            dayAfter.setDate(today.getDate() + 2);
+            
+            const popup = document.createElement('div');
+            popup.className = 'admin-popup-overlay';
+            popup.innerHTML = `
+                <div class="admin-popup reschedule-popup">
+                    <div class="admin-popup-header">
+                        <h3>📅 Reprogramar Bingo</h3>
+                    </div>
+                    <div class="admin-popup-content">
+                        <div class="reschedule-section">
+                            <h4>Fecha:</h4>
+                            <div class="date-options">
+                                <label class="date-option">
+                                    <input type="radio" name="reschedule-date" value="${tomorrow.toISOString().split('T')[0]}">
+                                    <span>Mañana (${tomorrow.toLocaleDateString('es-ES')})</span>
+                                </label>
+                                <label class="date-option">
+                                    <input type="radio" name="reschedule-date" value="${dayAfter.toISOString().split('T')[0]}">
+                                    <span>Pasado mañana (${dayAfter.toLocaleDateString('es-ES')})</span>
+                                </label>
+                                <label class="date-option">
+                                    <input type="radio" name="reschedule-date" value="custom">
+                                    <span>Fecha personalizada:</span>
+                                    <input type="date" id="custom-date" min="${today.toISOString().split('T')[0]}">
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="reschedule-section">
+                            <h4>Hora:</h4>
+                            <div class="time-options">
+                                <label class="time-option">
+                                    <input type="radio" name="reschedule-time" value="14:00">
+                                    <span>2:00 PM</span>
+                                </label>
+                                <label class="time-option">
+                                    <input type="radio" name="reschedule-time" value="16:00">
+                                    <span>4:00 PM</span>
+                                </label>
+                                <label class="time-option">
+                                    <input type="radio" name="reschedule-time" value="18:00">
+                                    <span>6:00 PM</span>
+                                </label>
+                                <label class="time-option">
+                                    <input type="radio" name="reschedule-time" value="20:00">
+                                    <span>8:00 PM</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="reschedule-section">
+                            <h4>Precio por cartón:</h4>
+                            <div class="price-options">
+                                <label class="price-option">
+                                    <input type="radio" name="reschedule-price" value="60">
+                                    <span>BsF 60 (Normal)</span>
+                                </label>
+                                <label class="price-option">
+                                    <input type="radio" name="reschedule-price" value="100">
+                                    <span>BsF 100 (Premium)</span>
+                                </label>
+                                <label class="price-option">
+                                    <input type="radio" name="reschedule-price" value="150">
+                                    <span>BsF 150 (Especial)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="admin-popup-actions">
+                        <button class="admin-popup-btn secondary" onclick="closeRescheduleSelector(this)">Cancelar</button>
+                        <button class="admin-popup-btn primary" onclick="executeReschedule(this)">Reprogramar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(popup);
+            setTimeout(() => popup.classList.add('show'), 10);
+        }
+        
+        function closeRescheduleSelector(btn) {
+            const popup = btn.closest('.admin-popup-overlay');
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+        
+        function executeReschedule(btn) {
+            const popup = btn.closest('.admin-popup-overlay');
+            
+            // Obtener fecha seleccionada
+            const dateRadio = popup.querySelector('input[name="reschedule-date"]:checked');
+            if (!dateRadio) {
+                showAdminPopup('Error', 'Selecciona una fecha', 'error');
+                return;
+            }
+            
+            let newDate = dateRadio.value;
+            if (newDate === 'custom') {
+                const customDate = popup.querySelector('#custom-date').value;
+                if (!customDate) {
+                    showAdminPopup('Error', 'Ingresa la fecha personalizada', 'error');
+                    return;
+                }
+                newDate = customDate;
+            }
+            
+            // Obtener hora seleccionada
+            const timeRadio = popup.querySelector('input[name="reschedule-time"]:checked');
+            if (!timeRadio) {
+                showAdminPopup('Error', 'Selecciona una hora', 'error');
+                return;
+            }
+            const newTime = timeRadio.value;
+            
+            // Obtener precio seleccionado
+            const priceRadio = popup.querySelector('input[name="reschedule-price"]:checked');
+            if (!priceRadio) {
+                showAdminPopup('Error', 'Selecciona un precio', 'error');
+                return;
+            }
+            const newPrice = priceRadio.value;
+            
+            closeRescheduleSelector(btn);
+            processReschedule(newDate, newTime, newPrice);
+        }
+        
+        function processReschedule(newDate, newTime, newPrice) {
+            
+            console.log('Reprogramando:', { newDate, newTime, newPrice });
+            
+            // Pausar juego actual
             gameActive = false;
             stopAutomaticCalling();
             
@@ -3540,14 +4102,43 @@
                 });
             }
             
+            // Agregar a programación semanal
+            const dayOfWeek = new Date(newDate).getDay();
+            const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const dayKey = dayKeys[dayOfWeek];
+            
+            const newBingo = {
+                id: Date.now().toString(),
+                time: newTime,
+                price: parseInt(newPrice),
+                multiplier: 1,
+                maxCards: 10,
+                status: 'programmed',
+                rescheduled: true,
+                originalDate: new Date().toISOString().split('T')[0]
+            };
+            
+            if (!weeklySchedule[dayKey]) weeklySchedule[dayKey] = [];
+            weeklySchedule[dayKey].push(newBingo);
+            weeklySchedule[dayKey].sort((a, b) => a.time.localeCompare(b.time));
+            
+            saveWeeklySchedule();
+            renderWeeklyCalendar();
+            updateBingoSelector();
             updateGameControlsUI();
-            showPopup('Partida Reprogramada', 'Partida pausada. Los cartones siguen vigentes para cuando se reanude.');
+            
+            showAdminPopup('Bingo Reprogramado', `Reprogramado para ${newDate} a las ${newTime}. Los cartones siguen vigentes.`, 'success');
         }
         
-        function closeBingoCompletely() {
-            if (!window.confirm('🔒 CERRAR BINGO COMPLETO\n\n¿Estás seguro? Esto:\n• Finalizará el bingo actual\n• Expirará cartones del juego actual\n• Permitirá iniciar uno nuevo\n\n¿Continuar?')) return;
+        function finalizeBingoCompletely() {
+            showAdminConfirm('Finalizar Bingo', '¿Estás seguro? Esto:<br><br>• Finalizará toda la partida (Ronda 1 y 2)<br>• Expirará todos los cartones del juego actual<br>• Activará cartones para próximo juego<br>• Dejará el sistema listo para nuevo bingo', () => {
+                executeFinalizeBingo();
+            });
+        }
+        
+        function executeFinalizeBingo() {
             
-            console.log('🔒 Cerrando bingo completamente...');
+            console.log('🏁 Finalizando bingo completamente...');
             
             gameActive = false;
             stopAutomaticCalling();
@@ -3560,33 +4151,47 @@
                 get(ref(database, 'gameState')).then(snapshot => {
                     const currentState = snapshot.val() || {};
                     
-                    // Marcar como cerrado CON gameId actual
+                    // Marcar como finalizado completamente
                     set(ref(database, 'gameState'), {
-                        ...currentState,
                         gameActive: false,
-                        bingoClosed: true,
+                        gameFinalized: true,
+                        bothRoundsCompleted: true,
                         expireCards: true,
                         expireGameId: currentState.gameId || currentGameId,
-                        closedBy: 'admin',
-                        closedAt: Date.now(),
-                        readyForNewGame: true
+                        finalizedBy: 'admin',
+                        finalizedAt: Date.now(),
+                        currentRound: 1,
+                        readyForNewGame: true,
+                        isPaused: false,
+                        pauseReason: null,
+                        pauseTimestamp: null
                     });
+                    
+                    // Limpiar números cantados
+                    set(ref(database, 'calledNumbers'), []);
+                    
+                    // Limpiar verificaciones pendientes
+                    set(ref(database, 'pendingBingoVerification'), null);
+                    set(ref(database, 'globalBingoAlert'), null);
                 });
             }
             
-            // Expirar solo cartones del juego actual
+            // Expirar cartones del juego actual
             expireCardsFromCurrentGame();
             
+            // Resetear variables del admin
             currentRound = 1;
             selectedBingoIndex = -1;
             calledNumbers = [];
             currentPattern = null;
             
+            // Activar cartones para próximo juego
             activateNextGameCards();
+            
             updateGameControlsUI();
             updateStats();
             
-            showPopup('🔒 Bingo Cerrado', 'Bingo cerrado. Cartones del juego actual expirados.');
+            showAdminPopup('Bingo Finalizado', 'Bingo finalizado completamente. Sistema listo para nuevo juego.', 'success');
         }
 
         document.getElementById('pause-round').addEventListener('click', () => {
@@ -3677,24 +4282,12 @@
                 });
             }
             
-            const finishGame = document.getElementById('finish-game');
-            if (finishGame) {
-                finishGame.addEventListener('click', () => {
-                    finishGameSafely();
-                });
-            }
+
             
-            const emergencyStop = document.getElementById('emergency-stop');
-            if (emergencyStop) {
-                emergencyStop.addEventListener('click', () => {
-                    emergencyStopSafely();
-                });
-            }
-            
-            const closeBingo = document.getElementById('close-bingo');
-            if (closeBingo) {
-                closeBingo.addEventListener('click', () => {
-                    closeBingoCompletely();
+            const finalizeBingo = document.getElementById('finalize-bingo');
+            if (finalizeBingo) {
+                finalizeBingo.addEventListener('click', () => {
+                    finalizeBingoCompletely();
                 });
             }
             
@@ -4118,16 +4711,17 @@
         function approvePayment(paymentId) {
             try {
                 const payment = allPayments.find(p => p.id === paymentId);
-                if (!payment) {
-                    console.error('Pago no encontrado:', paymentId);
+                if (!payment || payment.status !== 'pending') {
+                    console.error('Pago no encontrado o ya procesado:', paymentId);
                     return;
                 }
                 
                 if (!window.firebase) {
-                    showPopup('Error', 'Firebase no disponible - no se puede aprobar el pago');
+                    showAdminPopup('Error', 'Firebase no disponible - no se puede aprobar el pago', 'error');
                     return;
                 }
                 
+                // Cambiar estado inmediatamente para evitar duplicados
                 payment.status = 'verified';
                 payment.verifiedDate = new Date().toISOString();
                 
@@ -4139,13 +4733,15 @@
                 // Generar cartones para el jugador
                 generateCardsForPlayer(payment.phone, payment.cartones);
                 
-                showPopup('Pago Aprobado', `Se han asignado ${payment.cartones} cartones al teléfono ${payment.phone}`);
-                loadPendingPurchases();
+                showAdminPopup('Pago Aprobado', `Se han asignado ${payment.cartones} cartones al teléfono ${payment.phone}`, 'success');
+                
+                // Actualizar inmediatamente la UI
+                updatePaymentStats();
                 filterPayments();
                 updateStats();
             } catch (error) {
                 console.error('Error approving payment:', error);
-                showPopup('Error', 'Error aprobando pago: ' + error.message);
+                showAdminPopup('Error', 'Error aprobando pago: ' + error.message, 'error');
             }
         }
 
@@ -4153,27 +4749,30 @@
         function rejectPayment(paymentId) {
             try {
                 const payment = allPayments.find(p => p.id === paymentId);
-                if (!payment) {
-                    console.error('Pago no encontrado:', paymentId);
+                if (!payment || payment.status !== 'pending') {
+                    console.error('Pago no encontrado o ya procesado:', paymentId);
                     return;
                 }
                 
                 if (!window.firebase) {
-                    showPopup('Error', 'Firebase no disponible - no se puede rechazar el pago');
+                    showAdminPopup('Error', 'Firebase no disponible - no se puede rechazar el pago', 'error');
                     return;
                 }
                 
+                // Cambiar estado inmediatamente para evitar duplicados
                 payment.status = 'rejected';
                 payment.rejectedDate = new Date().toISOString();
                 
                 updatePurchaseInFirebase(payment);
                 
-                showPopup('Pago Rechazado', `Pago del teléfono ${payment.phone} ha sido rechazado.`);
-                loadPendingPurchases();
+                showAdminPopup('Pago Rechazado', `Pago del teléfono ${payment.phone} ha sido rechazado.`, 'warning');
+                
+                // Actualizar inmediatamente la UI
+                updatePaymentStats();
                 filterPayments();
             } catch (error) {
                 console.error('Error rejecting payment:', error);
-                showPopup('Error', 'Error rechazando pago: ' + error.message);
+                showAdminPopup('Error', 'Error rechazando pago: ' + error.message, 'error');
             }
         }
 

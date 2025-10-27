@@ -149,7 +149,7 @@ class GameRoom {
         // Header del cartón
         const cardHeader = document.createElement('div');
         cardHeader.className = 'card-header';
-        cardHeader.textContent = `${cardCode} (${card.autoMode ? 'AUTO' : 'MANUAL'})`;
+        cardHeader.textContent = cardCode;
         
         // Letras BINGO
         const bingoLetters = document.createElement('div');
@@ -175,13 +175,25 @@ class GameRoom {
                 const cellKey = `${row}-${col}`;
                 const isMarked = card.marked.includes(cellKey) || isFree;
                 const wasCalled = this.calledNumbers.includes(number) && !isFree;
-                const isPatternCell = this.currentRound === 1 && this.currentPattern && 
-                    this.currentPattern.positions && this.currentPattern.positions.some(pos => pos[0] === row && pos[1] === col);
+                // Patrón visual para Ronda 1
+                let isPatternCell = false;
+                if (this.currentRound === 1) {
+                    if (this.currentPattern && this.currentPattern.positions) {
+                        isPatternCell = this.currentPattern.positions.some(pos => pos[0] === row && pos[1] === col);
+                    } else {
+                        // Patrón por defecto: Cruz sin centro
+                        const defaultPattern = [[0,2], [1,2], [3,2], [4,2], [2,0], [2,1], [2,3], [2,4]];
+                        isPatternCell = defaultPattern.some(pos => pos[0] === row && pos[1] === col);
+                    }
+                }
                 
                 if (isMarked) cell.classList.add('marked');
                 if (isFree) cell.classList.add('free');
                 if (wasCalled) cell.classList.add('called');
-                if (isPatternCell) cell.style.border = '2px solid #9b59b6';
+                if (isPatternCell) {
+                    cell.style.border = '3px solid #9b59b6';
+                    cell.style.boxShadow = '0 0 5px rgba(155, 89, 182, 0.5)';
+                }
                 
                 cell.dataset.cardId = card.id;
                 cell.dataset.row = row;
@@ -340,8 +352,8 @@ class GameRoom {
     checkPattern(card) {
         if (!card.marked) return false;
         if (!this.currentPattern || !this.currentPattern.positions) {
-            // Si no hay patrón definido, usar patrón simple (4 esquinas + centro)
-            const simplePattern = [[0,0], [0,4], [2,2], [4,0], [4,4]];
+            // Si no hay patrón definido, usar patrón cruz sin centro
+            const simplePattern = [[0,2], [1,2], [3,2], [4,2], [2,0], [2,1], [2,3], [2,4]];
             for (const [row, col] of simplePattern) {
                 const cellKey = `${row}-${col}`;
                 if (!card.marked.includes(cellKey)) {
@@ -354,7 +366,9 @@ class GameRoom {
         for (const [row, col] of this.currentPattern.positions) {
             const cellKey = `${row}-${col}`;
             const isFree = card.numbers[row][col] === 0;
-            if (!isFree && !card.marked.includes(cellKey)) {
+            // NO usar el FREE en patrones
+            if (isFree) continue;
+            if (!card.marked.includes(cellKey)) {
                 return false;
             }
         }
@@ -679,40 +693,43 @@ class GameRoom {
 
         grid.innerHTML = '';
         
-        const sections = [
-            { start: 1, end: 15, letter: 'B' },
-            { start: 16, end: 30, letter: 'I' },
-            { start: 31, end: 45, letter: 'N' },
-            { start: 46, end: 60, letter: 'G' },
-            { start: 61, end: 75, letter: 'O' }
-        ];
-
-        sections.forEach(section => {
-            const sectionDiv = document.createElement('div');
-            sectionDiv.className = 'number-section';
+        // Crear grid simple del 1 al 75
+        const gridContainer = document.createElement('div');
+        gridContainer.style.display = 'grid';
+        gridContainer.style.gridTemplateColumns = 'repeat(10, 1fr)';
+        gridContainer.style.gap = '3px';
+        gridContainer.style.padding = '0.3rem';
+        
+        for (let i = 1; i <= 75; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'number-cell';
+            cell.textContent = i;
+            cell.id = `num-${i}`;
+            cell.style.aspectRatio = '1';
+            cell.style.background = '#ecf0f1';
+            cell.style.display = 'flex';
+            cell.style.alignItems = 'center';
+            cell.style.justifyContent = 'center';
+            cell.style.fontSize = '0.75rem';
+            cell.style.fontWeight = '600';
+            cell.style.color = '#7f8c8d';
+            cell.style.borderRadius = '4px';
+            cell.style.transition = 'all 0.3s ease';
             
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'section-header';
-            headerDiv.textContent = section.letter;
-            sectionDiv.appendChild(headerDiv);
-            
-            for (let i = section.start; i <= section.end; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'number-cell';
-                cell.textContent = i;
-                cell.id = `num-${i}`;
-                
-                if (this.calledNumbers.includes(i)) {
-                    cell.classList.add('called');
-                    cell.style.background = '#3498db';
-                    cell.style.color = 'white';
-                }
-                
-                sectionDiv.appendChild(cell);
+            if (this.calledNumbers.includes(i)) {
+                cell.classList.add('called');
+                cell.style.background = '#3498db';
+                cell.style.color = 'white';
+                cell.style.transform = 'scale(1.05)';
+                cell.style.border = '2px solid #2980b9';
+                cell.style.boxShadow = '0 2px 8px rgba(52,152,219,0.4)';
+                cell.style.fontWeight = '900';
             }
             
-            grid.appendChild(sectionDiv);
-        });
+            gridContainer.appendChild(cell);
+        }
+        
+        grid.appendChild(gridContainer);
     }
 
     markNumberCalled(number) {
@@ -721,6 +738,10 @@ class GameRoom {
             cell.classList.add('called');
             cell.style.background = '#3498db';
             cell.style.color = 'white';
+            cell.style.transform = 'scale(1.05)';
+            cell.style.border = '2px solid #2980b9';
+            cell.style.boxShadow = '0 2px 8px rgba(52,152,219,0.4)';
+            cell.style.fontWeight = '900';
         }
     }
 
@@ -735,9 +756,18 @@ class GameRoom {
     }
 
     showPattern() {
-        if (!this.currentPattern || this.currentRound !== 1) {
+        if (this.currentRound !== 1) {
             this.showToast('Patrón solo disponible en Ronda 1');
             return;
+        }
+        
+        // Usar patrón actual o patrón por defecto
+        let patternPositions = [];
+        if (this.currentPattern && this.currentPattern.positions) {
+            patternPositions = this.currentPattern.positions;
+        } else {
+            // Patrón por defecto: Cruz sin centro
+            patternPositions = [[0,2], [1,2], [3,2], [4,2], [2,0], [2,1], [2,3], [2,4]];
         }
         
         const modal = document.getElementById('pattern-modal');
@@ -757,7 +787,7 @@ class GameRoom {
                         cell.textContent = 'FREE';
                     } else {
                         // Verificar si esta posición está en el patrón
-                        const isActive = this.currentPattern.positions.some(pos => pos[0] === row && pos[1] === col);
+                        const isActive = patternPositions.some(pos => pos[0] === row && pos[1] === col);
                         if (isActive) {
                             cell.classList.add('active');
                         }

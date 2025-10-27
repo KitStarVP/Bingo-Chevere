@@ -22,7 +22,7 @@ class AutoCaller {
 
     startRobustCalling() {
         let lastCallTime = Date.now();
-        const CALL_INTERVAL = 6000; // 6 segundos
+        const CALL_INTERVAL = 12000; // 12 segundos - lento y uniforme para ambas rondas
         
         const scheduleNextCall = async () => {
             if (!this.isRunning || !window.firebase) return;
@@ -104,7 +104,7 @@ class AutoCaller {
         this.keepAlive = setInterval(() => {
             if (this.isRunning) {
                 const now = Date.now();
-                if (now - lastCallTime > 8000) { // 8 segundos sin actividad
+                if (now - lastCallTime > 12000) { // 12 segundos sin actividad
                     console.log('🔄 Reactivando cantado automático');
                     scheduleNextCall();
                 }
