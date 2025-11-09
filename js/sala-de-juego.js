@@ -506,7 +506,10 @@ class GameRoom {
                 const newNumbers = sortedNumbers.filter(num => !this.calledNumbers.includes(num));
                 if (newNumbers.length > 0) {
                     console.log('🔥 Nuevos números desde calledNumbersList:', newNumbers);
-                    this.addNumbersToQueue(newNumbers);
+                    // PROCESAMIENTO INSTANTÁNEO - Sin cola
+                    newNumbers.forEach(number => {
+                        this.processNewNumberInstantly(number);
+                    });
                 }
                 
                 // Actualizar lista completa
@@ -523,7 +526,10 @@ class GameRoom {
                 if (newNumbers.length > 0 && this.calledNumbers.length === 0) {
                     // Solo usar como fallback si calledNumbersList está vacío
                     console.log('🔥 Fallback: usando calledNumbers');
-                    this.addNumbersToQueue(newNumbers);
+                    // PROCESAMIENTO INSTANTÁNEO - Sin cola
+                    newNumbers.forEach(number => {
+                        this.processNewNumberInstantly(number);
+                    });
                     this.calledNumbers = [...firebaseNumbers];
                     this.generateNumbersGrid();
                 }
