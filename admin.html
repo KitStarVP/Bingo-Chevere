@@ -2248,6 +2248,7 @@
     <script src="js/card-generator.js"></script>
     <script src="js/admin-functions.js"></script>
     <script src="js/bingo-verification.js"></script>
+    <script src="js/admin-fix.js"></script>
     <script>
         // Sistema de bingos diarios
         // VARIABLES LIMPIAS - Solo las necesarias
@@ -3501,6 +3502,116 @@
             loadPurchasesFromFirebase();
         }
         
+        // Función para cargar compras desde Firebase
+        function loadPurchasesFromFirebase() {
+            if (!window.firebase) {
+                console.error('❌ Firebase no disponible para cargar compras');
+                return;
+            }
+            
+            const { database, ref, onValue } = window.firebase;
+            onValue(ref(database, 'purchases'), (snapshot) => {
+                const purchases = snapshot.val();
+                if (purchases) {
+                    allPayments = Object.values(purchases).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    console.log('✅ Compras cargadas desde Firebase:', allPayments.length);
+                } else {
+                    allPayments = [];
+                }
+                updatePaymentStats();
+            }, (error) => {
+                console.error('❌ Error cargando compras:', error);
+                allPayments = [];
+                updatePaymentStats();
+            });
+        }
+        
+        // Función para actualizar compra en Firebase
+        function updatePurchaseInFirebase(purchase) {
+            if (!window.firebase) return;
+            
+            const { database, ref, set } = window.firebase;
+            set(ref(database, `purchases/${purchase.id}`), purchase)
+                .then(() => console.log('✅ Compra actualizada en Firebase'))
+                .catch(error => console.error('❌ Error actualizando compra:', error));
+        }
+        
+        // Función para generar cartones para jugador
+        function generateCardsForPlayer(phone, quantity) {
+            if (!window.firebase) return;
+            
+            const { database, ref, get, set } = window.firebase;
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            
+            get(ref(database, `playerCards/${cleanPhone}`)).then((snapshot) => {
+                let existingCards = snapshot.val() || [];
+                
+                // Generar nuevos cartones
+                for (let i = 0; i < quantity; i++) {
+                    const newCard = {
+                        id: Date.now() + i,
+                        code: `C${Date.now()}${i}`,
+                        numbers: generateBingoCard(),
+                        status: 'vigente',
+                        purchaseDate: new Date().toISOString(),
+                        marked: ['2-2'], // Solo FREE marcado inicialmente
+                        round: 1
+                    };
+                    existingCards.push(newCard);
+                }
+                
+                return set(ref(database, `playerCards/${cleanPhone}`), existingCards);
+            }).then(() => {
+                console.log(`✅ ${quantity} cartones generados para ${phone}`);
+            }).catch(error => {
+                console.error('❌ Error generando cartones:', error);
+            });
+        }
+        
+        // Función para generar cartón de bingo
+        function generateBingoCard() {
+            const card = [];
+            const ranges = {
+                0: [1, 15],   // B
+                1: [16, 30],  // I
+                2: [31, 45],  // N
+                3: [46, 60],  // G
+                4: [61, 75]   // O
+            };
+            
+            for (let col = 0; col < 5; col++) {
+                const column = [];
+                const [min, max] = ranges[col];
+                const used = new Set();
+                
+                for (let row = 0; row < 5; row++) {
+                    if (col === 2 && row === 2) {
+                        column.push(0); // FREE space
+                    } else {
+                        let num;
+                        do {
+                            num = Math.floor(Math.random() * (max - min + 1)) + min;
+                        } while (used.has(num));
+                        used.add(num);
+                        column.push(num);
+                    }
+                }
+                card.push(column);
+            }
+            
+            // Transponer para obtener formato [fila][columna]
+            const transposed = [];
+            for (let row = 0; row < 5; row++) {
+                const rowData = [];
+                for (let col = 0; col < 5; col++) {
+                    rowData.push(card[col][row]);
+                }
+                transposed.push(rowData);
+            }
+            
+            return transposed;
+        }
+        
         // Guardar ganador en Firebase
         function saveWinnerToFirebase(winner) {
             if (!window.firebase) return;
@@ -3779,7 +3890,11 @@
         
         // Función para mostrar popup (mantener compatibilidad)
         function showPopup(title, message) {
-            showAdminPopup(title, message);
+            if (window.showAdminPopup) {
+                showAdminPopup(title, message);
+            } else {
+                alert(`${title}: ${message}`);
+            }
         }
         
         // SISTEMA DE MONITOREO DE FIREBASE
