@@ -801,7 +801,7 @@ window.filterWinners = function() {
 };
 
 window.resetAllCards = async function() {
-    if (!await window.modal.confirm('¿Resetear todos los cartones?')) return;
+    if (!await window.modal.confirm('¿Resetear todos los cartones? Esto limpiará todas las marcas pero mantendrá los cartones activos.')) return;
     
     if (!window.firebase) {
         window.modal.error('Firebase no disponible');
@@ -830,7 +830,7 @@ window.resetAllCards = async function() {
             }
         }
         
-        window.modal.success('Cartones reseteados');
+        window.modal.success('Cartones reseteados - marcas limpiadas');
     } catch (error) {
         window.modal.error('Error: ' + error.message);
     }
@@ -875,7 +875,7 @@ window.expireAllCards = async function() {
 };
 
 window.clearGameData = async function() {
-    if (!await window.modal.confirm('¿Limpiar datos del juego actual?')) return;
+    if (!await window.modal.confirm('¿Limpiar datos del juego actual? Esto solo limpia el estado del juego, no los cartones ni compras.')) return;
     
     if (!window.firebase) {
         window.modal.error('Firebase no disponible');
@@ -898,6 +898,57 @@ window.clearGameData = async function() {
         window.modal.success('Datos del juego limpiados');
     } catch (error) {
         window.modal.error('Error: ' + error.message);
+    }
+};
+
+window.resetTotalSystem = async function() {
+    const confirmed = await window.modal.confirm(
+        '⚠️ RESET TOTAL DEL SISTEMA\n\n¿Estás seguro? Esto eliminará:\n• Todos los usuarios y cartones\n• Todas las compras y pagos\n• Todos los ganadores y premios\n• Estado del juego completo\n• Historial completo\n\nEsta acción NO se puede deshacer.',
+        '🗑️ RESET TOTAL',
+        '⚠️'
+    );
+    
+    if (!confirmed) return;
+    
+    if (!window.firebase) {
+        window.modal.error('Firebase no disponible');
+        return;
+    }
+    
+    try {
+        const { database, ref, set } = window.firebase;
+        
+        // Limpiar TODOS los datos de Firebase
+        await Promise.all([
+            set(ref(database, 'gameState'), null),
+            set(ref(database, 'calledNumbers'), null),
+            set(ref(database, 'playerCards'), null),
+            set(ref(database, 'purchases'), null),
+            set(ref(database, 'winners'), null),
+            set(ref(database, 'prizes'), null),
+            set(ref(database, 'users'), null),
+            set(ref(database, 'pendingBingoVerification'), null),
+            set(ref(database, 'globalBingoAlert'), null),
+            set(ref(database, 'bingoVerificationResult'), null),
+            set(ref(database, 'roundTwoReset'), null)
+        ]);
+        
+        // Limpiar localStorage (mantener solo configuración)
+        const keysToKeep = [];
+        const allKeys = Object.keys(localStorage);
+        allKeys.forEach(key => {
+            if (!keysToKeep.includes(key)) {
+                localStorage.removeItem(key);
+            }
+        });
+        
+        window.modal.success('✅ RESET TOTAL COMPLETADO\n\nTodos los datos han sido eliminados. La página se recargará...');
+        
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+    } catch (error) {
+        window.modal.error('Error durante el reset: ' + error.message);
     }
 };
 
