@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6C63FF">
+    <title>Mi Perfil</title>
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/perfil.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="mobile-header">
+            <a href="index.html" class="back-btn">←</a>
+            <div class="header-title"><h1>Mi Perfil</h1></div>
+            <div class="header-spacer"></div>
+        </header>
+
+        <div class="content">
+            <!-- Login -->
+            <div id="login-section" style="display:none">
+                <div class="login-card">
+                    <h2>🔐 Iniciar Sesión</h2>
+                    <input type="tel" id="login-phone" placeholder="Teléfono" maxlength="11" class="input-field">
+                    <input type="password" id="login-pin" placeholder="PIN" maxlength="4" class="input-field">
+                    <button id="login-btn" class="submit-btn">Entrar</button>
+                </div>
+            </div>
+
+            <!-- Perfil -->
+            <div id="profile-section" style="display:none">
+                <div class="profile-card">
+                    <div class="profile-avatar">👤</div>
+                    <h3 id="user-name">Usuario</h3>
+                    <p id="user-phone">0424-1234567</p>
+                </div>
+
+                <div class="stats-card">
+                    <h2>📊 Estadísticas</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value" id="total-tickets">0</span>
+                            <span class="stat-label">Cartones</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="total-wins">0</span>
+                            <span class="stat-label">Victorias</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="total-spent">0</span>
+                            <span class="stat-label">Gastado</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="total-prizes">0</span>
+                            <span class="stat-label">Ganado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="logout-btn" class="logout-btn">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Inicio</span>
+            </a>
+            <a href="comprar.html" class="nav-item">
+                <span class="nav-icon">🎫</span>
+                <span class="nav-label">Comprar</span>
+            </a>
+            <a href="juego.html" class="nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Jugar</span>
+            </a>
+            <a href="premios.html" class="nav-item">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">Premios</span>
+            </a>
+            <a href="perfil.html" class="nav-item active">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Perfil</span>
+            </a>
+        </nav>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+            authDomain: "bingo-chevere.firebaseapp.com",
+            databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+            projectId: "bingo-chevere",
+            storageBucket: "bingo-chevere.firebasestorage.app",
+            messagingSenderId: "1057150163831",
+            appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        window.firebase = { database, ref, onValue, get };
+    </script>
+    <script src="js/perfil.js"></script>
+</body>
+</html>

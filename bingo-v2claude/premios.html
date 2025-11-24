@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6C63FF">
+    <title>Premios</title>
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/premios.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="mobile-header">
+            <a href="index.html" class="back-btn">←</a>
+            <div class="header-title"><h1>Premios</h1></div>
+            <div class="header-spacer"></div>
+        </header>
+
+        <div class="content">
+            <section class="prize-card">
+                <h2>🏆 Premios de Hoy</h2>
+                <div class="prize-total" id="total">BsF 0</div>
+                <div class="prize-breakdown">
+                    <div class="breakdown-item">
+                        <span>🎯 Patrón</span>
+                        <strong id="pattern">BsF 0</strong>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>🏆 Lleno</span>
+                        <strong id="full">BsF 0</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="winners-section">
+                <h2>🎉 Ganadores Recientes</h2>
+                <div class="winners-list" id="winners"></div>
+            </section>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Inicio</span>
+            </a>
+            <a href="comprar.html" class="nav-item">
+                <span class="nav-icon">🎫</span>
+                <span class="nav-label">Comprar</span>
+            </a>
+            <a href="juego.html" class="nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Jugar</span>
+            </a>
+            <a href="premios.html" class="nav-item active">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">Premios</span>
+            </a>
+            <a href="perfil.html" class="nav-item">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Perfil</span>
+            </a>
+        </nav>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+            authDomain: "bingo-chevere.firebaseapp.com",
+            databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+            projectId: "bingo-chevere",
+            storageBucket: "bingo-chevere.firebasestorage.app",
+            messagingSenderId: "1057150163831",
+            appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        window.firebase = { database, ref, onValue };
+    </script>
+    <script src="js/premios.js"></script>
+</body>
+</html>
