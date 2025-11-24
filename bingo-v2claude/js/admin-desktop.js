@@ -787,17 +787,18 @@ class DesktopAdmin {
             return;
         }
 
-        window.ultraCaller.start();
+        // Iniciar como ADMIN (prioridad)
+        window.ultraCaller.start(true);
         this.callerActive = true;
         
         const callerStatus = document.getElementById('caller-status');
         const callerStatusMain = document.getElementById('caller-status-main');
         if (callerStatus) {
-            callerStatus.textContent = '🟢 Activo';
+            callerStatus.textContent = '🟢 Activo (ADMIN)';
             callerStatus.className = 'status-badge active';
         }
         if (callerStatusMain) {
-            callerStatusMain.textContent = '🟢 Activo';
+            callerStatusMain.textContent = '🟢 Activo (ADMIN)';
             callerStatusMain.className = 'status-badge active';
         }
         

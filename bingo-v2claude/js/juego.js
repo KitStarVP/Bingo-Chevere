@@ -185,7 +185,12 @@ class MobileGameRoom {
 
     toggleCell(cardId, row, col) {
         const card = this.cards.find(c => c.id == cardId);
-        if (!card || card.autoMode) return;
+        if (!card) return;
+        
+        if (card.autoMode) {
+            this.showToast('Desactiva modo automático para marcar manualmente');
+            return;
+        }
 
         const number = card.numbers[row][col];
         if (!number || number === 0) return;
@@ -210,8 +215,11 @@ class MobileGameRoom {
         card.autoMode = isAuto;
         
         if (card.autoMode) {
+            this.showToast('Modo automático activado');
             const hadNewMarks = this.autoMarkCard(card);
             if (hadNewMarks) this.saveCardToFirebase(card);
+        } else {
+            this.showToast('Modo manual activado');
         }
 
         this.renderCards();
@@ -279,7 +287,13 @@ class MobileGameRoom {
         if (!card) return;
 
         const hasBingo = this.checkBingo(card);
-        if (!hasBingo) return;
+        if (!hasBingo) {
+            this.showToast('Este cartón no tiene BINGO completo');
+            return;
+        }
+
+        this.showToast('🏆 ¡BINGO! Enviando para verificación...');
+        this.showBingoAlert();
 
         if (window.firebase) {
             const userPhone = localStorage.getItem('userPhone');
@@ -296,6 +310,16 @@ class MobileGameRoom {
             const { database, ref, set } = window.firebase;
             set(ref(database, 'pendingBingoVerification'), bingoData);
         }
+    }
+
+    showBingoAlert() {
+        const alert = document.getElementById('bingo-alert');
+        if (alert) alert.style.display = 'flex';
+    }
+
+    hideBingoAlert() {
+        const alert = document.getElementById('bingo-alert');
+        if (alert) alert.style.display = 'none';
     }
 
     loadInitialGameState() {
@@ -316,10 +340,36 @@ class MobileGameRoom {
         get(ref(database, 'calledNumbers')).then((snapshot) => {
             const numbers = snapshot.val();
             if (numbers && Array.isArray(numbers)) {
-                this.calledNumbers = [...numbers];
+                // Extraer solo los números
+                this.calledNumbers = numbers.map(n => typeof n === 'object' ? n.number : n);
                 this.processExistingNumbers();
             }
         });
+        
+        // Iniciar caller si es jugador
+        this.startCallerIfNeeded();
+    }
+    
+    startCallerIfNeeded() {
+        // Los jugadores también pueden ser callers
+        if (typeof UltraCaller !== 'undefined' && window.firebase) {
+            if (!window.ultraCaller) {
+                window.ultraCaller = new UltraCaller(window.firebase.database);
+            }
+            // Iniciar como jugador (no admin) después de cargar todo
+            setTimeout(() => {
+                if (window.ultraCaller && !window.ultraCaller.isActive) {
+                    const { database, ref, get } = window.firebase;
+                    get(ref(database, 'gameState')).then((snapshot) => {
+                        const gameState = snapshot.val();
+                        if (gameState && gameState.gameActive && !gameState.gameFinalized) {
+                            console.log('🎮 Jugador iniciando caller automático...');
+                            window.ultraCaller.start(false);
+                        }
+                    });
+                }
+            }, 3000);
+        }
     }
 
     processExistingNumbers() {
@@ -331,9 +381,11 @@ class MobileGameRoom {
         }
         
         if (this.calledNumbers.length > 0) {
+            console.log(`🔄 Procesando ${this.calledNumbers.length} números existentes...`);
             this.cards.forEach(card => {
                 if (card.autoMode) {
-                    this.autoMarkCard(card);
+                    const hadNewMarks = this.autoMarkCard(card);
+                    if (hadNewMarks) this.saveCardToFirebase(card);
                 }
             });
         }
@@ -354,11 +406,56 @@ class MobileGameRoom {
         onValue(ref(database, 'calledNumbers'), (snapshot) => {
             let firebaseNumbers = snapshot.val();
             if (firebaseNumbers && Array.isArray(firebaseNumbers)) {
-                const newNumbers = firebaseNumbers.filter(num => !this.calledNumbers.includes(num));
+                // Extraer solo los números
+                const numbers = firebaseNumbers.map(n => typeof n === 'object' ? n.number : n);
+                const newNumbers = numbers.filter(num => !this.calledNumbers.includes(num));
+                
                 if (newNumbers.length > 0) {
-                    this.addNumbersToQueue(newNumbers);
+                    // Procesar con timestamps
+                    const now = Date.now();
+                    const recentNumbers = [];
+                    const oldNumbers = [];
+                    
+                    firebaseNumbers.forEach(item => {
+                        const num = typeof item === 'object' ? item.number : item;
+                        const timestamp = typeof item === 'object' ? item.timestamp : now;
+                        
+                        if (newNumbers.includes(num)) {
+                            const age = now - timestamp;
+                            if (age < 5000) {
+                                recentNumbers.push(num);
+                            } else {
+                                oldNumbers.push(num);
+                            }
+                        }
+                    });
+                    
+                    // Procesar números viejos inmediatamente (catch-up)
+                    if (oldNumbers.length > 0) {
+                        console.log(`🔄 Recuperando ${oldNumbers.length} números perdidos...`);
+                        oldNumbers.forEach(num => {
+                            this.calledNumbers.push(num);
+                            this.markNumberCalled(num);
+                            this.cards.forEach(card => {
+                                if (card.autoMode) {
+                                    const hadNewMarks = this.autoMarkCard(card);
+                                    if (hadNewMarks) this.saveCardToFirebase(card);
+                                }
+                            });
+                        });
+                        this.renderCards();
+                        if (oldNumbers.length > 0) {
+                            this.updateCurrentNumber(oldNumbers[oldNumbers.length - 1]);
+                        }
+                    }
+                    
+                    // Procesar números recientes con cola
+                    if (recentNumbers.length > 0) {
+                        this.addNumbersToQueue(recentNumbers);
+                    }
                 }
-                this.calledNumbers = [...firebaseNumbers];
+                
+                this.calledNumbers = numbers;
                 this.generateNumbersGrid();
             }
         });
@@ -649,12 +746,25 @@ class MobileGameRoom {
     }
     
     handleBingoVerification(result) {
+        this.hideBingoAlert();
+        
         if (result.isWinner) {
-            window.modal.success(`¡Felicitaciones! Has ganado ${result.typeText}\nPremio: BsF ${result.prize || 0}`, '🏆 ¡GANADOR!');
+            const alert = document.getElementById('winner-alert');
+            const msg = document.getElementById('winner-msg');
+            const prize = document.getElementById('winner-prize');
+            
+            if (alert && msg && prize) {
+                msg.textContent = `¡Felicitaciones! Has ganado ${result.typeText}`;
+                prize.textContent = `BsF ${result.prize || 0}`;
+                alert.style.display = 'flex';
+            }
+        } else {
+            this.showToast('BINGO incorrecto. El juego continúa.');
         }
     }
     
     handleRoundTwoReset() {
+        console.log('🔄 Procesando reset de Ronda 2...');
         this.numberQueue = [];
         this.isProcessingQueue = false;
         this.lastProcessedTime = 0;
@@ -667,12 +777,13 @@ class MobileGameRoom {
         
         this.generateNumbersGrid();
         
-        const currentNumber = document.getElementById('current-number');
-        if (currentNumber) {
-            currentNumber.textContent = '--';
+        const currentBall = document.getElementById('current-ball');
+        if (currentBall) {
+            currentBall.textContent = '--';
         }
         
         this.renderCards();
+        this.showToast('🔄 Ronda 2 iniciada - Cartones reseteados');
         
         if (window.firebase) {
             const { database, ref, set } = window.firebase;
@@ -697,6 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-history')?.addEventListener('click', () => gameRoom?.closeHistory());
     document.getElementById('pattern-btn')?.addEventListener('click', () => gameRoom?.showPattern());
     document.getElementById('close-pattern')?.addEventListener('click', () => gameRoom?.closePattern());
+    document.getElementById('close-winner')?.addEventListener('click', () => gameRoom?.closeWinnerAlert());
     
     window.gameRoom = {
         showHistory: () => gameRoom?.showHistory(),

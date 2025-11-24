@@ -728,9 +728,10 @@ class MobileAdmin {
             return;
         }
 
-        window.ultraCaller.start();
+        // Iniciar como ADMIN (prioridad)
+        window.ultraCaller.start(true);
         this.callerActive = true;
-        document.getElementById('caller-status').textContent = '🟢 Activo';
+        document.getElementById('caller-status').textContent = '🟢 Activo (ADMIN)';
         document.getElementById('caller-status').className = 'status-badge active';
         document.getElementById('start-caller').style.display = 'none';
         document.getElementById('stop-caller').style.display = 'block';
