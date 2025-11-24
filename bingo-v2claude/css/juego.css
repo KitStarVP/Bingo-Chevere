@@ -6,7 +6,7 @@
 
 .game-header {
     background: linear-gradient(135deg, #6C63FF 0%, #5A52D5 100%);
-    padding: 12px 16px;
+    padding: 10px 16px;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -17,7 +17,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    gap: 8px;
 }
 
 .info-item {
@@ -40,18 +40,19 @@
 }
 
 .current-ball {
-    width: 64px;
-    height: 64px;
+    width: 60px;
+    height: 60px;
     background: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 900;
     color: var(--primary);
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     animation: ballPulse 2s infinite;
+    flex-shrink: 0;
 }
 
 @keyframes ballPulse {
@@ -59,22 +60,17 @@
     50% { transform: scale(1.05); }
 }
 
-.game-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-}
-
 .action-icon {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background: rgba(255,255,255,0.2);
     border: none;
-    border-radius: 12px;
-    font-size: 20px;
+    border-radius: 10px;
+    font-size: 18px;
     cursor: pointer;
     backdrop-filter: blur(10px);
     transition: all 0.3s;
+    flex-shrink: 0;
 }
 
 .action-icon:active {

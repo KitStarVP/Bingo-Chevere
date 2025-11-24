@@ -52,7 +52,7 @@ class MobileGameRoom {
     
     processLoadedCards() {
         this.cards.forEach(card => {
-            if (!card.marked) card.marked = [];
+            if (!card.marked) card.marked = ['2-2'];
             if (card.autoMode === undefined) card.autoMode = true;
             if (!card.id) card.id = Date.now() + Math.random();
         });
@@ -61,7 +61,10 @@ class MobileGameRoom {
         
         if (this.calledNumbers.length > 0) {
             this.cards.forEach(card => {
-                if (card.autoMode) this.autoMarkCard(card);
+                if (card.autoMode) {
+                    const hadNewMarks = this.autoMarkCard(card);
+                    if (hadNewMarks) this.saveCardToFirebase(card);
+                }
             });
             this.renderCards();
         }
@@ -196,6 +199,7 @@ class MobileGameRoom {
             card.marked.push(cellKey);
         }
         
+        this.saveCardToFirebase(card);
         this.renderCards();
     }
 
@@ -206,7 +210,8 @@ class MobileGameRoom {
         card.autoMode = isAuto;
         
         if (card.autoMode) {
-            this.autoMarkCard(card);
+            const hadNewMarks = this.autoMarkCard(card);
+            if (hadNewMarks) this.saveCardToFirebase(card);
         }
 
         this.renderCards();
@@ -426,17 +431,18 @@ class MobileGameRoom {
     }
 
     processNewNumber(number) {
-        this.callNumberWithVoice(number);
-        this.updateCurrentNumber(number);
         this.markNumberCalled(number);
         
         this.cards.forEach(card => {
             if (card.autoMode) {
-                this.autoMarkCard(card);
+                const hadNewMarks = this.autoMarkCard(card);
+                if (hadNewMarks) this.saveCardToFirebase(card);
             }
         });
         
         this.renderCards();
+        this.updateCurrentNumber(number);
+        this.callNumberWithVoice(number);
     }
 
     updateGameInfo() {
@@ -580,6 +586,67 @@ class MobileGameRoom {
         const modal = document.getElementById('pattern-modal');
         if (modal) modal.classList.remove('show');
     }
+
+    saveCardToFirebase(card) {
+        if (!window.firebase) return;
+        
+        const userPhone = localStorage.getItem('userPhone');
+        if (!userPhone) return;
+        
+        const { database, ref, get, set } = window.firebase;
+        const cleanPhone = userPhone.replace(/[^0-9]/g, '');
+        
+        get(ref(database, `playerCards/${cleanPhone}`))
+            .then((snapshot) => {
+                const firebaseCards = snapshot.val();
+                if (firebaseCards && Array.isArray(firebaseCards)) {
+                    const cardIndex = firebaseCards.findIndex(c => c.code === card.code);
+                    if (cardIndex !== -1) {
+                        firebaseCards[cardIndex].marked = card.marked;
+                        firebaseCards[cardIndex].autoMode = card.autoMode;
+                        return set(ref(database, `playerCards/${cleanPhone}`), firebaseCards);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error guardando cartón:', error);
+            });
+    }
+
+    showToast(message) {
+        let toast = document.getElementById('game-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'game-toast';
+            toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:12px 24px;border-radius:8px;z-index:9999;display:none;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    showPauseAlert() {
+        let alert = document.getElementById('pause-alert');
+        if (!alert) {
+            alert = document.createElement('div');
+            alert.id = 'pause-alert';
+            alert.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:9998;';
+            alert.innerHTML = '<div style="background:white;padding:32px;border-radius:16px;text-align:center;max-width:300px;"><div style="font-size:48px;margin-bottom:16px;">⏸️</div><h3 style="margin:0 0 8px 0;color:#333;">Juego Pausado</h3><p style="color:#666;margin:0;">El admin ha pausado el juego temporalmente</p></div>';
+            document.body.appendChild(alert);
+        }
+        alert.style.display = 'flex';
+    }
+
+    hidePauseAlert() {
+        const alert = document.getElementById('pause-alert');
+        if (alert) alert.style.display = 'none';
+    }
+
+    closeWinnerAlert() {
+        const alert = document.getElementById('winner-alert');
+        if (alert) alert.style.display = 'none';
+    }
     
     handleBingoVerification(result) {
         if (result.isWinner) {
@@ -595,6 +662,7 @@ class MobileGameRoom {
         
         this.cards.forEach(card => {
             card.marked = ['2-2'];
+            this.saveCardToFirebase(card);
         });
         
         this.generateNumbersGrid();
@@ -634,6 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showHistory: () => gameRoom?.showHistory(),
         closeHistory: () => gameRoom?.closeHistory(),
         showPattern: () => gameRoom?.showPattern(),
-        closePattern: () => gameRoom?.closePattern()
+        closePattern: () => gameRoom?.closePattern(),
+        closeWinnerAlert: () => gameRoom?.closeWinnerAlert()
     };
 });

@@ -1,5 +1,5 @@
-// Panel Admin Móvil
-class MobileAdmin {
+// Panel Admin Desktop
+class DesktopAdmin {
     constructor() {
         this.payments = [];
         this.prizes = [];
@@ -16,6 +16,7 @@ class MobileAdmin {
     }
 
     init() {
+        this.setupNavigation();
         this.loadPayments();
         this.loadPrizes();
         this.loadWinners();
@@ -23,6 +24,27 @@ class MobileAdmin {
         this.setupListeners();
         this.startRealTimeUpdates();
         this.checkPendingBingo();
+    }
+
+    setupNavigation() {
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = link.dataset.section;
+                this.showSection(section);
+                
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+    }
+
+    showSection(sectionId) {
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        document.getElementById(sectionId)?.classList.add('active');
     }
 
     setupListeners() {
@@ -36,6 +58,9 @@ class MobileAdmin {
         document.getElementById('start-caller')?.addEventListener('click', () => this.startCaller());
         document.getElementById('stop-caller')?.addEventListener('click', () => this.stopCaller());
         document.getElementById('call-manual')?.addEventListener('click', () => this.callManual());
+        document.getElementById('start-caller-main')?.addEventListener('click', () => this.startCaller());
+        document.getElementById('stop-caller-main')?.addEventListener('click', () => this.stopCaller());
+        document.getElementById('call-manual-main')?.addEventListener('click', () => this.callManual());
     }
 
     startRealTimeUpdates() {
@@ -94,7 +119,15 @@ class MobileAdmin {
                 const lastNum = numbers[numbers.length - 1];
                 if (lastNum) {
                     document.getElementById('last-number').textContent = lastNum;
+                    document.getElementById('last-number-display').textContent = lastNum;
+                    document.getElementById('last-number-caller').textContent = lastNum;
                 }
+                const totalCalled = numbers.length;
+                document.getElementById('total-called').textContent = totalCalled;
+                document.getElementById('numbers-called-count').textContent = totalCalled;
+                document.getElementById('total-called-caller').textContent = totalCalled;
+                document.getElementById('available-numbers').textContent = 75 - totalCalled;
+                document.getElementById('caller-progress').textContent = Math.round((totalCalled / 75) * 100) + '%';
             }
         });
 
@@ -134,6 +167,9 @@ class MobileAdmin {
         document.getElementById('pending-count').textContent = pending;
         document.getElementById('verified-count').textContent = verified;
         document.getElementById('rejected-count').textContent = rejected;
+        
+        const pendingPaymentsCount = document.getElementById('pending-payments-count');
+        if (pendingPaymentsCount) pendingPaymentsCount.textContent = pending;
     }
 
     updateGameStats() {
@@ -151,22 +187,43 @@ class MobileAdmin {
 
     updateGameUI() {
         const statusBadge = document.querySelector('#game-status .status-badge');
+        const statusBadge2 = document.getElementById('game-status-badge');
         const roundDisplay = document.getElementById('current-round');
+        const roundDisplay2 = document.getElementById('current-round-display');
         
-        if (!statusBadge || !roundDisplay) return;
+        if (!statusBadge && !statusBadge2) return;
         
         if (this.gameActive) {
-            statusBadge.textContent = '🟢 Activo';
-            statusBadge.className = 'status-badge active';
+            if (statusBadge) {
+                statusBadge.textContent = '🟢 Activo';
+                statusBadge.className = 'status-badge active';
+            }
+            if (statusBadge2) {
+                statusBadge2.textContent = '🟢 Activo';
+                statusBadge2.className = 'status-badge active';
+            }
         } else if (this.isPaused) {
-            statusBadge.textContent = '🟡 Pausado';
-            statusBadge.className = 'status-badge paused';
+            if (statusBadge) {
+                statusBadge.textContent = '🟡 Pausado';
+                statusBadge.className = 'status-badge paused';
+            }
+            if (statusBadge2) {
+                statusBadge2.textContent = '🟡 Pausado';
+                statusBadge2.className = 'status-badge paused';
+            }
         } else {
-            statusBadge.textContent = '🔴 Inactivo';
-            statusBadge.className = 'status-badge';
+            if (statusBadge) {
+                statusBadge.textContent = '🔴 Inactivo';
+                statusBadge.className = 'status-badge';
+            }
+            if (statusBadge2) {
+                statusBadge2.textContent = '🔴 Inactivo';
+                statusBadge2.className = 'status-badge';
+            }
         }
 
-        roundDisplay.textContent = this.currentRound;
+        if (roundDisplay) roundDisplay.textContent = this.currentRound;
+        if (roundDisplay2) roundDisplay2.textContent = this.currentRound;
 
         // Mostrar/ocultar botones
         const startBtn = document.getElementById('start-game');
@@ -629,8 +686,10 @@ class MobileAdmin {
             const users = snapshot.val();
             if (users) {
                 this.users = Object.values(users);
-                document.getElementById('total-users').textContent = this.users.length;
-                document.getElementById('active-users').textContent = this.users.filter(u => u.phone).length;
+                const totalUsers = document.getElementById('total-users');
+                const activeUsers = document.getElementById('active-users');
+                if (totalUsers) totalUsers.textContent = this.users.length;
+                if (activeUsers) activeUsers.textContent = this.users.filter(u => u.phone).length;
             }
         });
     }
@@ -730,10 +789,22 @@ class MobileAdmin {
 
         window.ultraCaller.start();
         this.callerActive = true;
-        document.getElementById('caller-status').textContent = '🟢 Activo';
-        document.getElementById('caller-status').className = 'status-badge active';
-        document.getElementById('start-caller').style.display = 'none';
-        document.getElementById('stop-caller').style.display = 'block';
+        
+        const callerStatus = document.getElementById('caller-status');
+        const callerStatusMain = document.getElementById('caller-status-main');
+        if (callerStatus) {
+            callerStatus.textContent = '🟢 Activo';
+            callerStatus.className = 'status-badge active';
+        }
+        if (callerStatusMain) {
+            callerStatusMain.textContent = '🟢 Activo';
+            callerStatusMain.className = 'status-badge active';
+        }
+        
+        document.getElementById('start-caller')?.style.setProperty('display', 'none');
+        document.getElementById('stop-caller')?.style.setProperty('display', 'block');
+        document.getElementById('start-caller-main')?.style.setProperty('display', 'none');
+        document.getElementById('stop-caller-main')?.style.setProperty('display', 'block');
     }
 
     async stopCaller() {
@@ -741,10 +812,22 @@ class MobileAdmin {
 
         window.ultraCaller.stop();
         this.callerActive = false;
-        document.getElementById('caller-status').textContent = '🔴 Detenido';
-        document.getElementById('caller-status').className = 'status-badge';
-        document.getElementById('start-caller').style.display = 'block';
-        document.getElementById('stop-caller').style.display = 'none';
+        
+        const callerStatus = document.getElementById('caller-status');
+        const callerStatusMain = document.getElementById('caller-status-main');
+        if (callerStatus) {
+            callerStatus.textContent = '🔴 Detenido';
+            callerStatus.className = 'status-badge';
+        }
+        if (callerStatusMain) {
+            callerStatusMain.textContent = '🔴 Detenido';
+            callerStatusMain.className = 'status-badge';
+        }
+        
+        document.getElementById('start-caller')?.style.setProperty('display', 'block');
+        document.getElementById('stop-caller')?.style.setProperty('display', 'none');
+        document.getElementById('start-caller-main')?.style.setProperty('display', 'block');
+        document.getElementById('stop-caller-main')?.style.setProperty('display', 'none');
     }
 
     async callManual() {
@@ -976,7 +1059,7 @@ window.resetTotalSystem = async function() {
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-        const admin = new MobileAdmin();
+        const admin = new DesktopAdmin();
         window.admin = admin;
         
         // Inicializar UltraCaller si existe
@@ -1038,24 +1121,28 @@ let firebaseMonitor = {
     },
     
     updateUI() {
-        const indicator = document.getElementById('firebase-indicator');
         const statusText = document.getElementById('firebase-status-text');
-        const dot = indicator?.querySelector('.status-dot');
-        const connectionStatus = document.getElementById('connection-status');
-        const lastSync = document.getElementById('last-sync');
-        const activeData = document.getElementById('active-data');
+        const dot = document.querySelector('.firebase-status .status-dot');
+        const connectionStatus = document.getElementById('firebase-connection-status');
+        const lastSync = document.getElementById('firebase-last-sync');
+        const activeData = document.getElementById('firebase-active-data');
         
         if (this.connected) {
             dot?.classList.add('connected');
-            dot?.classList.remove('connecting');
             if (statusText) statusText.textContent = 'Conectado';
+            if (connectionStatus) {
+                connectionStatus.textContent = '🟢 Conectado';
+                connectionStatus.className = 'status-badge active';
+            }
         } else {
             dot?.classList.remove('connected');
-            dot?.classList.add('connecting');
             if (statusText) statusText.textContent = 'Desconectado';
+            if (connectionStatus) {
+                connectionStatus.textContent = '🔴 Desconectado';
+                connectionStatus.className = 'status-badge';
+            }
         }
         
-        if (connectionStatus) connectionStatus.textContent = this.connected ? 'Activa' : 'Perdida';
         if (lastSync) lastSync.textContent = this.lastSync ? this.lastSync.toLocaleTimeString() : '--';
         if (activeData) activeData.textContent = `${this.activeData} nodos`;
     }

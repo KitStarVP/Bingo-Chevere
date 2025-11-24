@@ -11,8 +11,12 @@ class UltraCaller {
     }
 
     start() {
-        if (this.isActive) return;
+        if (this.isActive) {
+            console.log('⚠️ UltraCaller ya está activo');
+            return;
+        }
         
+        console.log('🎤 UltraCaller iniciado - Intervalo:', this.CALL_INTERVAL, 'ms');
         this.isActive = true;
         this.lastCallTime = Date.now();
         
@@ -27,9 +31,13 @@ class UltraCaller {
         if (this.callInProgress || !this.isActive) return;
         
         this.callInProgress = true;
+        console.log('🎲 UltraCaller ejecutando llamada...');
         
         try {
-            if (!window.firebase) return;
+            if (!window.firebase) {
+                console.error('❌ Firebase no disponible');
+                return;
+            }
 
             const { database, ref, get, set } = window.firebase;
             
@@ -37,23 +45,31 @@ class UltraCaller {
             const gameState = gameStateSnap.val();
             
             if (!this.shouldContinue(gameState)) {
+                console.log('⏹️ Juego no activo, deteniendo caller');
                 this.stop();
                 return;
             }
 
             const pendingSnap = await get(ref(database, 'pendingBingoVerification'));
-            if (pendingSnap.exists()) return;
+            if (pendingSnap.exists()) {
+                console.log('⏸️ BINGO pendiente, pausando cantado');
+                return;
+            }
 
             const numbersSnap = await get(ref(database, 'calledNumbers'));
             const currentNumbers = numbersSnap.val() || [];
 
             if (currentNumbers.length >= 75) {
+                console.log('✅ Todos los números cantados (75/75)');
                 this.stop();
                 return;
             }
 
             const nextNumber = this.getNextNumber(currentNumbers);
-            if (!nextNumber) return;
+            if (!nextNumber) {
+                console.error('❌ No se pudo generar siguiente número');
+                return;
+            }
 
             const updatedNumbers = [...currentNumbers, nextNumber];
             await set(ref(database, 'calledNumbers'), updatedNumbers);
@@ -65,10 +81,11 @@ class UltraCaller {
                 totalCalled: updatedNumbers.length
             });
 
+            console.log(`📢 Número cantado: ${nextNumber} (${updatedNumbers.length}/75)`);
             this.lastCallTime = Date.now();
 
         } catch (error) {
-            // Error silencioso
+            console.error('❌ Error en UltraCaller:', error);
         } finally {
             this.callInProgress = false;
         }
@@ -100,6 +117,7 @@ class UltraCaller {
     stop() {
         if (!this.isActive) return;
         
+        console.log('🛑 UltraCaller detenido');
         this.isActive = false;
         this.callInProgress = false;
         

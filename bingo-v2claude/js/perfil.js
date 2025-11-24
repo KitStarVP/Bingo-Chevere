@@ -115,9 +115,9 @@ class MobilePerfil {
         onValue(ref(database, 'purchases'), snap => {
             const purchases = snap.val();
             if (purchases) {
-                const userPurchases = Object.values(purchases).filter(p => p.phone === phone && p.status === 'verified');
+                const userPurchases = Object.values(purchases).filter(p => (p.telefono === phone || p.phone === phone) && p.status === 'verified');
                 const totalTickets = userPurchases.reduce((sum, p) => sum + p.cartones, 0);
-                const totalSpent = userPurchases.reduce((sum, p) => sum + p.amount, 0);
+                const totalSpent = userPurchases.reduce((sum, p) => sum + (p.monto || p.amount || 0), 0);
                 
                 document.getElementById('total-tickets').textContent = totalTickets;
                 document.getElementById('total-spent').textContent = `${totalSpent} BsF`;
