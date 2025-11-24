@@ -11,15 +11,10 @@ class UltraCaller {
     }
 
     start() {
-        if (this.isActive) {
-            console.log(`⚠️ UltraCaller ya activo`);
-            return;
-        }
+        if (this.isActive) return;
         
         this.isActive = true;
         this.lastCallTime = Date.now();
-        
-        console.log(`🚀 UltraCaller iniciado`);
         
         this.mainInterval = setInterval(() => {
             this.executeCall();
@@ -47,16 +42,12 @@ class UltraCaller {
             }
 
             const pendingSnap = await get(ref(database, 'pendingBingoVerification'));
-            if (pendingSnap.exists()) {
-                console.log('⏸️ BINGO pendiente');
-                return;
-            }
+            if (pendingSnap.exists()) return;
 
             const numbersSnap = await get(ref(database, 'calledNumbers'));
             const currentNumbers = numbersSnap.val() || [];
 
             if (currentNumbers.length >= 75) {
-                console.log('✅ Todos cantados');
                 this.stop();
                 return;
             }
@@ -75,10 +66,9 @@ class UltraCaller {
             });
 
             this.lastCallTime = Date.now();
-            console.log(`📢 ${nextNumber} cantado (${updatedNumbers.length}/75)`);
 
         } catch (error) {
-            console.error(`❌ Error:`, error);
+            // Error silencioso
         } finally {
             this.callInProgress = false;
         }
@@ -117,8 +107,6 @@ class UltraCaller {
             clearInterval(this.mainInterval);
             this.mainInterval = null;
         }
-        
-        console.log(`🛑 UltraCaller detenido`);
     }
 }
 
@@ -136,12 +124,10 @@ function initUltraCaller() {
         
         if (gameState && gameState.gameActive && !gameState.gameFinalized) {
             if (window.ultraCaller && !window.ultraCaller.isActive) {
-                console.log('🚀 Auto-iniciando UltraCaller');
                 window.ultraCaller.start();
             }
         } else {
             if (window.ultraCaller && window.ultraCaller.isActive) {
-                console.log('🛑 Auto-deteniendo UltraCaller');
                 window.ultraCaller.stop();
             }
         }

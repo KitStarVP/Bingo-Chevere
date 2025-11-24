@@ -15,7 +15,19 @@
         <!-- Header compacto -->
         <header class="mobile-header">
             <div class="header-brand">
-                <div class="brand-icon">🎯</div>
+                <svg class="brand-logo" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="25" cy="25" r="23" fill="url(#logoGrad)" stroke="#fff" stroke-width="2"/>
+                    <text x="25" y="32" font-family="Inter" font-weight="900" font-size="20" fill="#fff" text-anchor="middle">B</text>
+                    <circle cx="15" cy="15" r="3" fill="#fff" opacity="0.8"/>
+                    <circle cx="35" cy="15" r="2" fill="#fff" opacity="0.6"/>
+                    <circle cx="38" cy="30" r="2.5" fill="#fff" opacity="0.7"/>
+                </svg>
                 <div class="brand-text">
                     <h1>Bingo Chévere</h1>
                     <span class="brand-subtitle">¡Juega y Gana!</span>

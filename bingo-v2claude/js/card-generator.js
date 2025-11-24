@@ -42,9 +42,10 @@ function generateBingoCard() {
 function generateMultipleCards(quantity) {
     const cards = [];
     for (let i = 0; i < quantity; i++) {
+        const shortId = Math.floor(1000 + Math.random() * 9000); // 4 dígitos
         cards.push({
-            id: Date.now() + i,
-            code: `C${Date.now()}${i}`,
+            id: shortId,
+            code: `C${shortId}`,
             numbers: generateBingoCard(),
             status: 'vigente',
             createdDate: new Date().toISOString(),

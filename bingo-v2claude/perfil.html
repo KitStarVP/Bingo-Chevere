@@ -23,7 +23,7 @@
                 <div class="login-card">
                     <h2>🔐 Iniciar Sesión</h2>
                     <input type="tel" id="login-phone" placeholder="Teléfono" maxlength="11" class="input-field">
-                    <input type="password" id="login-pin" placeholder="PIN" maxlength="4" class="input-field">
+                    <input type="password" id="login-pin" placeholder="PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" class="input-field">
                     <button id="login-btn" class="submit-btn">Entrar</button>
                 </div>
             </div>
@@ -104,6 +104,7 @@
         const database = getDatabase(app);
         window.firebase = { database, ref, onValue, get };
     </script>
+    <script src="js/modal.js"></script>
     <script src="js/perfil.js"></script>
 </body>
 </html>

@@ -33,17 +33,27 @@ class MobileCompra {
             e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
         });
         
+        // Forzar solo números en campos PIN
+        const pinInputs = ['new-pin', 'confirm-pin', 'verify-pin'];
+        pinInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                });
+            }
+        });
+        
         // Navegación entre pasos
         document.getElementById('next-1').addEventListener('click', () => this.goToStep2());
         document.getElementById('next-2').addEventListener('click', () => this.goToStep3());
         document.getElementById('next-3').addEventListener('click', () => this.validateAndGoToStep4());
-        document.getElementById('finish').addEventListener('click', () => this.handleSubmit());
     }
 
     goToStep2() {
         const phone = this.phone.value;
         if (phone.length !== 11 || !phone.startsWith('04')) {
-            alert('Ingresa un teléfono válido (04241234567)');
+            window.modal.warning('Ingresa un número válido (04241234567)', 'Teléfono Inválido');
             return;
         }
         document.getElementById('step-1').style.display = 'none';
@@ -59,16 +69,31 @@ class MobileCompra {
         document.getElementById('indicator-3').classList.add('active');
     }
 
-    validateAndGoToStep4() {
+    async validateAndGoToStep4() {
         const ref = this.reference.value;
         if (ref.length !== 4) {
-            alert('Ingresa los 4 dígitos de la referencia');
+            window.modal.warning('Por favor ingresa los 4 dígitos de la referencia', 'Referencia Incompleta');
             return;
         }
-        this.goToStep4();
+        
+        const phone = this.phone.value;
+        const qty = parseInt(this.quantity.value);
+        
+        // Verificar si hay juego activo
+        const gameActive = await this.checkActiveGame();
+        if (gameActive) {
+            const confirmed = await window.modal.confirm(
+                'Hay una partida activa. Los cartones que compres serán válidos SOLO cuando termine la partida actual.\n\n¿Confirmas comprar para la próxima partida?',
+                '🚨 Partida en Curso',
+                '⚠️'
+            );
+            if (!confirmed) return;
+        }
+        
+        await this.checkUser(phone, ref, qty);
     }
 
-    goToStep4() {
+    goToStep4(purchaseId) {
         const phone = this.phone.value;
         const qty = parseInt(this.quantity.value);
         const ref = this.reference.value;
@@ -83,6 +108,8 @@ class MobileCompra {
         document.getElementById('step-4').style.display = 'block';
         document.getElementById('indicator-3').classList.remove('active');
         document.getElementById('indicator-4').classList.add('active');
+        
+        this.listenForVerification(purchaseId, phone);
     }
 
     changeQty(delta) {
@@ -109,7 +136,7 @@ class MobileCompra {
 
     async checkUser(phone, ref, qty) {
         if (!window.firebase) {
-            alert('Sistema no disponible');
+            window.modal.error('Sistema no disponible en este momento', 'Error de Conexión');
             return;
         }
 
@@ -121,7 +148,7 @@ class MobileCompra {
             const exists = snap.exists();
             this.showPINModal(phone, ref, qty, exists);
         } catch (error) {
-            alert('Error: ' + error.message);
+            window.modal.error(error.message, 'Error');
         }
     }
 
@@ -163,16 +190,16 @@ class MobileCompra {
     }
 
     async createUser(phone, ref, qty) {
-        const newPin = document.getElementById('new-pin').value;
-        const confirmPin = document.getElementById('confirm-pin').value;
+        const newPin = document.getElementById('new-pin').value.replace(/[^0-9]/g, '');
+        const confirmPin = document.getElementById('confirm-pin').value.replace(/[^0-9]/g, '');
 
-        if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
-            alert('PIN debe tener 4 dígitos');
+        if (newPin.length !== 4) {
+            window.modal.warning('El PIN debe tener exactamente 4 dígitos numéricos', 'PIN Inválido');
             return;
         }
 
         if (newPin !== confirmPin) {
-            alert('Los PINs no coinciden');
+            window.modal.error('Los PINs no coinciden. Intenta nuevamente.', 'Error de Verificación');
             return;
         }
 
@@ -192,15 +219,15 @@ class MobileCompra {
             localStorage.setItem('userLoggedIn', 'true');
             this.processPurchase(phone, ref, qty);
         } catch (error) {
-            alert('Error: ' + error.message);
+            window.modal.error(error.message, 'Error al Crear Usuario');
         }
     }
 
     async verifyPIN(phone, ref, qty) {
-        const pin = document.getElementById('verify-pin').value;
+        const pin = document.getElementById('verify-pin').value.replace(/[^0-9]/g, '');
 
-        if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-            alert('Ingresa un PIN de 4 dígitos');
+        if (pin.length !== 4) {
+            window.modal.warning('Ingresa un PIN de 4 dígitos numéricos', 'PIN Incompleto');
             return;
         }
 
@@ -216,20 +243,34 @@ class MobileCompra {
                 localStorage.setItem('userLoggedIn', 'true');
                 this.processPurchase(phone, ref, qty);
             } else {
-                alert('PIN incorrecto');
+                window.modal.error('El PIN ingresado es incorrecto', 'PIN Incorrecto');
             }
         } catch (error) {
-            alert('Error: ' + error.message);
+            window.modal.error(error.message, 'Error de Verificación');
+        }
+    }
+
+    async checkActiveGame() {
+        if (!window.firebase) return false;
+        
+        const { database, ref: dbRef, get } = window.firebase;
+        try {
+            const snap = await get(dbRef(database, 'gameState'));
+            const gameState = snap.val();
+            return gameState && gameState.gameActive;
+        } catch (error) {
+            console.error('Error verificando juego:', error);
+            return false;
         }
     }
 
     processPurchase(phone, ref, qty) {
         const purchase = {
             id: Date.now(),
-            ref,
-            amount: qty * this.PRICE,
+            referencia: ref,
+            monto: qty * this.PRICE,
             cartones: qty,
-            phone,
+            telefono: phone,
             date: new Date().toISOString().split('T')[0],
             time: new Date().toLocaleTimeString('es-VE', { hour12: false }),
             status: 'pending',
@@ -239,14 +280,42 @@ class MobileCompra {
         const { database, ref: dbRef, set } = window.firebase;
         set(dbRef(database, `purchases/${purchase.id}`), purchase)
             .then(() => {
-                console.log('✅ Compra guardada:', purchase);
                 document.getElementById('pin-modal').classList.remove('show');
-                this.goToStep4();
+                this.goToStep4(purchase.id);
             })
             .catch(error => {
-                console.error('❌ Error:', error);
-                alert('Error: ' + error.message);
+                window.modal.error(error.message, 'Error al Procesar Compra');
             });
+    }
+    
+    listenForVerification(purchaseId, phone) {
+        if (!window.firebase) return;
+        
+        const { database, ref: dbRef, onValue } = window.firebase;
+        
+        onValue(dbRef(database, `purchases/${purchaseId}`), (snapshot) => {
+            const purchase = snapshot.val();
+            if (purchase) {
+                if (purchase.status === 'verified') {
+                    document.getElementById('status-message').textContent = '✅ ¡Pago Verificado!';
+                    document.querySelector('.verification-content').classList.add('verified');
+                    
+                    localStorage.setItem('userPhone', phone);
+                    
+                    setTimeout(() => {
+                        window.location.href = 'juego.html';
+                    }, 1500);
+                    
+                } else if (purchase.status === 'rejected') {
+                    document.getElementById('status-message').textContent = '❌ Pago Rechazado';
+                    document.querySelector('.verification-content').classList.add('rejected');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'comprar.html';
+                    }, 2000);
+                }
+            }
+        });
     }
 
     hashPIN(pin) {

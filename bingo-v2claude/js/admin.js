@@ -305,7 +305,7 @@ class MobileAdmin {
         // Generar cartones
         await this.generateCards(payment.telefono || payment.phone, payment.cartones);
         
-        alert(`✅ Pago aprobado\n${payment.cartones} cartones asignados a ${payment.telefono || payment.phone}`);
+        window.modal.success(`Pago aprobado\n${payment.cartones} cartones asignados a ${payment.telefono || payment.phone}`);
     }
 
     async rejectPayment(idx) {
@@ -337,7 +337,7 @@ class MobileAdmin {
 
         await set(ref(database, `purchases/${realId}`), payment);
         
-        alert(`❌ Pago rechazado`);
+        window.modal.error('Pago rechazado');
     }
 
     async generateCards(phone, quantity) {
@@ -353,7 +353,6 @@ class MobileAdmin {
         cards = cards.concat(newCards);
 
         await set(ref(database, `playerCards/${cleanPhone}`), cards);
-        console.log(`✅ ${quantity} cartones generados para ${phone}`);
     }
 
     async startGame() {
@@ -361,16 +360,22 @@ class MobileAdmin {
 
         const { database, ref, set } = window.firebase;
         
+        const defaultPattern = {
+            name: 'Cruz',
+            positions: [[0,2], [1,2], [2,0], [2,1], [2,2], [2,3], [2,4], [3,2], [4,2]]
+        };
+        
         await set(ref(database, 'gameState'), {
             gameActive: true,
             isPaused: false,
             currentRound: 1,
+            currentPattern: defaultPattern,
             startTime: Date.now()
         });
 
         await set(ref(database, 'calledNumbers'), []);
 
-        alert('🚀 Juego iniciado');
+        window.modal.success('Juego iniciado - Ronda 1: Patrón Cruz');
     }
 
     async pauseGame() {
@@ -385,7 +390,7 @@ class MobileAdmin {
         gameState.pauseTimestamp = Date.now();
 
         await set(ref(database, 'gameState'), gameState);
-        alert('⏸️ Juego pausado');
+        window.modal.info('Juego pausado');
     }
 
     async resumeGame() {
@@ -400,11 +405,11 @@ class MobileAdmin {
         delete gameState.pauseTimestamp;
 
         await set(ref(database, 'gameState'), gameState);
-        alert('▶️ Juego reanudado');
+        window.modal.success('Juego reanudado');
     }
 
     async nextRound() {
-        if (!confirm('¿Avanzar a Ronda 2?')) return;
+        if (!await window.modal.confirm('¿Avanzar a Ronda 2?')) return;
 
         if (!window.firebase) return;
 
@@ -423,11 +428,11 @@ class MobileAdmin {
             timestamp: Date.now()
         });
 
-        alert('➡️ Ronda 2 iniciada');
+        window.modal.success('Ronda 2 iniciada');
     }
 
     async endGame() {
-        if (!confirm('¿Finalizar el juego?')) return;
+        if (!await window.modal.confirm('¿Finalizar el juego?')) return;
 
         if (!window.firebase) return;
 
@@ -444,7 +449,7 @@ class MobileAdmin {
 
         await set(ref(database, 'calledNumbers'), []);
 
-        alert('🏁 Juego finalizado');
+        window.modal.success('Juego finalizado');
     }
 
     checkPendingBingo() {
@@ -517,12 +522,13 @@ class MobileAdmin {
         await set(ref(database, 'bingoVerificationResult'), {
             isCorrect: true,
             isWinner: true,
+            typeText: winner.type,
             prize: winner.amount
         });
         await set(ref(database, 'pendingBingoVerification'), null);
         await set(ref(database, 'globalBingoAlert'), null);
 
-        alert(`✅ Ganador verificado\nPremio: BsF ${winner.amount}`);
+        window.modal.success(`Ganador verificado\nPremio: BsF ${winner.amount}`);
     }
 
     async rejectWinner() {
@@ -537,7 +543,7 @@ class MobileAdmin {
         await set(ref(database, 'pendingBingoVerification'), null);
         await set(ref(database, 'globalBingoAlert'), null);
 
-        alert('❌ BINGO rechazado');
+        window.modal.error('BINGO rechazado');
     }
 
     async calculatePrizeAmount() {
@@ -561,7 +567,7 @@ class MobileAdmin {
         prize.paidDate = new Date().toISOString();
 
         await set(ref(database, `prizes/${prize.id}`), prize);
-        alert('✅ Premio marcado como pagado');
+        window.modal.success('Premio marcado como pagado');
     }
 
     loadPrizes() {
@@ -641,7 +647,7 @@ class MobileAdmin {
     async searchUser() {
         const phone = document.getElementById('user-phone-search').value;
         if (!phone) {
-            alert('Ingresa un teléfono');
+            window.modal.warning('Ingresa un teléfono');
             return;
         }
 
@@ -655,7 +661,7 @@ class MobileAdmin {
             const cardsSnap = await get(ref(database, `playerCards/${cleanPhone}`));
 
             if (!userSnap.exists()) {
-                alert('Usuario no encontrado');
+                window.modal.warning('Usuario no encontrado');
                 return;
             }
 
@@ -691,13 +697,13 @@ class MobileAdmin {
                 </div>
             `;
         } catch (error) {
-            alert('Error: ' + error.message);
+            window.modal.error('Error: ' + error.message);
         }
     }
 
     async startCaller() {
         if (!window.ultraCaller) {
-            alert('UltraCaller no disponible');
+            window.modal.error('UltraCaller no disponible');
             return;
         }
 
@@ -722,7 +728,7 @@ class MobileAdmin {
 
     async callManual() {
         if (!window.ultraCaller) {
-            alert('UltraCaller no disponible');
+            window.modal.error('UltraCaller no disponible');
             return;
         }
 
@@ -795,10 +801,10 @@ window.filterWinners = function() {
 };
 
 window.resetAllCards = async function() {
-    if (!confirm('¿Resetear todos los cartones?')) return;
+    if (!await window.modal.confirm('¿Resetear todos los cartones?')) return;
     
     if (!window.firebase) {
-        alert('❌ Firebase no disponible');
+        window.modal.error('Firebase no disponible');
         return;
     }
     
@@ -809,7 +815,7 @@ window.resetAllCards = async function() {
         const allCards = snapshot.val();
         
         if (!allCards) {
-            alert('❌ No hay cartones para resetear');
+            window.modal.warning('No hay cartones para resetear');
             return;
         }
         
@@ -824,17 +830,17 @@ window.resetAllCards = async function() {
             }
         }
         
-        alert('✅ Cartones reseteados');
+        window.modal.success('Cartones reseteados');
     } catch (error) {
-        alert('❌ Error: ' + error.message);
+        window.modal.error('Error: ' + error.message);
     }
 };
 
 window.expireAllCards = async function() {
-    if (!confirm('¿Expirar todos los cartones activos?')) return;
+    if (!await window.modal.confirm('¿Expirar todos los cartones activos?')) return;
     
     if (!window.firebase) {
-        alert('❌ Firebase no disponible');
+        window.modal.error('Firebase no disponible');
         return;
     }
     
@@ -845,7 +851,7 @@ window.expireAllCards = async function() {
         const allCards = snapshot.val();
         
         if (!allCards) {
-            alert('❌ No hay cartones para expirar');
+            window.modal.warning('No hay cartones para expirar');
             return;
         }
         
@@ -862,17 +868,17 @@ window.expireAllCards = async function() {
             }
         }
         
-        alert('✅ Cartones expirados');
+        window.modal.success('Cartones expirados');
     } catch (error) {
-        alert('❌ Error: ' + error.message);
+        window.modal.error('Error: ' + error.message);
     }
 };
 
 window.clearGameData = async function() {
-    if (!confirm('¿Limpiar datos del juego actual?')) return;
+    if (!await window.modal.confirm('¿Limpiar datos del juego actual?')) return;
     
     if (!window.firebase) {
-        alert('❌ Firebase no disponible');
+        window.modal.error('Firebase no disponible');
         return;
     }
     
@@ -889,9 +895,9 @@ window.clearGameData = async function() {
         await set(ref(database, 'globalBingoAlert'), null);
         await set(ref(database, 'bingoVerificationResult'), null);
         
-        alert('✅ Datos del juego limpiados');
+        window.modal.success('Datos del juego limpiados');
     } catch (error) {
-        alert('❌ Error: ' + error.message);
+        window.modal.error('Error: ' + error.message);
     }
 };
 
@@ -999,12 +1005,12 @@ function initFirebaseMonitor() {
                         
                         if (result.exists()) {
                             await set(ref(database, 'connectionTest'), null);
-                            alert('✅ Conexión exitosa');
+                            window.modal.success('Conexión exitosa');
                         } else {
-                            alert('❌ Error de lectura');
+                            window.modal.error('Error de lectura');
                         }
                     } catch (error) {
-                        alert('❌ Error: ' + error.message);
+                        window.modal.error('Error: ' + error.message);
                     }
                 });
             }

@@ -82,18 +82,19 @@
     background: rgba(255,255,255,0.3);
 }
 
-/* Cartones */
+/* Cartones - Grid Responsivo */
 .cards-container {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    padding-bottom: 100px;
 }
 
 .bingo-card {
     background: var(--card-bg);
-    border-radius: 20px;
-    padding: 16px;
+    border-radius: 16px;
+    padding: 12px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.3);
 }
 
@@ -101,85 +102,110 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-}
-
-.card-code {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--primary);
-}
-
-.mode-toggle {
-    display: flex;
-    gap: 4px;
-    background: var(--bg);
-    padding: 4px;
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     border-radius: 8px;
 }
 
-.mode-btn {
-    padding: 6px 12px;
-    border: none;
-    background: transparent;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s;
+.card-code {
+    font-size: 12px;
+    font-weight: 800;
+    color: white;
 }
 
-.mode-btn.active {
-    background: var(--primary);
+.card-progress {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+}
+
+.card-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mode-selector {
+    display: flex;
+    gap: 4px;
+}
+
+.mode-option {
+    flex: 1;
+    padding: 8px 4px;
+    border: none;
+    background: rgba(255,255,255,0.5);
+    color: #666;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-option.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
+    box-shadow: 0 2px 8px rgba(108,99,255,0.4);
 }
 
 .bingo-letters {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 4px;
-    margin-bottom: 8px;
+    gap: 3px;
+    margin-bottom: 6px;
 }
 
 .bingo-letters span {
     text-align: center;
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 800;
     color: var(--primary);
-    padding: 8px 0;
+    padding: 6px 0;
+    background: var(--bg);
+    border-radius: 6px;
 }
 
 .card-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 4px;
-    margin-bottom: 12px;
+    gap: 3px;
+    margin-bottom: 8px;
 }
 
 .card-cell {
     aspect-ratio: 1;
-    background: var(--bg);
-    border-radius: 8px;
+    background: #fff;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 800;
     color: var(--text);
     cursor: pointer;
     transition: all 0.3s;
     user-select: none;
+    border: 1px solid #e0e0e0;
 }
 
 .card-cell.marked {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
+    border-color: var(--primary);
     transform: scale(0.95);
 }
 
 .card-cell.free {
-    background: var(--warning);
+    background: linear-gradient(135deg, #FFD700, #FFA500);
     color: white;
+    font-size: 9px;
+    border-color: #FFD700;
+}
+
+.card-cell.pattern {
+    box-shadow: inset 0 0 0 2px var(--warning);
 }
 
 .card-cell:active {
@@ -188,23 +214,29 @@
 
 .bingo-btn {
     width: 100%;
-    padding: 14px;
-    background: var(--bg);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    font-size: 16px;
+    padding: 10px;
+    background: rgba(255,255,255,0.5);
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: 800;
-    color: var(--text-light);
-    cursor: pointer;
+    color: #999;
+    cursor: not-allowed;
     transition: all 0.3s;
 }
 
-.bingo-btn.active {
+.bingo-btn.has-bingo {
     background: linear-gradient(135deg, var(--success), #00B87C);
     color: white;
     border-color: var(--success);
     box-shadow: 0 4px 20px rgba(0, 217, 163, 0.4);
+    cursor: pointer;
     animation: bingoReady 1s infinite;
+}
+
+.bingo-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 @keyframes bingoReady {

@@ -82,12 +82,18 @@ class MobileGameRoom {
     createCardElement(card) {
         const cardDiv = document.createElement('div');
         cardDiv.className = 'bingo-card';
+        cardDiv.dataset.cardId = card.id;
         
         const cardCode = card.code || `C${card.id}`;
+        const marcadosCount = card.marked ? card.marked.length : 0;
+        const progreso = Math.round(marcadosCount / 25 * 100);
         
         const cardHeader = document.createElement('div');
         cardHeader.className = 'card-header';
-        cardHeader.textContent = cardCode;
+        cardHeader.innerHTML = `
+            <span class="card-code">${cardCode}</span>
+            <span class="card-progress">${marcadosCount}/25 (${progreso}%)</span>
+        `;
         
         const bingoLetters = document.createElement('div');
         bingoLetters.className = 'bingo-letters';
@@ -112,13 +118,8 @@ class MobileGameRoom {
                 const wasCalled = this.calledNumbers.includes(number) && !isFree;
                 
                 let isPatternCell = false;
-                if (this.currentRound === 1) {
-                    if (this.currentPattern && this.currentPattern.positions) {
-                        isPatternCell = this.currentPattern.positions.some(pos => pos[0] === row && pos[1] === col);
-                    } else {
-                        const defaultPattern = [[0,2], [1,2], [3,2], [4,2], [2,0], [2,1], [2,3], [2,4]];
-                        isPatternCell = defaultPattern.some(pos => pos[0] === row && pos[1] === col);
-                    }
+                if (this.currentRound === 1 && this.currentPattern && this.currentPattern.positions) {
+                    isPatternCell = this.currentPattern.positions.some(pos => pos[0] === row && pos[1] === col);
                 }
                 
                 if (isMarked) cell.classList.add('marked');
@@ -257,22 +258,10 @@ class MobileGameRoom {
     }
     
     checkPattern(card) {
-        if (!card.marked) return false;
-        if (!this.currentPattern || !this.currentPattern.positions) {
-            const simplePattern = [[0,2], [1,2], [3,2], [4,2], [2,0], [2,1], [2,3], [2,4]];
-            for (const [row, col] of simplePattern) {
-                const cellKey = `${row}-${col}`;
-                if (!card.marked.includes(cellKey)) {
-                    return false;
-                }
-            }
-            return true;
-        }
+        if (!card.marked || !this.currentPattern || !this.currentPattern.positions) return false;
         
         for (const [row, col] of this.currentPattern.positions) {
             const cellKey = `${row}-${col}`;
-            const isFree = card.numbers[row][col] === 0;
-            if (isFree) continue;
             if (!card.marked.includes(cellKey)) {
                 return false;
             }
@@ -395,7 +384,7 @@ class MobileGameRoom {
     }
 
     updateCurrentNumber(number) {
-        const currentNumberEl = document.getElementById('current-number');
+        const currentNumberEl = document.getElementById('current-ball');
         if (currentNumberEl) {
             const letter = this.getBingoLetter(number);
             currentNumberEl.textContent = `${letter}${number}`;
@@ -451,8 +440,8 @@ class MobileGameRoom {
     }
 
     updateGameInfo() {
-        const roundElement = document.getElementById('current-round');
-        const prizeElement = document.getElementById('current-prize');
+        const roundElement = document.getElementById('round');
+        const prizeElement = document.getElementById('prize');
         
         if (roundElement) roundElement.textContent = this.currentRound;
         
@@ -541,38 +530,45 @@ class MobileGameRoom {
     }
 
     showPattern() {
-        if (this.currentRound !== 1) return;
+        if (this.currentRound !== 1) {
+            window.modal.info('El patrón solo aplica en Ronda 1', 'Información');
+            return;
+        }
         
-        let patternPositions = [];
-        if (this.currentPattern && this.currentPattern.positions) {
-            patternPositions = this.currentPattern.positions;
-        } else {
-            patternPositions = [[0,2], [1,2], [3,2], [4,2], [2,0], [2,1], [2,3], [2,4]];
+        if (!this.currentPattern || !this.currentPattern.positions) {
+            window.modal.warning('No hay patrón definido para esta ronda', 'Patrón No Disponible');
+            return;
         }
         
         const modal = document.getElementById('pattern-modal');
-        const grid = document.getElementById('pattern-grid');
+        const display = document.getElementById('pattern-display');
+        const title = modal?.querySelector('.modal-header h3');
         
-        if (grid) {
-            grid.innerHTML = '';
+        if (title && this.currentPattern.name) {
+            title.textContent = `Patrón: ${this.currentPattern.name}`;
+        }
+        
+        if (display) {
+            display.innerHTML = '';
             
             for (let row = 0; row < 5; row++) {
                 for (let col = 0; col < 5; col++) {
                     const cell = document.createElement('div');
                     cell.className = 'pattern-cell';
                     
+                    const isActive = this.currentPattern.positions.some(pos => pos[0] === row && pos[1] === col);
+                    
                     if (row === 2 && col === 2) {
                         cell.classList.add('free');
                         cell.textContent = 'FREE';
+                    } else if (isActive) {
+                        cell.classList.add('active');
+                        cell.textContent = '✓';
                     } else {
-                        const isActive = patternPositions.some(pos => pos[0] === row && pos[1] === col);
-                        if (isActive) {
-                            cell.classList.add('active');
-                        }
-                        cell.textContent = (row * 5 + col + 1).toString();
+                        cell.textContent = '';
                     }
                     
-                    grid.appendChild(cell);
+                    display.appendChild(cell);
                 }
             }
         }
@@ -587,7 +583,7 @@ class MobileGameRoom {
     
     handleBingoVerification(result) {
         if (result.isWinner) {
-            alert(`¡Felicitaciones! Has ganado ${result.typeText}\nPremio: BsF ${result.prize || 0}`);
+            window.modal.success(`¡Felicitaciones! Has ganado ${result.typeText}\nPremio: BsF ${result.prize || 0}`, '🏆 ¡GANADOR!');
         }
     }
     
@@ -627,6 +623,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     gameRoom = new MobileGameRoom();
+    
+    // Event listeners para botones
+    document.getElementById('history-btn')?.addEventListener('click', () => gameRoom?.showHistory());
+    document.getElementById('close-history')?.addEventListener('click', () => gameRoom?.closeHistory());
+    document.getElementById('pattern-btn')?.addEventListener('click', () => gameRoom?.showPattern());
+    document.getElementById('close-pattern')?.addEventListener('click', () => gameRoom?.closePattern());
     
     window.gameRoom = {
         showHistory: () => gameRoom?.showHistory(),

@@ -113,9 +113,9 @@
             <!-- Paso 4: Verificación -->
             <section class="step-card" id="step-4" style="display:none">
                 <div class="verification-content">
-                    <div class="verification-icon">⏳</div>
-                    <h2>Verificando Pago</h2>
-                    <p>Tu compra está siendo procesada. Recibirás una notificación cuando sea aprobada.</p>
+                    <div class="spinner"></div>
+                    <h2 id="status-message">Verificando tu pago...</h2>
+                    <p>Por favor espera mientras el admin confirma tu transacción.</p>
                     <div class="purchase-summary">
                         <div class="summary-row">
                             <span>Teléfono</span>
@@ -134,10 +134,6 @@
                             <strong id="summary-ref"></strong>
                         </div>
                     </div>
-                    <button id="finish" class="submit-btn">
-                        <span>Confirmar Compra</span>
-                        <span class="btn-icon">✓</span>
-                    </button>
                 </div>
             </section>
         </div>
@@ -148,11 +144,11 @@
                 <h3 id="pin-title">Crear PIN</h3>
                 <p id="pin-subtitle">Protege tu cuenta con un PIN de 4 dígitos</p>
                 <div id="create-section">
-                    <input type="password" id="new-pin" placeholder="PIN" maxlength="4" class="pin-input">
-                    <input type="password" id="confirm-pin" placeholder="Confirmar PIN" maxlength="4" class="pin-input">
+                    <input type="password" id="new-pin" placeholder="PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" class="pin-input">
+                    <input type="password" id="confirm-pin" placeholder="Confirmar PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" class="pin-input">
                 </div>
                 <div id="verify-section" style="display:none">
-                    <input type="password" id="verify-pin" placeholder="Ingresa tu PIN" maxlength="4" class="pin-input">
+                    <input type="password" id="verify-pin" placeholder="Ingresa tu PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" class="pin-input">
                 </div>
                 <div class="modal-actions">
                     <button id="pin-cancel" class="modal-btn secondary">Cancelar</button>
@@ -186,9 +182,10 @@
         </nav>
     </div>
 
+    <script src="js/modal.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
@@ -202,7 +199,7 @@
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-        window.firebase = { database, ref, set, get };
+        window.firebase = { database, ref, set, get, onValue };
     </script>
     <script src="js/comprar.js"></script>
 </body>

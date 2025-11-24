@@ -34,6 +34,7 @@ class MobilePerfil {
     setupListeners() {
         const loginBtn = document.getElementById('login-btn');
         const logoutBtn = document.getElementById('logout-btn');
+        const loginPin = document.getElementById('login-pin');
 
         if (loginBtn) {
             loginBtn.addEventListener('click', () => this.login());
@@ -42,24 +43,30 @@ class MobilePerfil {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.logout());
         }
+        
+        if (loginPin) {
+            loginPin.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+            });
+        }
     }
 
     async login() {
         const phone = document.getElementById('login-phone').value;
-        const pin = document.getElementById('login-pin').value;
+        const pin = document.getElementById('login-pin').value.replace(/[^0-9]/g, '');
 
         if (phone.length !== 11 || !phone.startsWith('04')) {
-            alert('Teléfono inválido');
+            window.modal.warning('Teléfono inválido');
             return;
         }
 
         if (pin.length !== 4) {
-            alert('PIN inválido');
+            window.modal.warning('PIN debe tener 4 dígitos numéricos');
             return;
         }
 
         if (!window.firebase) {
-            alert('Sistema no disponible');
+            window.modal.error('Sistema no disponible');
             return;
         }
 
@@ -73,12 +80,13 @@ class MobilePerfil {
             if (user && user.pin === this.hashPIN(pin)) {
                 localStorage.setItem('userPhone', phone);
                 localStorage.setItem('userLoggedIn', 'true');
+                window.modal.success('Bienvenido');
                 this.showProfile(phone);
             } else {
-                alert('Credenciales incorrectas');
+                window.modal.error('Credenciales incorrectas');
             }
         } catch (error) {
-            alert('Error: ' + error.message);
+            window.modal.error('Error: ' + error.message);
         }
     }
 
