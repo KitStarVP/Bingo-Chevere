@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6C63FF">
+    <title>Comprar Cartones</title>
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/comprar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="mobile-header">
+            <a href="index.html" class="back-btn">←</a>
+            <div class="header-title">
+                <h1>Comprar Cartones</h1>
+            </div>
+            <div class="header-spacer"></div>
+        </header>
+
+        <!-- Indicador de pasos -->
+        <div class="steps-indicator">
+            <div class="step-item active" id="indicator-1">
+                <div class="step-dot">1</div>
+                <span>Teléfono</span>
+            </div>
+            <div class="step-item" id="indicator-2">
+                <div class="step-dot">2</div>
+                <span>Cartones</span>
+            </div>
+            <div class="step-item" id="indicator-3">
+                <div class="step-dot">3</div>
+                <span>Pago</span>
+            </div>
+            <div class="step-item" id="indicator-4">
+                <div class="step-dot">4</div>
+                <span>Verificar</span>
+            </div>
+        </div>
+
+        <!-- Pasos de compra -->
+        <div class="purchase-flow">
+            <!-- Paso 1: Teléfono -->
+            <section class="step-card" id="step-1">
+                <div class="step-header">
+                    <span class="step-number">1</span>
+                    <h2>Tu Teléfono</h2>
+                </div>
+                <input type="tel" id="phone" placeholder="04241234567" maxlength="11" class="input-field">
+                <button id="next-1" class="submit-btn">
+                    <span>Siguiente</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </section>
+
+            <!-- Paso 2: Cantidad -->
+            <section class="step-card" id="step-2" style="display:none">
+                <div class="step-header">
+                    <span class="step-number">2</span>
+                    <h2>Cantidad de Cartones</h2>
+                </div>
+                <div class="quantity-selector">
+                    <button class="qty-btn" id="minus">−</button>
+                    <input type="number" id="quantity" value="1" min="1" readonly>
+                    <button class="qty-btn" id="plus">+</button>
+                </div>
+                <div class="total-display">
+                    <span>Total a Pagar</span>
+                    <strong id="total">60 BsF</strong>
+                </div>
+                <button id="next-2" class="submit-btn">
+                    <span>Siguiente</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </section>
+
+            <!-- Paso 3: Pago y Referencia -->
+            <section class="step-card" id="step-3" style="display:none">
+                <div class="step-header">
+                    <span class="step-number">3</span>
+                    <h2>Datos de Pago</h2>
+                </div>
+                <div class="payment-info">
+                    <div class="info-row">
+                        <span class="info-label">Banco</span>
+                        <span class="info-value">Banco de Venezuela</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Teléfono</span>
+                        <span class="info-value">0424-9115652</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Cédula</span>
+                        <span class="info-value">V-20.002.954</span>
+                    </div>
+                    <div class="info-row highlight">
+                        <span class="info-label">Monto</span>
+                        <span class="info-value" id="amount">60 BsF</span>
+                    </div>
+                </div>
+                <div class="step-header" style="margin-top: 24px;">
+                    <h2>Número de Referencia</h2>
+                </div>
+                <input type="text" id="reference" placeholder="Últimos 4 dígitos" maxlength="4" class="input-field">
+                <button id="next-3" class="submit-btn">
+                    <span>Continuar</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </section>
+
+            <!-- Paso 4: Verificación -->
+            <section class="step-card" id="step-4" style="display:none">
+                <div class="verification-content">
+                    <div class="spinner"></div>
+                    <h2 id="status-message">Verificando tu pago...</h2>
+                    <p>Por favor espera mientras el admin confirma tu transacción.</p>
+                    <div class="purchase-summary">
+                        <div class="summary-row">
+                            <span>Teléfono</span>
+                            <strong id="summary-phone"></strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Cartones</span>
+                            <strong id="summary-qty"></strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Total</span>
+                            <strong id="summary-total"></strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Referencia</span>
+                            <strong id="summary-ref"></strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Modal PIN -->
+        <div class="modal" id="pin-modal">
+            <div class="modal-content">
+                <h3 id="pin-title">Crear PIN</h3>
+                <p id="pin-subtitle">Protege tu cuenta con un PIN de 4 dígitos</p>
+                <div id="create-section">
+                    <input type="password" id="new-pin" placeholder="PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" class="pin-input">
+                    <input type="password" id="confirm-pin" placeholder="Confirmar PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" class="pin-input">
+                </div>
+                <div id="verify-section" style="display:none">
+                    <input type="password" id="verify-pin" placeholder="Ingresa tu PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" class="pin-input">
+                </div>
+                <div class="modal-actions">
+                    <button id="pin-cancel" class="modal-btn secondary">Cancelar</button>
+                    <button id="pin-confirm" class="modal-btn primary">Confirmar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navegación -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Inicio</span>
+            </a>
+            <a href="comprar.html" class="nav-item active">
+                <span class="nav-icon">🎫</span>
+                <span class="nav-label">Comprar</span>
+            </a>
+            <a href="juego.html" class="nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Jugar</span>
+            </a>
+            <a href="premios.html" class="nav-item">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">Premios</span>
+            </a>
+            <a href="perfil.html" class="nav-item">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Perfil</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="js/modal.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+            authDomain: "bingo-chevere.firebaseapp.com",
+            databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+            projectId: "bingo-chevere",
+            storageBucket: "bingo-chevere.firebasestorage.app",
+            messagingSenderId: "1057150163831",
+            appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        window.firebase = { database, ref, set, get, onValue };
+    </script>
+    <script src="js/comprar.js"></script>
+</body>
+</html>

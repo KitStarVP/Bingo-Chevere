@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Bingo Chevere</title>
+    <link rel="stylesheet" href="css/admin-desktop.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🎯 Bingo Admin</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-link active" data-section="dashboard">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#game" class="nav-link" data-section="game">
+                    <span class="icon">🎮</span>
+                    <span>Control de Juego</span>
+                </a>
+                <a href="#payments" class="nav-link" data-section="payments">
+                    <span class="icon">💳</span>
+                    <span>Pagos</span>
+                </a>
+                <a href="#prizes" class="nav-link" data-section="prizes">
+                    <span class="icon">🏆</span>
+                    <span>Premios</span>
+                </a>
+                <a href="#users" class="nav-link" data-section="users">
+                    <span class="icon">👥</span>
+                    <span>Usuarios</span>
+                </a>
+                <a href="#winners" class="nav-link" data-section="winners">
+                    <span class="icon">🎊</span>
+                    <span>Ganadores</span>
+                </a>
+                <a href="#caller" class="nav-link" data-section="caller">
+                    <span class="icon">🎲</span>
+                    <span>Cantado Auto</span>
+                </a>
+                <a href="#maintenance" class="nav-link" data-section="maintenance">
+                    <span class="icon">🔧</span>
+                    <span>Mantenimiento</span>
+                </a>
+                <a href="#firebase" class="nav-link" data-section="firebase">
+                    <span class="icon">🔥</span>
+                    <span>Firebase</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="section-header">
+                    <h2>Dashboard</h2>
+                    <div class="firebase-status">
+                        <span class="status-dot"></span>
+                        <span id="firebase-status-text">Conectando...</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎫</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Cartones Vendidos</span>
+                            <span class="stat-value" id="tickets-sold">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Recaudado</span>
+                            <span class="stat-value" id="total-collected">BsF 0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Premios</span>
+                            <span class="stat-value" id="total-prizes">BsF 0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Usuarios Activos</span>
+                            <span class="stat-value" id="active-users">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Estado del Juego</h3>
+                        <div class="game-status-display">
+                            <div class="status-item">
+                                <span>Estado:</span>
+                                <span class="status-badge" id="game-status-badge">🔴 Inactivo</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Ronda:</span>
+                                <span id="current-round-display">1</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Números Cantados:</span>
+                                <span id="numbers-called-count">0</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Último Número:</span>
+                                <span id="last-number-display">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>Pagos Pendientes</h3>
+                        <div class="pending-count-display">
+                            <span class="big-number" id="pending-payments-count">0</span>
+                            <span class="count-label">Pagos por verificar</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Game Control Section -->
+            <section id="game" class="content-section">
+                <div class="section-header">
+                    <h2>Control de Juego</h2>
+                </div>
+
+                <div class="game-control-grid">
+                    <div class="control-card">
+                        <h3>Estado del Juego</h3>
+                        <div class="game-info">
+                            <div class="info-row">
+                                <span>Estado:</span>
+                                <span class="status-badge" id="game-status">🔴 Inactivo</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Ronda Actual:</span>
+                                <span id="current-round">1</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Premio Ronda:</span>
+                                <span id="round-prize">BsF 0</span>
+                            </div>
+                        </div>
+                        <div class="control-buttons">
+                            <button id="start-game" class="btn btn-success">▶️ Iniciar Juego</button>
+                            <button id="pause-game" class="btn btn-warning" style="display:none">⏸️ Pausar</button>
+                            <button id="resume-game" class="btn btn-success" style="display:none">▶️ Reanudar</button>
+                            <button id="next-round" class="btn btn-primary" style="display:none">⏭️ Ronda 2</button>
+                            <button id="end-game" class="btn btn-danger" style="display:none">⏹️ Finalizar</button>
+                        </div>
+                    </div>
+
+                    <div class="control-card">
+                        <h3>Sistema de Cantado</h3>
+                        <div class="caller-info">
+                            <div class="info-row">
+                                <span>Estado Caller:</span>
+                                <span class="status-badge" id="caller-status">🔴 Detenido</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Último Número:</span>
+                                <span id="last-number" class="last-number-display">--</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Total Cantados:</span>
+                                <span id="total-called">0</span>
+                            </div>
+                        </div>
+                        <div class="control-buttons">
+                            <button id="start-caller" class="btn btn-success">🎤 Iniciar Cantado</button>
+                            <button id="stop-caller" class="btn btn-danger" style="display:none">🛑 Detener Cantado</button>
+                            <button id="call-manual" class="btn btn-primary">🎲 Cantar Manual</button>
+                        </div>
+                    </div>
+
+                    <div class="control-card full-width">
+                        <h3>Verificación de BINGO</h3>
+                        <div id="no-bingo-pending" class="no-pending">
+                            <span class="icon">✅</span>
+                            <span>No hay BINGO pendiente de verificación</span>
+                        </div>
+                        <div id="bingo-pending" class="bingo-verification" style="display:none">
+                            <div class="verification-info">
+                                <div class="info-item">
+                                    <span class="label">Cartón:</span>
+                                    <span class="value" id="winner-carton">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Teléfono:</span>
+                                    <span class="value" id="winner-phone">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Tipo:</span>
+                                    <span class="value" id="winner-type">-</span>
+                                </div>
+                            </div>
+                            <div class="verification-actions">
+                                <button id="verify-winner" class="btn btn-success">✓ Verificar Ganador</button>
+                                <button id="reject-winner" class="btn btn-danger">✗ Rechazar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Payments Section -->
+            <section id="payments" class="content-section">
+                <div class="section-header">
+                    <h2>Gestión de Pagos</h2>
+                    <div class="filter-tabs">
+                        <button class="tab-btn active" onclick="filterPayments('pending')">Pendientes (<span id="pending-count">0</span>)</button>
+                        <button class="tab-btn" onclick="filterPayments('verified')">Verificados (<span id="verified-count">0</span>)</button>
+                        <button class="tab-btn" onclick="filterPayments('rejected')">Rechazados (<span id="rejected-count">0</span>)</button>
+                    </div>
+                </div>
+                <div id="payments-list" class="payments-grid"></div>
+            </section>
+
+            <!-- Prizes Section -->
+            <section id="prizes" class="content-section">
+                <div class="section-header">
+                    <h2>Gestión de Premios</h2>
+                    <div class="filter-tabs">
+                        <button class="tab-btn active" onclick="showPrizeTab('pending')">Pendientes (<span id="pending-prizes">0</span>)</button>
+                        <button class="tab-btn" onclick="showPrizeTab('paid')">Pagados (<span id="paid-prizes">0</span>)</button>
+                    </div>
+                </div>
+                <div id="prizes-content" class="prizes-grid"></div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users" class="content-section">
+                <div class="section-header">
+                    <h2>Gestión de Usuarios</h2>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="user-phone-search" placeholder="Buscar por teléfono...">
+                    <button onclick="searchUser()" class="btn btn-primary">🔍 Buscar</button>
+                </div>
+                <div id="user-profile" class="user-profile-container"></div>
+            </section>
+
+            <!-- Winners Section -->
+            <section id="winners" class="content-section">
+                <div class="section-header">
+                    <h2>Historial de Ganadores</h2>
+                </div>
+                <div class="filters-row">
+                    <input type="date" id="winner-date-filter" placeholder="Filtrar por fecha">
+                    <input type="text" id="winner-phone-filter" placeholder="Filtrar por teléfono">
+                    <button onclick="filterWinners()" class="btn btn-primary">Filtrar</button>
+                </div>
+                <div id="winners-list" class="winners-grid"></div>
+            </section>
+
+            <!-- Caller Section -->
+            <section id="caller" class="content-section">
+                <div class="section-header">
+                    <h2>Sistema de Cantado Automático</h2>
+                </div>
+
+                <div class="game-control-grid">
+                    <div class="control-card">
+                        <h3>Estado del Cantado</h3>
+                        <div class="caller-info">
+                            <div class="info-row">
+                                <span>Estado:</span>
+                                <span class="status-badge" id="caller-status-main">🔴 Detenido</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Último Número:</span>
+                                <span id="last-number-caller" class="last-number-display">--</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Total Cantados:</span>
+                                <span id="total-called-caller">0</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Intervalo:</span>
+                                <span>15 segundos</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 16px; padding: 12px; background: rgba(108, 99, 255, 0.1); border-radius: 8px;">
+                            <p style="margin: 0; font-size: 13px; color: #666; text-align: center;">
+                                ℹ️ El cantado se inicia automáticamente al hacer clic en "Iniciar Juego"<br>
+                                Se pausa automáticamente cuando hay BINGO pendiente<br>
+                                Intervalo: 15 segundos entre números
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="control-card">
+                        <h3>Información del Sistema</h3>
+                        <div class="caller-info">
+                            <div class="info-row">
+                                <span>Modo:</span>
+                                <span>Automático (15s)</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Números Disponibles:</span>
+                                <span id="available-numbers">75</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Progreso:</span>
+                                <span id="caller-progress">0%</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; padding: 16px; background: rgba(255, 184, 0, 0.1); border-radius: 8px; border-left: 4px solid var(--warning);">
+                            <p style="margin: 0; font-size: 13px; color: var(--text-light);">⚠️ El cantado automático se detiene cuando hay un BINGO pendiente de verificación</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Maintenance Section -->
+            <section id="maintenance" class="content-section">
+                <div class="section-header">
+                    <h2>Mantenimiento del Sistema</h2>
+                </div>
+
+                <div class="maintenance-grid">
+                    <div class="maintenance-card safe">
+                        <div class="maintenance-header">
+                            <span class="maintenance-icon">🛡️</span>
+                            <h3>Mantenimiento Seguro</h3>
+                        </div>
+                        <p class="maintenance-desc">Operaciones que NO afectan datos importantes</p>
+                        <div class="maintenance-actions">
+                            <button onclick="resetAllCards()" class="btn btn-warning">🔄 Resetear Cartones</button>
+                            <button onclick="expireAllCards()" class="btn btn-warning">⏰ Expirar Cartones</button>
+                            <button onclick="clearGameData()" class="btn btn-warning">🗑️ Limpiar Juego Actual</button>
+                        </div>
+                        <div class="maintenance-info">
+                            <p><strong>Resetear Cartones:</strong> Limpia todas las marcas pero mantiene los cartones activos</p>
+                            <p><strong>Expirar Cartones:</strong> Marca todos los cartones activos como vencidos</p>
+                            <p><strong>Limpiar Juego:</strong> Limpia el estado del juego actual (números cantados, estado)</p>
+                        </div>
+                    </div>
+
+                    <div class="maintenance-card danger">
+                        <div class="maintenance-header">
+                            <span class="maintenance-icon">⚠️</span>
+                            <h3>Zona Peligrosa</h3>
+                        </div>
+                        <p class="maintenance-desc">⚠️ CUIDADO: Esta acción NO se puede deshacer</p>
+                        <div class="maintenance-actions">
+                            <button onclick="resetTotalSystem()" class="btn btn-danger" style="width: 100%;">🗑️ RESET TOTAL DEL SISTEMA</button>
+                        </div>
+                        <div class="maintenance-info danger-info">
+                            <p><strong>⚠️ ADVERTENCIA:</strong></p>
+                            <p>Esta acción eliminará PERMANENTEMENTE:</p>
+                            <ul>
+                                <li>Todos los usuarios y cartones</li>
+                                <li>Todas las compras y pagos</li>
+                                <li>Todos los ganadores y premios</li>
+                                <li>Estado del juego completo</li>
+                                <li>Historial completo</li>
+                            </ul>
+                            <p style="color: var(--danger); font-weight: 700;">Esta acción NO se puede deshacer</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Firebase Section -->
+            <section id="firebase" class="content-section">
+                <div class="section-header">
+                    <h2>Estado de Firebase</h2>
+                </div>
+
+                <div class="firebase-grid">
+                    <div class="firebase-card">
+                        <h3>Estado de Conexión</h3>
+                        <div class="firebase-status-display">
+                            <div class="status-item">
+                                <span>Estado:</span>
+                                <span class="status-badge" id="firebase-connection-status">🔴 Desconectado</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Última Sincronización:</span>
+                                <span id="firebase-last-sync">--</span>
+                            </div>
+                            <div class="status-item">
+                                <span>Datos Activos:</span>
+                                <span id="firebase-active-data">--</span>
+                            </div>
+                        </div>
+                        <button id="test-firebase" class="btn btn-primary" style="margin-top: 20px; width: 100%;">🔍 Probar Conexión</button>
+                    </div>
+
+                    <div class="firebase-card">
+                        <h3>Información de la Base de Datos</h3>
+                        <div class="firebase-info">
+                            <div class="info-item">
+                                <span class="label">Proyecto:</span>
+                                <span class="value">bingo-chevere</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Región:</span>
+                                <span class="value">us-central1</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Base de Datos:</span>
+                                <span class="value">Realtime Database</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">URL:</span>
+                                <span class="value" style="font-size: 11px; word-break: break-all;">bingo-chevere-default-rtdb.firebaseio.com</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=jQZ2zSb7"></script>
+    <script src="js/modal.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue, get, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+            authDomain: "bingo-chevere.firebaseapp.com",
+            databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+            projectId: "bingo-chevere",
+            storageBucket: "bingo-chevere.firebasestorage.app",
+            messagingSenderId: "1057150163831",
+            appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        window.firebase = { database, ref, onValue, get, set };
+    </script>
+    <script src="js/card-generator.js"></script>
+    <script src="js/bingo-caller.js"></script>
+    <script src="js/bingo-validator.js"></script>
+    <script src="js/admin-desktop.js"></script>
+    <script src="js/admin-functions.js"></script>
+</body>
+</html>
