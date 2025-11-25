@@ -145,6 +145,14 @@ class GameRoom {
                 }
             }, (error) => console.error('Error listener gameState:', error))
         );
+        
+        // Listener: Compras (para actualizar premios)
+        this.listeners.push(
+            onValue(ref(database, 'purchases'), (snapshot) => {
+                // Actualizar premio cuando cambien las compras
+                this.updatePrizeDisplay();
+            }, (error) => console.error('Error listener purchases:', error))
+        );
 
         // Listener: Alertas BINGO
         this.listeners.push(
@@ -495,6 +503,45 @@ class GameRoom {
     updateGameInfo() {
         const roundEl = document.getElementById('round');
         if (roundEl) roundEl.textContent = `${this.currentRound}/2`;
+        
+        // Actualizar premio dinámicamente
+        this.updatePrizeDisplay();
+    }
+
+    async updatePrizeDisplay() {
+        try {
+            const { database, ref, get } = window.firebase;
+            
+            // Obtener pagos verificados
+            const purchasesSnap = await get(ref(database, 'purchases'));
+            const purchases = purchasesSnap.val();
+            
+            if (!purchases) {
+                document.getElementById('prize').textContent = '0';
+                return;
+            }
+            
+            const verified = Object.values(purchases).filter(p => p.status === 'verified');
+            const ticketsSold = verified.reduce((sum, p) => sum + (p.cartones || 0), 0);
+            const totalCollected = ticketsSold * 60; // 60 BsF por cartón
+            const totalPrizes = totalCollected * 0.75; // 75% para premios
+            
+            let currentRoundPrize = 0;
+            if (this.currentRound === 1) {
+                currentRoundPrize = totalPrizes * 0.25; // 25% para Ronda 1
+            } else {
+                currentRoundPrize = totalPrizes * 0.75; // 75% para Ronda 2
+            }
+            
+            const prizeEl = document.getElementById('prize');
+            if (prizeEl) {
+                prizeEl.textContent = Math.round(currentRoundPrize);
+            }
+            
+        } catch (error) {
+            console.error('Error actualizando premio:', error);
+            document.getElementById('prize').textContent = '0';
+        }
     }
 
     updateCurrentBall() {
@@ -671,9 +718,11 @@ class GameRoom {
         
         document.body.appendChild(modal);
         
-        document.getElementById('safari-enter-btn').addEventListener('click', () => {
-            // Activar audio con interacción real
-            if ('speechSynthesis' in window) {
+        document.getElementById('safari-enter-btn').addEventListener('click', async () => {
+            // Activar audio con el nuevo sistema
+            if (window.voiceSystem) {
+                await window.voiceSystem.activateAudio();
+            } else if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance('');
                 speechSynthesis.speak(utterance);
             }

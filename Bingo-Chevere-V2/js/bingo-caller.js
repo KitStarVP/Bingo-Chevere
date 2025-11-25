@@ -123,7 +123,7 @@ class BingoCaller {
         return available[randomIndex];
     }
 
-    announceNumber(number) {
+    async announceNumber(number) {
         const letter = this.getBingoLetter(number);
         
         // Cada 3 números, agregar frase introductoria
@@ -137,22 +137,22 @@ class BingoCaller {
         
         this.callCount++;
 
-        // Intentar con ResponsiveVoice primero
-        if (window.responsiveVoice && responsiveVoice.voiceSupport()) {
-            responsiveVoice.cancel();
-            responsiveVoice.speak(text, "Spanish Latin American Female", {
-                rate: 0.9,
-                pitch: 1,
-                volume: 1,
-                onstart: () => console.log('🔊 Voz iniciada:', text),
-                onend: () => console.log('✅ Voz completada'),
-                onerror: (e) => {
-                    console.error('❌ Error ResponsiveVoice:', e);
-                    this.fallbackToNativeVoice(text);
+        // Usar el nuevo sistema de voz universal
+        if (window.voiceSystem) {
+            try {
+                const success = await window.voiceSystem.announceNumber(number);
+                if (success) {
+                    console.log(`🔊 Número anunciado: ${text}`);
+                } else {
+                    console.warn(`⚠️ No se pudo anunciar: ${text}`);
                 }
-            });
+            } catch (error) {
+                console.error('❌ Error en sistema de voz:', error);
+                // Fallback al método anterior
+                this.fallbackToNativeVoice(text);
+            }
         } else {
-            // Fallback a voz nativa del navegador
+            // Fallback si no está disponible el nuevo sistema
             this.fallbackToNativeVoice(text);
         }
     }
@@ -167,7 +167,7 @@ class BingoCaller {
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'es-ES';
-        utterance.rate = 0.85;
+        utterance.rate = 0.8;
         utterance.volume = 1;
         utterance.pitch = 1;
 
@@ -177,7 +177,9 @@ class BingoCaller {
             const spanishVoice = voices.find(v => 
                 v.lang === 'es-ES' || 
                 v.lang === 'es-MX' || 
-                v.lang.startsWith('es')
+                v.lang.startsWith('es') ||
+                v.name.toLowerCase().includes('spanish') ||
+                v.name.toLowerCase().includes('español')
             );
             
             if (spanishVoice) {
@@ -193,7 +195,7 @@ class BingoCaller {
 
         if (speechSynthesis.getVoices().length === 0) {
             speechSynthesis.addEventListener('voiceschanged', speak, { once: true });
-            setTimeout(speak, 500);
+            setTimeout(speak, 1000);
         } else {
             setTimeout(speak, 100);
         }
