@@ -46,29 +46,45 @@ class UniversalVoiceSystem {
     async setupVoiceMethods() {
         this.fallbackMethods = [];
 
+        console.log('🔍 Verificando métodos de voz disponibles...');
+        
         // Método 1: ResponsiveVoice (si está disponible)
-        if (typeof responsiveVoice !== 'undefined' && responsiveVoice.voiceSupport()) {
-            this.fallbackMethods.push('responsiveVoice');
-            console.log('✅ ResponsiveVoice disponible');
+        if (typeof responsiveVoice !== 'undefined') {
+            console.log('🔍 ResponsiveVoice encontrado, verificando soporte...');
+            if (responsiveVoice.voiceSupport && responsiveVoice.voiceSupport()) {
+                this.fallbackMethods.push('responsiveVoice');
+                console.log('✅ ResponsiveVoice disponible y soportado');
+            } else {
+                console.log('⚠️ ResponsiveVoice encontrado pero sin soporte');
+            }
+        } else {
+            console.log('❌ ResponsiveVoice no encontrado');
         }
 
         // Método 2: Web Speech API nativa
         if (this.environment.supportsWebSpeech) {
             this.fallbackMethods.push('webSpeech');
             console.log('✅ Web Speech API disponible');
+        } else {
+            console.log('❌ Web Speech API no disponible');
         }
 
         // Método 3: Audio HTML5 con TTS online
         if (this.environment.supportsAudioContext) {
             this.fallbackMethods.push('audioHTML5');
             console.log('✅ Audio HTML5 disponible');
+        } else {
+            console.log('❌ Audio HTML5 no disponible');
         }
 
         // Método 4: Fallback silencioso
         this.fallbackMethods.push('silent');
+        console.log('✅ Fallback silencioso siempre disponible');
 
         // Establecer método principal
         this.currentMethod = this.fallbackMethods[0] || 'silent';
+        console.log(`🎤 Métodos disponibles: [${this.fallbackMethods.join(', ')}]`);
+        console.log(`🎤 Método principal seleccionado: ${this.currentMethod}`);
     }
 
     loadNativeVoices() {
@@ -439,7 +455,24 @@ class UniversalVoiceSystem {
 // Exportar globalmente
 window.UniversalVoiceSystem = UniversalVoiceSystem;
 
-// Auto-inicializar si no existe
+// Inicializar cuando ResponsiveVoice esté listo
 if (!window.voiceSystem) {
-    window.voiceSystem = new UniversalVoiceSystem();
+    // Esperar a que ResponsiveVoice se cargue
+    const initVoiceSystem = () => {
+        if (typeof responsiveVoice !== 'undefined') {
+            window.voiceSystem = new UniversalVoiceSystem();
+            console.log('🎤 Sistema de voz inicializado con ResponsiveVoice');
+        } else {
+            // Fallback sin ResponsiveVoice
+            window.voiceSystem = new UniversalVoiceSystem();
+            console.log('🎤 Sistema de voz inicializado sin ResponsiveVoice');
+        }
+    };
+    
+    // Intentar inicializar inmediatamente
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initVoiceSystem);
+    } else {
+        setTimeout(initVoiceSystem, 500);
+    }
 }

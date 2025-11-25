@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simple - Voz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Test Simple de Voz</h1>
+        
+        <button onclick="testResponsiveVoice()">Test ResponsiveVoice</button>
+        <button onclick="testWebSpeech()">Test Web Speech</button>
+        <button onclick="testSimpleSystem()">Test Sistema Simple</button>
+        <button onclick="testBingoNumber()">Test Número Bingo</button>
+        <button onclick="clearLog()">Limpiar Log</button>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=jQZ2zSb7"></script>
+    <script src="js/simple-voice.js"></script>
+    
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function testResponsiveVoice() {
+            log('🧪 Probando ResponsiveVoice...');
+            
+            if (typeof responsiveVoice === 'undefined') {
+                log('❌ ResponsiveVoice no encontrado');
+                return;
+            }
+            
+            if (!responsiveVoice.voiceSupport()) {
+                log('❌ ResponsiveVoice sin soporte');
+                return;
+            }
+            
+            log('✅ ResponsiveVoice disponible, probando...');
+            
+            responsiveVoice.speak('B 7, repito, B 7', 'Spanish Latin American Female', {
+                rate: 0.8,
+                onstart: () => log('🔊 ResponsiveVoice iniciado'),
+                onend: () => log('✅ ResponsiveVoice completado'),
+                onerror: (e) => log('❌ ResponsiveVoice error: ' + e)
+            });
+        }
+
+        function testWebSpeech() {
+            log('🧪 Probando Web Speech API...');
+            
+            if (!('speechSynthesis' in window)) {
+                log('❌ Web Speech API no disponible');
+                return;
+            }
+            
+            log('✅ Web Speech API disponible, probando...');
+            
+            const utterance = new SpeechSynthesisUtterance('I 23, repito, I 23');
+            utterance.lang = 'es-ES';
+            utterance.rate = 0.8;
+            
+            utterance.onstart = () => log('🔊 Web Speech iniciado');
+            utterance.onend = () => log('✅ Web Speech completado');
+            utterance.onerror = (e) => log('❌ Web Speech error: ' + e.error);
+            
+            speechSynthesis.speak(utterance);
+        }
+
+        function testSimpleSystem() {
+            log('🧪 Probando Sistema Simple...');
+            
+            if (!window.simpleVoice) {
+                log('❌ Sistema Simple no encontrado');
+                return;
+            }
+            
+            if (!window.simpleVoice.isReady) {
+                log('❌ Sistema Simple no está listo');
+                return;
+            }
+            
+            log('✅ Sistema Simple disponible, probando...');
+            
+            window.simpleVoice.speak('N 45, repito, N 45').then(success => {
+                if (success) {
+                    log('✅ Sistema Simple funcionó correctamente');
+                } else {
+                    log('❌ Sistema Simple falló');
+                }
+            });
+        }
+
+        function testBingoNumber() {
+            log('🧪 Probando número de bingo...');
+            
+            if (!window.simpleVoice || !window.simpleVoice.isReady) {
+                log('❌ Sistema Simple no disponible');
+                return;
+            }
+            
+            const number = Math.floor(Math.random() * 75) + 1;
+            log(`🎲 Número aleatorio: ${number}`);
+            
+            window.simpleVoice.announceNumber(number).then(success => {
+                if (success) {
+                    log('✅ Número anunciado correctamente');
+                } else {
+                    log('❌ Fallo al anunciar número');
+                }
+            });
+        }
+
+        // Log inicial
+        setTimeout(() => {
+            log('🚀 Test Simple cargado');
+            log('ResponsiveVoice: ' + (typeof responsiveVoice !== 'undefined' ? '✅' : '❌'));
+            log('Web Speech: ' + ('speechSynthesis' in window ? '✅' : '❌'));
+            log('Sistema Simple: ' + (window.simpleVoice ? '✅' : '❌'));
+        }, 1000);
+    </script>
+</body>
+</html>

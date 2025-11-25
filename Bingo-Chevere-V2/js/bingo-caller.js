@@ -137,22 +137,23 @@ class BingoCaller {
         
         this.callCount++;
 
-        // Usar el nuevo sistema de voz universal
-        if (window.voiceSystem) {
+        // Usar sistema de voz simple
+        if (window.simpleVoice && window.simpleVoice.isReady) {
             try {
-                const success = await window.voiceSystem.announceNumber(number);
+                console.log(`📢 Intentando anunciar: ${text}`);
+                const success = await window.simpleVoice.announceNumber(number);
                 if (success) {
-                    console.log(`🔊 Número anunciado: ${text}`);
+                    console.log(`✅ Número anunciado exitosamente: ${text}`);
                 } else {
-                    console.warn(`⚠️ No se pudo anunciar: ${text}`);
+                    console.warn(`⚠️ Fallo en sistema simple, usando fallback`);
+                    this.fallbackToNativeVoice(text);
                 }
             } catch (error) {
-                console.error('❌ Error en sistema de voz:', error);
-                // Fallback al método anterior
+                console.error('❌ Error en sistema simple:', error);
                 this.fallbackToNativeVoice(text);
             }
         } else {
-            // Fallback si no está disponible el nuevo sistema
+            console.warn('⚠️ Sistema simple no disponible, usando fallback nativo');
             this.fallbackToNativeVoice(text);
         }
     }

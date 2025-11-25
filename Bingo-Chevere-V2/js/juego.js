@@ -719,13 +719,16 @@ class GameRoom {
         document.body.appendChild(modal);
         
         document.getElementById('safari-enter-btn').addEventListener('click', async () => {
-            // Activar audio con el nuevo sistema
-            if (window.voiceSystem) {
-                await window.voiceSystem.activateAudio();
-            } else if ('speechSynthesis' in window) {
+            // Activar audio
+            if (typeof responsiveVoice !== 'undefined') {
+                responsiveVoice.speak('', 'Spanish Female', { volume: 0 });
+            }
+            if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance('');
+                utterance.volume = 0;
                 speechSynthesis.speak(utterance);
             }
+            console.log('🔊 Audio activado para iOS/Safari');
             modal.remove();
         });
     }
