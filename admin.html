@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6C63FF">
+    <title>Admin - Bingo Chévere</title>
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="mobile-header">
+            <a href="index.html" class="back-btn">←</a>
+            <div class="header-title">
+                <h1>Panel Admin</h1>
+            </div>
+            <div class="header-spacer"></div>
+        </header>
+
+        <!-- Estado de Firebase -->
+        <section class="admin-section">
+            <h2>🔥 Estado de Firebase</h2>
+            <div class="firebase-status">
+                <div class="status-indicator" id="firebase-indicator">
+                    <div class="status-dot"></div>
+                    <span id="firebase-status-text">Verificando...</span>
+                </div>
+                <div class="firebase-details">
+                    <div class="detail-item">
+                        <span>Conexión:</span>
+                        <span id="connection-status">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>Última sync:</span>
+                        <span id="last-sync">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>Datos activos:</span>
+                        <span id="active-data">--</span>
+                    </div>
+                </div>
+                <button id="test-firebase" class="control-btn start">🔍 Test Conexión</button>
+            </div>
+        </section>
+
+        <!-- Pagos Pendientes -->
+        <section class="admin-section">
+            <h2>💳 Gestión de Pagos</h2>
+            <div class="stats-row">
+                <div class="stat-box" onclick="filterPayments('pending')">
+                    <span class="stat-number" id="pending-count">0</span>
+                    <span class="stat-label">Pendientes</span>
+                </div>
+                <div class="stat-box" onclick="filterPayments('verified')">
+                    <span class="stat-number" id="verified-count">0</span>
+                    <span class="stat-label">Verificados</span>
+                </div>
+                <div class="stat-box" onclick="filterPayments('rejected')">
+                    <span class="stat-number" id="rejected-count">0</span>
+                    <span class="stat-label">Rechazados</span>
+                </div>
+            </div>
+            <div id="payments-list" class="payments-list"></div>
+        </section>
+
+        <!-- Verificación de BINGO -->
+        <section class="admin-section">
+            <h2>🎯 Verificación de BINGO</h2>
+            <div id="bingo-verification">
+                <div id="no-bingo-pending" class="empty-state">
+                    <div class="empty-state-icon">✅</div>
+                    <p>No hay BINGO pendiente</p>
+                </div>
+                <div id="bingo-pending" style="display:none">
+                    <div class="bingo-alert">
+                        <h3>🚨 ¡BINGO CANTADO!</h3>
+                        <div class="bingo-details">
+                            <span>Cartón: <strong id="winner-carton">-</strong></span>
+                            <span>Teléfono: <strong id="winner-phone">-</strong></span>
+                            <span>Tipo: <strong id="winner-type">-</strong></span>
+                        </div>
+                    </div>
+                    <div class="verification-actions">
+                        <button id="verify-winner" class="payment-btn approve">✓ Verificar</button>
+                        <button id="reject-winner" class="payment-btn reject">✗ Rechazar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Controles del Juego -->
+        <section class="admin-section">
+            <h2>🎮 Control del Juego</h2>
+            <div class="game-status" id="game-status">
+                <span class="status-badge">🔴 Inactivo</span>
+                <span class="game-info">Ronda: <strong id="current-round">1</strong>/2</span>
+            </div>
+            <div class="game-controls">
+                <button id="start-game" class="control-btn start">🚀 Iniciar Juego</button>
+                <button id="pause-game" class="control-btn pause" style="display:none;">⏸️ Pausar</button>
+                <button id="resume-game" class="control-btn resume" style="display:none;">▶️ Reanudar</button>
+                <button id="next-round" class="control-btn round" style="display:none;">➡️ Ronda 2</button>
+                <button id="end-game" class="control-btn end" style="display:none;">🏁 Finalizar</button>
+            </div>
+        </section>
+
+        <!-- Gestión de Premios -->
+        <section class="admin-section">
+            <h2>💰 Gestión de Premios</h2>
+            <div class="stats-row">
+                <div class="stat-box">
+                    <span class="stat-number" id="pending-prizes">0</span>
+                    <span class="stat-label">Pendientes</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number" id="paid-prizes">0</span>
+                    <span class="stat-label">Pagados</span>
+                </div>
+            </div>
+            <div class="prize-tabs">
+                <button class="tab-btn active" onclick="showPrizeTab('pending')">Pendientes</button>
+                <button class="tab-btn" onclick="showPrizeTab('paid')">Pagados</button>
+            </div>
+            <div id="prizes-content" class="prizes-content"></div>
+        </section>
+
+        <!-- Estadísticas -->
+        <section class="admin-section">
+            <h2>📊 Estadísticas</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Cartones Vendidos</span>
+                    <span class="stat-value" id="tickets-sold">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Premio Ronda</span>
+                    <span class="stat-value" id="round-prize">BsF 0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Recaudado</span>
+                    <span class="stat-value" id="total-collected">BsF 0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Premios</span>
+                    <span class="stat-value" id="total-prizes">BsF 0</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gestión de Usuarios -->
+        <section class="admin-section">
+            <h2>👥 Gestión de Usuarios</h2>
+            <div class="user-search">
+                <input type="tel" id="user-phone-search" placeholder="Buscar por teléfono" class="input-field">
+                <button onclick="searchUser()" class="control-btn start" style="margin-top: 12px;">🔍 Buscar</button>
+            </div>
+            <div class="stats-row" style="margin-top: 16px;">
+                <div class="stat-box">
+                    <span class="stat-number" id="total-users">0</span>
+                    <span class="stat-label">Total Usuarios</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number" id="active-users">0</span>
+                    <span class="stat-label">Activos</span>
+                </div>
+            </div>
+            <div id="user-profile" style="display:none; margin-top: 16px;"></div>
+        </section>
+
+        <!-- Historial de Ganadores -->
+        <section class="admin-section">
+            <h2>🏆 Historial de Ganadores</h2>
+            <div class="search-filters">
+                <input type="date" id="winner-date-filter" class="input-field" style="margin-bottom: 8px;">
+                <input type="tel" id="winner-phone-filter" placeholder="Teléfono" class="input-field" style="margin-bottom: 8px;">
+                <button onclick="filterWinners()" class="control-btn start">🔍 Buscar</button>
+            </div>
+            <div id="winners-list" class="payments-list" style="margin-top: 16px;"></div>
+        </section>
+
+        <!-- Info Cantado Automático -->
+        <section class="admin-section">
+            <h2>🎲 Cantado Automático</h2>
+            <div class="game-status">
+                <span id="caller-status" class="status-badge">🔴 Detenido</span>
+                <span class="game-info">Último: <strong id="last-number">--</strong></span>
+            </div>
+            <div style="padding: 16px; background: rgba(108, 99, 255, 0.1); border-radius: 8px; margin-top: 12px;">
+                <p style="margin: 0; font-size: 14px; color: #666; text-align: center;">
+                    ℹ️ El cantado se inicia automáticamente al hacer clic en "Iniciar Juego"<br>
+                    Se pausa automáticamente cuando hay BINGO pendiente<br>
+                    Intervalo: 15 segundos entre números
+                </p>
+            </div>
+        </section>
+
+        <!-- Mantenimiento -->
+        <section class="admin-section">
+            <h2>🔧 Mantenimiento</h2>
+            <p style="color: #28a745; font-weight: 600; text-align: center; margin-bottom: 0.5rem;">
+                🛡️ Mantenimiento Seguro
+            </p>
+            <p style="font-size: 0.8rem; color: #666; text-align: center; margin-bottom: 1rem;">
+                Limpieza que NO afecta datos importantes
+            </p>
+            <div class="game-controls">
+                <button onclick="resetAllCards()" class="control-btn pause">🔄 Resetear Cartones</button>
+                <button onclick="expireAllCards()" class="control-btn danger">⏰ Expirar Cartones</button>
+                <button onclick="clearGameData()" class="control-btn danger">🗑️ Limpiar Juego</button>
+            </div>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                <h4 style="color: #dc3545; margin: 0 0 0.5rem 0;">⚠️ Zona Peligrosa</h4>
+                <button onclick="resetTotalSystem()" class="control-btn danger" style="width: 100%;">🗑️ RESET TOTAL</button>
+            </div>
+        </section>
+
+        <!-- Navegación -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Inicio</span>
+            </a>
+            <a href="comprar.html" class="nav-item">
+                <span class="nav-icon">🎫</span>
+                <span class="nav-label">Comprar</span>
+            </a>
+            <a href="juego.html" class="nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Jugar</span>
+            </a>
+            <a href="premios.html" class="nav-item">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">Premios</span>
+            </a>
+            <a href="admin.html" class="nav-item active">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Admin</span>
+            </a>
+        </nav>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+            authDomain: "bingo-chevere.firebaseapp.com",
+            databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+            projectId: "bingo-chevere",
+            storageBucket: "bingo-chevere.firebasestorage.app",
+            messagingSenderId: "1057150163831",
+            appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        window.firebase = { database, ref, set, get, onValue };
+    </script>
+    <script src="js/modal.js"></script>
+    <script src="js/audio-system.js"></script>
+    <script src="js/card-generator.js"></script>
+    <script src="js/bingo-caller.js"></script>
+    <script src="js/bingo-validator.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/admin-functions.js"></script>
+</body>
+</html>

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador MP3 Mejorado - Bingo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-start {
+            background: #28a745;
+            color: white;
+        }
+        .btn-stop {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-download {
+            background: #007bff;
+            color: white;
+        }
+        .progress {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 30px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #28a745, #20c997);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 20px 0;
+        }
+        .current-file {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Generador Automático de MP3 para Bingo</h1>
+        
+        <div class="controls">
+            <button id="generateBtn" class="btn-start">🎵 Generar Todos los MP3</button>
+            <button id="downloadZipBtn" class="btn-download" disabled>📦 Descargar ZIP Completo</button>
+            <button id="clearBtn" class="btn-stop">🗑️ Limpiar Todo</button>
+        </div>
+
+        <div class="progress">
+            <div id="progressBar" class="progress-bar">0%</div>
+        </div>
+
+        <div id="status" class="status">Listo para generar 75 archivos MP3</div>
+        
+        <div id="methodSelector" style="text-align: center; margin: 20px 0;">
+            <label style="margin-right: 20px;">
+                <input type="radio" name="method" value="responsiveVoice" checked> ResponsiveVoice
+            </label>
+            <label style="margin-right: 20px;">
+                <input type="radio" name="method" value="webSpeech"> Web Speech API
+            </label>
+            <label>
+                <input type="radio" name="method" value="hybrid"> Híbrido (Recomendado)
+            </label>
+        </div>
+
+        <div id="currentFile" class="current-file" style="display:none;">
+            Generando: <span id="currentFileName">--</span>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div id="generatedCount" class="stat-number">0</div>
+                <div class="stat-label">Generados</div>
+            </div>
+            <div class="stat-card">
+                <div id="readyCount" class="stat-number">0</div>
+                <div class="stat-label">Listos</div>
+            </div>
+            <div class="stat-card">
+                <div id="errorCount" class="stat-number">0</div>
+                <div class="stat-label">Errores</div>
+            </div>
+            <div class="stat-card">
+                <div id="zipSize" class="stat-number">0 MB</div>
+                <div class="stat-label">Tamaño ZIP</div>
+            </div>
+        </div>
+
+        <div id="log" class="log"></div>
+    </div>
+
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=jQZ2zSb7"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        class MP3Generator {
+            constructor() {
+                this.isGenerating = false;
+                this.currentIndex = 0;
+                this.generatedFiles = new Map();
+                this.readyCount = 0;
+                this.errorCount = 0;
+                this.startTime = null;
+                this.numbers = this.generateNumbers();
+                this.selectedMethod = 'hybrid';
+                this.zip = new JSZip();
+                
+                this.initElements();
+                this.setupEventListeners();
+                this.log('🎵 Generador MP3 Mejorado listo. Total: ' + this.numbers.length + ' archivos');
+            }
+
+            generateNumbers() {
+                const numbers = [];
+                // B: 1-15
+                for (let i = 1; i <= 15; i++) {
+                    numbers.push({ number: i, letter: 'B', text: `B ${i}, repito, B ${i}`, filename: `B${i}.mp3` });
+                }
+                // I: 16-30
+                for (let i = 16; i <= 30; i++) {
+                    numbers.push({ number: i, letter: 'I', text: `I ${i}, repito, I ${i}`, filename: `I${i}.mp3` });
+                }
+                // N: 31-45
+                for (let i = 31; i <= 45; i++) {
+                    numbers.push({ number: i, letter: 'N', text: `N ${i}, repito, N ${i}`, filename: `N${i}.mp3` });
+                }
+                // G: 46-60
+                for (let i = 46; i <= 60; i++) {
+                    numbers.push({ number: i, letter: 'G', text: `G ${i}, repito, G ${i}`, filename: `G${i}.mp3` });
+                }
+                // O: 61-75
+                for (let i = 61; i <= 75; i++) {
+                    numbers.push({ number: i, letter: 'O', text: `O ${i}, repito, O ${i}`, filename: `O${i}.mp3` });
+                }
+                return numbers;
+            }
+
+            initElements() {
+                this.generateBtn = document.getElementById('generateBtn');
+                this.downloadZipBtn = document.getElementById('downloadZipBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.progressBar = document.getElementById('progressBar');
+                this.status = document.getElementById('status');
+                this.currentFile = document.getElementById('currentFile');
+                this.currentFileName = document.getElementById('currentFileName');
+                this.logElement = document.getElementById('log');
+                this.generatedCountEl = document.getElementById('generatedCount');
+                this.readyCountEl = document.getElementById('readyCount');
+                this.errorCountEl = document.getElementById('errorCount');
+                this.zipSizeEl = document.getElementById('zipSize');
+            }
+
+            setupEventListeners() {
+                this.generateBtn.addEventListener('click', () => this.generateAll());
+                this.downloadZipBtn.addEventListener('click', () => this.downloadZip());
+                this.clearBtn.addEventListener('click', () => this.clearAll());
+                
+                // Selector de método
+                document.querySelectorAll('input[name="method"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        this.selectedMethod = e.target.value;
+                        this.log(`🔄 Método cambiado a: ${this.selectedMethod}`);
+                    });
+                });
+            }
+
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                this.logElement.innerHTML += `[${timestamp}] ${message}<br>`;
+                this.logElement.scrollTop = this.logElement.scrollHeight;
+                console.log(message);
+            }
+
+            updateStats() {
+                this.generatedCountEl.textContent = this.generatedFiles.size;
+                this.readyCountEl.textContent = this.readyCount;
+                this.errorCountEl.textContent = this.errorCount;
+                
+                // Calcular tamaño aproximado del ZIP
+                const estimatedSize = (this.readyCount * 0.05).toFixed(1); // ~50KB por archivo
+                this.zipSizeEl.textContent = estimatedSize + ' MB';
+            }
+
+            updateProgress() {
+                const progress = Math.floor((this.generatedFiles.size / this.numbers.length) * 100);
+                this.progressBar.style.width = progress + '%';
+                this.progressBar.textContent = progress + '%';
+                
+                if (progress === 100) {
+                    this.downloadZipBtn.disabled = false;
+                    this.status.textContent = '✅ Todos los archivos generados. Listo para descargar ZIP';
+                }
+            }
+
+            async generateAll() {
+                if (this.isGenerating) return;
+                
+                this.isGenerating = true;
+                this.startTime = Date.now();
+                this.generatedFiles.clear();
+                this.readyCount = 0;
+                this.errorCount = 0;
+                this.zip = new JSZip();
+                
+                this.generateBtn.disabled = true;
+                this.downloadZipBtn.disabled = true;
+                this.status.textContent = 'Generando todos los archivos...';
+                this.currentFile.style.display = 'block';
+                
+                this.log(`🚀 Iniciando generación con método: ${this.selectedMethod}`);
+                
+                // Generar todos en paralelo (más rápido)
+                const promises = this.numbers.map((item, index) => 
+                    this.generateSingleFileImproved(item, index)
+                );
+                
+                try {
+                    await Promise.allSettled(promises);
+                    this.completeGeneration();
+                } catch (error) {
+                    this.log(`❌ Error en generación masiva: ${error.message}`);
+                    this.completeGeneration();
+                }
+            }
+
+            async generateSingleFileImproved(item, index) {
+                return new Promise(async (resolve) => {
+                    try {
+                        // Pequeña pausa escalonada para evitar saturación
+                        await new Promise(r => setTimeout(r, index * 100));
+                        
+                        this.currentFileName.textContent = item.filename;
+                        this.log(`🎤 Generando: ${item.filename}`);
+                        
+                        let audioBlob = null;
+                        
+                        switch (this.selectedMethod) {
+                            case 'responsiveVoice':
+                                audioBlob = await this.generateWithResponsiveVoice(item);
+                                break;
+                            case 'webSpeech':
+                                audioBlob = await this.generateWithWebSpeechImproved(item);
+                                break;
+                            case 'hybrid':
+                            default:
+                                audioBlob = await this.generateHybrid(item);
+                                break;
+                        }
+                        
+                        if (audioBlob) {
+                            this.generatedFiles.set(item.filename, audioBlob);
+                            this.zip.file(item.filename.replace('.mp3', '.wav'), audioBlob);
+                            this.readyCount++;
+                            this.log(`✅ Listo: ${item.filename}`);
+                        } else {
+                            this.errorCount++;
+                            this.log(`❌ Error: ${item.filename}`);
+                        }
+                        
+                        this.updateProgress();
+                        this.updateStats();
+                        
+                    } catch (error) {
+                        this.errorCount++;
+                        this.log(`❌ Error generando ${item.filename}: ${error.message}`);
+                    }
+                    
+                    resolve();
+                });
+            }
+
+            async generateWithResponsiveVoice(item) {
+                return new Promise((resolve) => {
+                    if (typeof responsiveVoice === 'undefined') {
+                        resolve(null);
+                        return;
+                    }
+                    
+                    // Crear contexto de audio para capturar
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const destination = audioContext.createMediaStreamDestination();
+                    const mediaRecorder = new MediaRecorder(destination.stream);
+                    const chunks = [];
+                    
+                    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: 'audio/wav' });
+                        resolve(blob);
+                    };
+                    
+                    responsiveVoice.speak(item.text, 'Spanish Latin American Female', {
+                        rate: 0.8,
+                        onstart: () => mediaRecorder.start(),
+                        onend: () => setTimeout(() => mediaRecorder.stop(), 500),
+                        onerror: () => resolve(null)
+                    });
+                    
+                    setTimeout(() => {
+                        mediaRecorder.stop();
+                        resolve(null);
+                    }, 10000);
+                });
+            }
+            
+            async generateWithWebSpeechImproved(item) {
+                return new Promise((resolve) => {
+                    if (!('speechSynthesis' in window)) {
+                        resolve(null);
+                        return;
+                    }
+                    
+                    try {
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const destination = audioContext.createMediaStreamDestination();
+                        const mediaRecorder = new MediaRecorder(destination.stream);
+                        const chunks = [];
+                        
+                        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                        mediaRecorder.onstop = () => {
+                            const blob = new Blob(chunks, { type: 'audio/wav' });
+                            resolve(blob);
+                        };
+                        
+                        const utterance = new SpeechSynthesisUtterance(item.text);
+                        utterance.lang = 'es-ES';
+                        utterance.rate = 0.8;
+                        utterance.volume = 1;
+                        
+                        const voices = speechSynthesis.getVoices();
+                        const spanishVoice = voices.find(v => v.lang.startsWith('es'));
+                        if (spanishVoice) utterance.voice = spanishVoice;
+                        
+                        utterance.onstart = () => mediaRecorder.start();
+                        utterance.onend = () => setTimeout(() => mediaRecorder.stop(), 500);
+                        utterance.onerror = () => resolve(null);
+                        
+                        speechSynthesis.speak(utterance);
+                        
+                        setTimeout(() => {
+                            mediaRecorder.stop();
+                            resolve(null);
+                        }, 10000);
+                        
+                    } catch (error) {
+                        resolve(null);
+                    }
+                });
+            }
+            
+            async generateHybrid(item) {
+                // Intentar ResponsiveVoice primero, luego Web Speech
+                let result = await this.generateWithResponsiveVoice(item);
+                if (!result) {
+                    result = await this.generateWithWebSpeechImproved(item);
+                }
+                return result;
+            }
+            
+            async waitForResponsiveVoice() {
+                return new Promise((resolve) => {
+                    let attempts = 0;
+                    const checkInterval = setInterval(() => {
+                        attempts++;
+                        if (typeof responsiveVoice !== 'undefined') {
+                            clearInterval(checkInterval);
+                            resolve();
+                        } else if (attempts > 20) { // 10 segundos máximo
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 500);
+                });
+            }
+
+
+
+            stopGeneration() {
+                this.isGenerating = false;
+                this.startBtn.disabled = false;
+                this.stopBtn.disabled = true;
+                this.downloadAllBtn.disabled = false;
+                
+                responsiveVoice.cancel();
+                
+                this.log('⏹️ Generación detenida por el usuario');
+                this.status.textContent = `Detenido. Generados: ${this.generatedFiles.length}/${this.numbers.length}`;
+                this.currentFile.style.display = 'none';
+            }
+
+            completeGeneration() {
+                this.isGenerating = false;
+                this.generateBtn.disabled = false;
+                this.currentFile.style.display = 'none';
+                
+                const successCount = this.generatedFiles.size;
+                const totalCount = this.numbers.length;
+                
+                this.log(`🎉 Generación completada: ${successCount}/${totalCount} archivos`);
+                
+                if (successCount > 0) {
+                    this.downloadZipBtn.disabled = false;
+                    this.status.textContent = `✅ ${successCount} archivos listos para descargar`;
+                } else {
+                    this.status.textContent = '❌ No se pudo generar ningún archivo';
+                }
+                
+                this.updateStats();
+            }
+
+            async downloadZip() {
+                if (this.generatedFiles.size === 0) {
+                    this.log('❌ No hay archivos para descargar');
+                    return;
+                }
+                
+                this.log('📦 Creando archivo ZIP...');
+                this.status.textContent = 'Creando ZIP...';
+                
+                try {
+                    const zipBlob = await this.zip.generateAsync({
+                        type: 'blob',
+                        compression: 'DEFLATE',
+                        compressionOptions: { level: 6 }
+                    });
+                    
+                    const url = URL.createObjectURL(zipBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'bingo-audio-files.zip';
+                    link.style.display = 'none';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    URL.revokeObjectURL(url);
+                    
+                    this.log(`✅ ZIP descargado: ${this.generatedFiles.size} archivos`);
+                    this.status.textContent = '✅ ZIP descargado exitosamente';
+                    
+                } catch (error) {
+                    this.log(`❌ Error creando ZIP: ${error.message}`);
+                    this.status.textContent = '❌ Error creando ZIP';
+                }
+            }
+            
+            clearAll() {
+                this.generatedFiles.clear();
+                this.readyCount = 0;
+                this.errorCount = 0;
+                this.zip = new JSZip();
+                this.downloadZipBtn.disabled = true;
+                this.progressBar.style.width = '0%';
+                this.progressBar.textContent = '0%';
+                this.status.textContent = 'Todo limpiado. Listo para generar';
+                this.logElement.innerHTML = '';
+                this.updateStats();
+                this.log('🗑️ Todo limpiado');
+            }
+        }
+
+        // Inicializar cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', () => {
+            window.mp3Generator = new MP3Generator();
+        });
+    </script>
+</body>
+</html>

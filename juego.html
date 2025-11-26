@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6C63FF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Sala de Juego - Bingo Chevere</title>
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/juego.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container game-mode">
+        <!-- Header del juego -->
+        <header class="game-header">
+            <div class="game-info-bar">
+                <div class="info-item">
+                    <span class="info-label">Ronda</span>
+                    <span class="info-value" id="round-display">1/2</span>
+                </div>
+                <button class="action-icon" id="pattern-btn" title="Ver Patrón">🎯</button>
+                <div class="current-ball" id="current-ball">--</div>
+                <button class="action-icon" id="history-btn" title="Historial">📊</button>
+                <div class="info-item">
+                    <span class="info-label">Premio</span>
+                    <span class="info-value" id="prize-display">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Cartones -->
+        <div class="cards-container" id="cards-container">
+            <!-- Los cartones se generan dinámicamente -->
+        </div>
+
+        <!-- Estado sin cartones -->
+        <div class="empty-state" id="empty-state" style="display:none">
+            <div class="empty-icon">🎫</div>
+            <h3>Sin Cartones</h3>
+            <p>Necesitas comprar cartones para jugar</p>
+            <a href="comprar.html" class="empty-btn">Comprar Ahora</a>
+        </div>
+
+        <!-- Modal Historial -->
+        <div class="modal" id="history-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Números Cantados</h3>
+                    <button class="close-modal" id="close-history">×</button>
+                </div>
+                <div class="numbers-grid" id="numbers-grid"></div>
+            </div>
+        </div>
+
+        <!-- Modal Patrón -->
+        <div class="modal" id="pattern-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="pattern-title">Patrón Ronda 1</h3>
+                    <button class="close-modal" id="close-pattern">×</button>
+                </div>
+                <div class="pattern-display" id="pattern-display"></div>
+            </div>
+        </div>
+
+        <!-- Alerta BINGO -->
+        <div class="alert-overlay" id="bingo-alert" style="display:none">
+            <div class="alert-content">
+                <div class="alert-icon">🎯</div>
+                <h3>¡BINGO CANTADO!</h3>
+                <p>Verificando cartón...</p>
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Alerta Ganador -->
+        <div class="alert-overlay success" id="winner-alert" style="display:none">
+            <div class="alert-content">
+                <div class="alert-icon">🏆</div>
+                <h3>¡FELICITACIONES!</h3>
+                <p id="winner-message">Has ganado</p>
+                <div class="winner-prize" id="winner-prize">BsF 0</div>
+                <button class="alert-btn" id="close-winner">Continuar</button>
+            </div>
+        </div>
+
+        <!-- Navegación -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Inicio</span>
+            </a>
+            <a href="comprar.html" class="nav-item">
+                <span class="nav-icon">🎫</span>
+                <span class="nav-label">Comprar</span>
+            </a>
+            <a href="juego.html" class="nav-item active">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Jugar</span>
+            </a>
+            <a href="premios.html" class="nav-item">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">Premios</span>
+            </a>
+            <a href="perfil.html" class="nav-item">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Perfil</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/audio-system.js"></script>
+    <script src="js/modal.js"></script>
+    <script src="js/bingo-validator.js"></script>
+    
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getDatabase, ref, onValue, get, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKK_aY4OeEh4NmRIAExKk4T0i7d4Z1_8M",
+            authDomain: "bingo-chevere.firebaseapp.com",
+            databaseURL: "https://bingo-chevere-default-rtdb.firebaseio.com/",
+            projectId: "bingo-chevere",
+            storageBucket: "bingo-chevere.firebasestorage.app",
+            messagingSenderId: "1057150163831",
+            appId: "1:1057150163831:web:0d6e9f70c356ee56b09f72"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        window.firebase = { database, ref, onValue, get, set };
+        
+        console.log('🔥 Firebase inicializado');
+    </script>
+    
+    <script src="js/sala-nueva.js"></script>
+</body>
+</html>

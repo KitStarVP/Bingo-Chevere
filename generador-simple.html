@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador Simple MP3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .method {
+            border: 2px solid #ddd;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        .method h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+        .progress {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 25px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: #28a745;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+        .current {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Generador Simple de Audios</h1>
+        
+        <!-- MÉTODO 1: Enlaces Directos -->
+        <div class="method">
+            <h3>🔗 Método 1: Enlaces Directos (MÁS FÁCIL)</h3>
+            <p>Genera enlaces directos para descargar cada audio individualmente</p>
+            <button class="btn-primary" onclick="generateLinks()">Generar 75 Enlaces</button>
+            <div id="links-container" style="display:none;">
+                <p><strong>Clic derecho → "Guardar enlace como..." en cada uno:</strong></p>
+                <div id="links-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;"></div>
+            </div>
+        </div>
+
+        <!-- MÉTODO 2: Descarga Automática -->
+        <div class="method">
+            <h3>⚡ Método 2: Descarga Automática</h3>
+            <p>Descarga automática uno por uno (puede ser bloqueado por el navegador)</p>
+            <button class="btn-success" onclick="startAutoDownload()">Iniciar Descarga Automática</button>
+            <button class="btn-warning" onclick="stopAutoDownload()" disabled id="stopBtn">Detener</button>
+            
+            <div class="progress">
+                <div id="progressBar" class="progress-bar">0%</div>
+            </div>
+            
+            <div id="current" class="current" style="display:none;">
+                Descargando: <span id="currentFile">--</span>
+            </div>
+            
+            <div id="log" class="log"></div>
+        </div>
+
+        <!-- MÉTODO 3: Lista para Copiar -->
+        <div class="method">
+            <h3>📋 Método 3: Lista para Copiar</h3>
+            <p>Lista de todos los textos para usar en otros generadores TTS</p>
+            <button class="btn-warning" onclick="generateTextList()">Generar Lista de Textos</button>
+            <textarea id="textList" style="width:100%; height:200px; margin-top:10px; display:none;" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        let downloadInterval = null;
+        let currentIndex = 0;
+        let isDownloading = false;
+
+        // Generar números de bingo
+        function generateNumbers() {
+            const numbers = [];
+            for (let i = 1; i <= 75; i++) {
+                let letter;
+                if (i <= 15) letter = 'B';
+                else if (i <= 30) letter = 'I';
+                else if (i <= 45) letter = 'N';
+                else if (i <= 60) letter = 'G';
+                else letter = 'O';
+                
+                const text = `${letter} ${i}, repito, ${letter} ${i}`;
+                const filename = `${letter}${i}.mp3`;
+                numbers.push({ number: i, letter, text, filename });
+            }
+            return numbers;
+        }
+
+        const numbers = generateNumbers();
+
+        // MÉTODO 1: Enlaces directos
+        function generateLinks() {
+            const container = document.getElementById('links-container');
+            const linksList = document.getElementById('links-list');
+            
+            let html = '';
+            numbers.forEach(item => {
+                const encodedText = encodeURIComponent(item.text);
+                const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=es&client=tw-ob&q=${encodedText}`;
+                html += `<div style="margin: 5px 0; padding: 8px; background: #f0f0f0; border-radius: 5px;">
+                    <strong>${item.filename}</strong> - "${item.text}"<br>
+                    <a href="${url}" download="${item.filename}" style="color: #007bff; text-decoration: none;">
+                        🔗 Descargar ${item.filename}
+                    </a>
+                </div>`;
+            });
+            
+            linksList.innerHTML = html;
+            container.style.display = 'block';
+            log('✅ 75 enlaces generados. Clic derecho → "Guardar enlace como..." en cada uno');
+        }
+
+        // MÉTODO 2: Descarga automática
+        function startAutoDownload() {
+            if (isDownloading) return;
+            
+            isDownloading = true;
+            currentIndex = 0;
+            
+            document.querySelector('button[onclick="startAutoDownload()"]').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('current').style.display = 'block';
+            
+            log('🚀 Iniciando descarga automática...');
+            downloadNext();
+        }
+
+        function downloadNext() {
+            if (!isDownloading || currentIndex >= numbers.length) {
+                completeDownload();
+                return;
+            }
+
+            const item = numbers[currentIndex];
+            document.getElementById('currentFile').textContent = item.filename;
+            
+            log(`📥 Descargando: ${item.filename}`);
+            
+            try {
+                const encodedText = encodeURIComponent(item.text);
+                const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=es&client=tw-ob&q=${encodedText}`;
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = item.filename;
+                link.style.display = 'none';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                log(`✅ Descargado: ${item.filename}`);
+            } catch (error) {
+                log(`❌ Error descargando ${item.filename}: ${error.message}`);
+            }
+
+            currentIndex++;
+            updateProgress();
+            
+            // Pausa de 2 segundos entre descargas
+            setTimeout(() => {
+                if (isDownloading) {
+                    downloadNext();
+                }
+            }, 2000);
+        }
+
+        function stopAutoDownload() {
+            isDownloading = false;
+            document.querySelector('button[onclick="startAutoDownload()"]').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('current').style.display = 'none';
+            log('⏹️ Descarga detenida');
+        }
+
+        function completeDownload() {
+            isDownloading = false;
+            document.querySelector('button[onclick="startAutoDownload()"]').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('current').style.display = 'none';
+            
+            const progress = document.getElementById('progressBar');
+            progress.style.width = '100%';
+            progress.textContent = '100%';
+            
+            log('🎉 ¡Descarga completada! Revisa tu carpeta de Descargas');
+        }
+
+        function updateProgress() {
+            const progress = Math.floor((currentIndex / numbers.length) * 100);
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+        }
+
+        // MÉTODO 3: Lista de textos
+        function generateTextList() {
+            const textArea = document.getElementById('textList');
+            let content = 'LISTA DE TEXTOS PARA BINGO (75 números)\n';
+            content += '=' .repeat(50) + '\n\n';
+            
+            numbers.forEach(item => {
+                content += `${item.filename}: "${item.text}"\n`;
+            });
+            
+            content += '\n' + '=' .repeat(50);
+            content += '\nPuedes copiar estos textos y usarlos en:\n';
+            content += '- https://ttsmp3.com/\n';
+            content += '- https://www.naturalreaders.com/\n';
+            content += '- https://speechelo.com/\n';
+            content += '- Cualquier otro generador TTS\n';
+            
+            textArea.value = content;
+            textArea.style.display = 'block';
+            log('📋 Lista de textos generada. Puedes copiar y usar en otros sitios TTS');
+        }
+
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}<br>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        // Log inicial
+        log('🎵 Generador Simple listo. 3 métodos disponibles');
+        log('💡 Recomendación: Usar Método 1 (Enlaces Directos) es más confiable');
+    </script>
+</body>
+</html>
